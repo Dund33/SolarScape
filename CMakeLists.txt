@@ -6,10 +6,12 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(data)
 
 add_executable(SolarScape
+        data/Real.h
         data/Vector3.cpp
         data/Vector3.h
         data/Body.cpp
         data/Body.h
         computation/DistanceAnalysis.h
         computation/Verlet.h
+        external/indicators/indicators.hpp
         simulation.cpp)

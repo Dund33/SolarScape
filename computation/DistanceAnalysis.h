@@ -13,7 +13,7 @@
 
 namespace DistanceAnalysis
 {
-    inline double distance(const Vector3& left, const Vector3& right)
+    inline Real distance(const Vector3& left, const Vector3& right)
     {
         return (left - right).length();
     }
@@ -23,14 +23,14 @@ namespace DistanceAnalysis
         return targetBody.position + relativePoint;
     }
 
-    inline double minimumDistanceFromMovingPoint(
+    inline Real minimumDistanceFromMovingPoint(
         std::vector<Body> bodies,
         std::size_t observedBodyIndex,
         std::size_t targetBodyIndex,
         const Vector3& relativePoint,
-        double simulationTime,
-        double timeStep,
-        double gravitationalConstant)
+        Real simulationTime,
+        Real timeStep,
+        Real gravitationalConstant)
     {
         if (observedBodyIndex >= bodies.size())
         {
@@ -42,30 +42,30 @@ namespace DistanceAnalysis
             throw std::out_of_range("targetBodyIndex is outside bodies vector");
         }
 
-        if (simulationTime < 0.0)
+        if (simulationTime < 0.0L)
         {
             throw std::invalid_argument("simulationTime must be non-negative");
         }
 
-        if (timeStep <= 0.0)
+        if (timeStep <= 0.0L)
         {
             throw std::invalid_argument("timeStep must be greater than zero");
         }
 
-        double currentTime = 0.0;
-        double minimumDistance = distance(
+        Real currentTime = 0.0L;
+        Real minimumDistance = distance(
             bodies[observedBodyIndex].position,
             absolutePointForBody(bodies[targetBodyIndex], relativePoint));
 
         while (currentTime < simulationTime)
         {
-            const double remainingTime = simulationTime - currentTime;
-            const double stepTime = remainingTime < timeStep ? remainingTime : timeStep;
+            const Real remainingTime = simulationTime - currentTime;
+            const Real stepTime = remainingTime < timeStep ? remainingTime : timeStep;
 
             Verlet::step(bodies, stepTime, gravitationalConstant);
             currentTime += stepTime;
 
-            const double currentDistance = distance(
+            const Real currentDistance = distance(
                 bodies[observedBodyIndex].position,
                 absolutePointForBody(bodies[targetBodyIndex], relativePoint));
 

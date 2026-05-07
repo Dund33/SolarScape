@@ -5,29 +5,31 @@
 #ifndef SOLARSCAPE_VECTOR3_H
 #define SOLARSCAPE_VECTOR3_H
 
+#include "Real.h"
+
 struct Vector3
 {
-    double x;
-    double y;
-    double z;
+    Real x;
+    Real y;
+    Real z;
 
     Vector3();
-    Vector3(double x, double y, double z);
+    Vector3(Real x, Real y, Real z);
 
     Vector3 operator+(const Vector3& other) const;
     Vector3 operator-(const Vector3& other) const;
-    Vector3 operator*(double scalar) const;
-    Vector3 operator/(double scalar) const;
+    Vector3 operator*(Real scalar) const;
+    Vector3 operator/(Real scalar) const;
 
     Vector3& operator+=(const Vector3& other);
     Vector3& operator-=(const Vector3& other);
-    Vector3& operator*=(double scalar);
-    Vector3& operator/=(double scalar);
+    Vector3& operator*=(Real scalar);
+    Vector3& operator/=(Real scalar);
 
-    double lengthSquared() const;
-    double length() const;
+    Real lengthSquared() const;
+    Real length() const;
 };
 
-Vector3 operator*(double scalar, const Vector3& vector);
+Vector3 operator*(Real scalar, const Vector3& vector);
 
 #endif //SOLARSCAPE_VECTOR3_H

@@ -15,7 +15,7 @@
 
 namespace Verlet
 {
-    inline Vector3 calculateAccelerationForBody(const std::vector<Body>& bodies, std::size_t bodyIndex, double gravitationalConstant)
+    inline Vector3 calculateAccelerationForBody(const std::vector<Body>& bodies, std::size_t bodyIndex, Real gravitationalConstant)
     {
         Vector3 acceleration;
 
@@ -27,22 +27,22 @@ namespace Verlet
             }
 
             const Vector3 direction = bodies[j].position - bodies[bodyIndex].position;
-            const double distanceSquared = direction.lengthSquared();
+            const Real distanceSquared = direction.lengthSquared();
 
-            if (distanceSquared == 0.0)
+            if (distanceSquared == 0.0L)
             {
                 continue;
             }
 
-            const double distance = std::sqrt(distanceSquared);
-            const double factor = gravitationalConstant * bodies[j].mass / (distanceSquared * distance);
+            const Real distance = std::sqrt(distanceSquared);
+            const Real factor = gravitationalConstant * bodies[j].mass / (distanceSquared * distance);
             acceleration += direction * factor;
         }
 
         return acceleration;
     }
 
-    inline std::vector<Vector3> calculateAccelerations(const std::vector<Body>& bodies, double gravitationalConstant)
+    inline std::vector<Vector3> calculateAccelerations(const std::vector<Body>& bodies, Real gravitationalConstant)
     {
         std::vector<Vector3> accelerations(bodies.size());
 
@@ -78,15 +78,15 @@ namespace Verlet
         return accelerations;
     }
 
-    inline void step(std::vector<Body>& bodies, double timeStep, double gravitationalConstant)
+    inline void step(std::vector<Body>& bodies, Real timeStep, Real gravitationalConstant)
     {
         const std::vector<Vector3> previousAccelerations = calculateAccelerations(bodies, gravitationalConstant);
-        const double timeStepSquared = timeStep * timeStep;
+        const Real timeStepSquared = timeStep * timeStep;
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             const Vector3 velocityPart = bodies[i].velocity * timeStep;
-            const Vector3 accelerationPart = previousAccelerations[i] * (0.5 * timeStepSquared);
+            const Vector3 accelerationPart = previousAccelerations[i] * (0.5L * timeStepSquared);
             bodies[i].position += velocityPart + accelerationPart;
         }
 
@@ -94,7 +94,7 @@ namespace Verlet
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
-            const Vector3 averageAcceleration = (previousAccelerations[i] + nextAccelerations[i]) * 0.5;
+            const Vector3 averageAcceleration = (previousAccelerations[i] + nextAccelerations[i]) * 0.5L;
             bodies[i].velocity += averageAcceleration * timeStep;
         }
     }

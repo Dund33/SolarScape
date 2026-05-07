@@ -12,10 +12,10 @@ class Body
 public:
     Vector3 position;
     Vector3 velocity;
-    double mass;
+    Real mass;
 
     Body();
-    Body(const Vector3& position, const Vector3& velocity, double mass);
+    Body(const Vector3& position, const Vector3& velocity, Real mass);
 };
 
 

@@ -4,11 +4,11 @@
 
 #include "Body.h"
 
-Body::Body() : position(), velocity(), mass(0.0)
+Body::Body() : position(), velocity(), mass(0.0L)
 {
 }
 
-Body::Body(const Vector3& position, const Vector3& velocity, double mass)
+Body::Body(const Vector3& position, const Vector3& velocity, Real mass)
     : position(position), velocity(velocity), mass(mass)
 {
 }
