@@ -43,7 +43,7 @@ int main()
         config.centralBodyIndex;
 
     std::vector<Body> bodies =
-        config.bodies;
+        std::move(config.bodies);
 
     const Real minimumDistance = DistanceAnalysis::minimumDistanceFromMovingPoint(
         bodies,
