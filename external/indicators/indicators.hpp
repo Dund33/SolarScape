@@ -46,7 +46,7 @@ enum class ProgressType { incremental, decremental };
 
 #include <iostream>
 #include <cstdio>
-
+#include <cstdint>
 // Detect target's platform and set some macros in order to wrap platform
 // specific code this library depends on.
 #if defined(_WIN32) || defined(_WIN64)

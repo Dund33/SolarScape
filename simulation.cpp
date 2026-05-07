@@ -8,30 +8,42 @@
 #include <limits>
 #include <vector>
 
-#include "Body.h"
-#include "computation/DistanceAnalysis.h"
-#include "computation/Verlet.h"
+#include "config/SimulationConfig.h"
+#include "math/Body.h"
+#include "simulation/DistanceAnalysis.h"
+#include "math/Verlet.h"
 #include "external/indicators/indicators.hpp"
 
 int main()
 {
-    const Real gravitationalConstant = 6.67430e-11L;
-    const Real timeStep = 5 * 60.0L;
-    const Real simulationTime = 60.0L * 60.0L * 24.0L * 365.0L;
-    const int steps = static_cast<int>(simulationTime / timeStep);
+    SimulationConfig config =
+        SimulationConfig::loadFromFile(
+            "config.yaml");
 
-    const std::size_t centralBodyIndex = 0;
-    const std::size_t secondBodyIndex = 1;
-    const std::size_t probeBodyIndex = 2;
-    const Vector3 targetPointFromCentralBody(10.0e9L, 0.0L, 0.0L);
+    const Real gravitationalConstant =
+        config.gravitationalConstant;
 
-    std::vector<Body> bodies;
-    bodies.push_back(Body(Vector3(0.0L, 0.0L, 0.0L), Vector3(0.0L, 0.0L, 0.0L), 1.98847e30L));
-    bodies.push_back(Body(Vector3(149597870700.0L, 0.0L, 0.0L), Vector3(0.0L, 29780.0L, 0.0L), 5.9722e24L));
+    const Real timeStep =
+        config.timeStep;
 
-    const Vector3 probeStartPosition = bodies[secondBodyIndex].position + Vector3(0.0L, 1.0e9L, 0.0L);
-    const Vector3 probeStartVelocity = bodies[secondBodyIndex].velocity + Vector3(-42000.0L, 0.0L, 0.0L);
-    bodies.push_back(Body(probeStartPosition, probeStartVelocity, 1000.0L));
+    const Real simulationTime =
+        config.simulationTime;
+
+    const int steps =
+        static_cast<int>(
+            simulationTime / timeStep);
+
+    const Vector3 targetPointFromCentralBody =
+        config.targetPointFromCentralBody;
+
+    const size_t probeBodyIndex =
+        config.probeBodyIndex;
+
+    const size_t centralBodyIndex =
+        config.centralBodyIndex;
+
+    std::vector<Body> bodies =
+        config.bodies;
 
     const Real minimumDistance = DistanceAnalysis::minimumDistanceFromMovingPoint(
         bodies,
@@ -84,32 +96,31 @@ int main()
 
     for (int step = 0; step <= steps; ++step)
     {
-        if (step % 1000 == 0)
-        {
-            const std::size_t progress = static_cast<std::size_t>(100 * step / steps);
-            progressBar.set_progress(progress);
-        }
-
         const Real time = step * timeStep;
         const Vector3 targetPoint = DistanceAnalysis::absolutePointForBody(
             bodies[centralBodyIndex],
             targetPointFromCentralBody);
 
-        for (std::size_t i = 0; i < bodies.size(); ++i)
+        if (step % 1000 == 0)
         {
-            output << step << ','
-                   << time << ','
-                   << i << ','
-                   << bodies[i].position.x << ','
-                   << bodies[i].position.y << ','
-                   << bodies[i].position.z << ','
-                   << bodies[i].velocity.x << ','
-                   << bodies[i].velocity.y << ','
-                   << bodies[i].velocity.z << ','
-                   << bodies[i].mass << ','
-                   << targetPoint.x << ','
-                   << targetPoint.y << ','
-                   << targetPoint.z << '\n';
+            const std::size_t progress = static_cast<std::size_t>(100 * step / steps);
+            progressBar.set_progress(progress);
+            for (std::size_t i = 0; i < bodies.size(); ++i)
+            {
+                output << step << ','
+                       << time << ','
+                       << i << ','
+                       << bodies[i].position.x << ','
+                       << bodies[i].position.y << ','
+                       << bodies[i].position.z << ','
+                       << bodies[i].velocity.x << ','
+                       << bodies[i].velocity.y << ','
+                       << bodies[i].velocity.z << ','
+                       << bodies[i].mass << ','
+                       << targetPoint.x << ','
+                       << targetPoint.y << ','
+                       << targetPoint.z << '\n';
+            }
         }
 
         if (step < steps)

@@ -2,17 +2,13 @@
 // Created by Luke on 5/7/2026.
 //
 
-#ifndef SOLARSCAPE_VERLET_H
-#define SOLARSCAPE_VERLET_H
+#include "Verlet.h"
 
 #include <cmath>
-#include <vector>
-
-#include "../data/Body.h"
 
 namespace Verlet
 {
-    inline Vector3 calculateAccelerationForBody(
+    Vector3 calculateAccelerationForBody(
         const std::vector<Body>& bodies,
         std::size_t bodyIndex,
         Real gravitationalConstant)
@@ -29,14 +25,16 @@ namespace Verlet
             const Vector3 direction =
                 bodies[j].position - bodies[bodyIndex].position;
 
-            const Real distanceSquared = direction.lengthSquared();
+            const Real distanceSquared =
+                direction.lengthSquared();
 
             if (distanceSquared == 0.0L)
             {
                 continue;
             }
 
-            const Real distance = std::sqrt(distanceSquared);
+            const Real distance =
+                std::sqrt(distanceSquared);
 
             const Real factor =
                 gravitationalConstant *
@@ -49,7 +47,7 @@ namespace Verlet
         return acceleration;
     }
 
-    inline std::vector<Vector3> calculateAccelerations(
+    std::vector<Vector3> calculateAccelerations(
         const std::vector<Body>& bodies,
         Real gravitationalConstant)
     {
@@ -67,15 +65,18 @@ namespace Verlet
         return accelerations;
     }
 
-    inline void step(
+    void step(
         std::vector<Body>& bodies,
         Real timeStep,
         Real gravitationalConstant)
     {
         const std::vector<Vector3> previousAccelerations =
-            calculateAccelerations(bodies, gravitationalConstant);
+            calculateAccelerations(
+                bodies,
+                gravitationalConstant);
 
-        const Real timeStepSquared = timeStep * timeStep;
+        const Real timeStepSquared =
+            timeStep * timeStep;
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
@@ -91,7 +92,9 @@ namespace Verlet
         }
 
         const std::vector<Vector3> nextAccelerations =
-            calculateAccelerations(bodies, gravitationalConstant);
+            calculateAccelerations(
+                bodies,
+                gravitationalConstant);
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
@@ -104,5 +107,3 @@ namespace Verlet
         }
     }
 }
-
-#endif // SOLARSCAPE_VERLET_H
