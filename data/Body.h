@@ -5,16 +5,7 @@
 #ifndef SOLARSCAPE_BODY_H
 #define SOLARSCAPE_BODY_H
 
-
-struct Vector3
-{
-    double x;
-    double y;
-    double z;
-
-    Vector3();
-    Vector3(double x, double y, double z);
-};
+#include "Vector3.h"
 
 class Body
 {
