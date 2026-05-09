@@ -8,10 +8,10 @@
 
 namespace Verlet
 {
-    Vector3 calculateAccelerationForBody(
+    auto calculateAccelerationForBody(
         const std::vector<Body>& bodies,
         std::size_t bodyIndex,
-        Real gravitationalConstant)
+        Real gravitationalConstant) -> Vector3
     {
         Vector3 acceleration;
 
@@ -47,9 +47,9 @@ namespace Verlet
         return acceleration;
     }
 
-    std::vector<Vector3> calculateAccelerations(
+    auto calculateAccelerations(
         const std::vector<Body>& bodies,
-        Real gravitationalConstant)
+        Real gravitationalConstant) -> std::vector<Vector3>
     {
         std::vector<Vector3> accelerations(bodies.size());
 

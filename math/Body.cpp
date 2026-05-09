@@ -4,7 +4,7 @@
 
 #include "Body.h"
 
-Body::Body() : position(), velocity(), mass(0.0L)
+Body::Body() :  mass(0.0L)
 {
 }
 

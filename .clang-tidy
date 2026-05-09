@@ -1,0 +1,79 @@
+Checks: >
+  # Start with all checks disabled.
+  -*,
+
+  # ---- Correctness / bug finding ----
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+
+  # ---- Performance / unnecessary copies ----
+  performance-*,
+
+  # ---- Modern C++ improvements ----
+  modernize-*,
+
+  # ---- Readability ----
+  readability-*,
+
+  # ---- Const correctness ----
+  misc-const-correctness,
+
+  # ---- Optional: useful extra checks ----
+  misc-*,
+  portability-*,
+
+  # ---- Disable overly noisy checks if desired ----
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -readability-magic-numbers
+
+CheckOptions:
+  # ==========================
+  # misc-const-correctness
+  # ==========================
+  - key: misc-const-correctness.TransformValues
+    value: 'true'
+  - key: misc-const-correctness.TransformReferences
+    value: 'true'
+  - key: misc-const-correctness.TransformPointersAsValues
+    value: 'true'
+  - key: misc-const-correctness.TransformPointersAsPointers
+    value: 'true'
+
+  # ==========================
+  # modernize-use-auto
+  # Converts:
+  #   const Real x = static_cast<Real>(...)
+  # to:
+  #   const auto x = static_cast<Real>(...)
+  # ==========================
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '0'
+  - key: modernize-use-auto.RemoveStars
+    value: 'false'
+
+  # ==========================
+  # performance-unnecessary-value-param
+  # Suggest const& for expensive-to-copy params
+  # ==========================
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: ''
+
+  # ==========================
+  # readability-identifier-naming
+  # (disabled by default unless configured)
+  # ==========================
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: '.*'
+FormatStyle: file

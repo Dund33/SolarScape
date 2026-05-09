@@ -10,28 +10,28 @@
 
 namespace DistanceAnalysis
 {
-    Real distance(
+    auto distance(
         const Vector3& left,
-        const Vector3& right)
+        const Vector3& right) -> Real
     {
         return (left - right).length();
     }
 
-    Vector3 absolutePointForBody(
+    auto absolutePointForBody(
         const Body& targetBody,
-        const Vector3& relativePoint)
+        const Vector3& relativePoint) -> Vector3
     {
         return targetBody.position + relativePoint;
     }
 
-    Real minimumDistanceFromMovingPoint(
+    auto minimumDistanceFromMovingPoint(
         std::vector<Body> bodies,
         std::size_t observedBodyIndex,
         std::size_t targetBodyIndex,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
-        Real gravitationalConstant)
+        Real gravitationalConstant) -> Real
     {
         if (observedBodyIndex >= bodies.size())
         {

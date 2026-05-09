@@ -9,13 +9,13 @@
 class SimulationConfig
 {
 public:
-    Real gravitationalConstant;
-    Real timeStep;
-    Real simulationTime;
+    Real gravitationalConstant{};
+    Real timeStep{};
+    Real simulationTime{};
 
-    std::size_t centralBodyIndex;
-    std::size_t secondBodyIndex;
-    std::size_t probeBodyIndex;
+    std::size_t centralBodyIndex{};
+    std::size_t secondBodyIndex{};
+    std::size_t probeBodyIndex{};
 
     Vector3 targetPointFromCentralBody;
 
