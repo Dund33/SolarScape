@@ -6,10 +6,19 @@
 #include <iomanip>
 #include <iosfwd>
 #include <iostream>
-#include "plot_trajectory.h"
+#include "PlotTrajectory.h"
+
+#include <numeric>
 
 
-void plot_trajectory(const Real gravitationalConstant, const Real timeStep, const int steps, const Vector3 targetPointFromTargetBody, const size_t targetBodyIndex, std::vector<Body> bodies)
+void plotTrajectory(const Real gravitationalConstant,
+    const Real timeStep,
+    const size_t steps,
+    const Vector3 targetPointFromTargetBody,
+    const size_t targetBodyIndex,
+    const size_t probeBodyIndex,
+    std::vector<Body>& bodies,
+    std::vector<Maneuver>& maneuvers)
 {
     std::ofstream output("simulation.csv");
     if (!output)
@@ -41,6 +50,18 @@ void plot_trajectory(const Real gravitationalConstant, const Real timeStep, cons
             bodies[targetBodyIndex],
             targetPointFromTargetBody);
 
+        auto executedManeuvers =
+                maneuvers
+                | std::views::filter([time](const Maneuver& maneuver)
+                {
+                    return maneuver.getInitTime() < time &&
+                           maneuver.getInitTime() + maneuver.getDuration() > time;
+                });
+
+        auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
+
+        const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+
         if (step % 500 == 0)
         {
             const auto progress = static_cast<std::size_t>(100 * step / steps);
@@ -65,7 +86,7 @@ void plot_trajectory(const Real gravitationalConstant, const Real timeStep, cons
 
         if (step < steps)
         {
-            Verlet::step(bodies, timeStep, gravitationalConstant);
+            Verlet::step(bodies, probeBodyIndex, totalForce, timeStep, gravitationalConstant);
         }
     }
 }

@@ -22,6 +22,8 @@ namespace Verlet
 
     void step(
         std::vector<Body>& bodies,
+        size_t probe_idx,
+        const Vector3& force,
         Real timeStep,
         Real gravitationalConstant);
 }

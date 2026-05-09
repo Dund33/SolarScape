@@ -67,6 +67,8 @@ namespace Verlet
 
     void step(
         std::vector<Body>& bodies,
+        size_t probe_idx,
+        const Vector3& force,
         Real timeStep,
         Real gravitationalConstant)
     {
@@ -98,9 +100,14 @@ namespace Verlet
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
-            const Vector3 averageAcceleration =
+            Vector3 averageAcceleration =
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
+
+            if (i == probe_idx)
+            {
+                averageAcceleration += force / bodies[i].mass;
+            }
 
             bodies[i].velocity +=
                 averageAcceleration * timeStep;

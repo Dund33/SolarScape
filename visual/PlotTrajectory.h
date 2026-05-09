@@ -9,5 +9,12 @@
 #include "math/Real.h"
 #include "math/Verlet.h"
 #include "simulation/DistanceAnalysis.h"
-void plot_trajectory(const Real gravitationalConstant, const Real timeStep, const int steps, const Vector3 targetPointFromTargetBody, const size_t targetBodyIndex, std::vector<Body> bodies);
+void plotTrajectory(const Real gravitationalConstant,
+    const Real timeStep,
+    const size_t steps,
+    const Vector3 targetPointFromTargetBody,
+    const size_t targetBodyIndex,
+    const size_t probeBodyIndex,
+    std::vector<Body>& bodies,
+    std::vector<Maneuver>& maneuvers);
 #endif //SOLARSCAPE_PLOT_TRAJECTORY_H

@@ -10,7 +10,7 @@
 #include "math/Body.h"
 #include "simulation/DistanceAnalysis.h"
 #include "external/indicators/indicators.hpp"
-#include "visual/plot_trajectory.h"
+#include "visual/PlotTrajectory.h"
 
 auto main() -> int
 {
@@ -53,6 +53,8 @@ auto main() -> int
     std::vector<Body> bodies =
         std::move(config.bodies);
 
+    auto maneuvers = std::vector{Maneuver(Vector3(10000, 0, 0), 1000, 2000)};
+
     const Real minimumDistance = DistanceAnalysis::minimumDistanceFromMovingPoint(
         bodies,
         probeBodyIndex,
@@ -60,8 +62,21 @@ auto main() -> int
         targetPointFromTargetBody,
         simulationTime,
         timeStep,
-        gravitationalConstant);
+        gravitationalConstant,
+        maneuvers);
 
     std::cout<<minimumDistance;
+
+    plotTrajectory(
+        gravitationalConstant,
+        timeStep,
+        static_cast<size_t>(simulationTime / timeStep),
+        targetPointFromTargetBody,
+        targetBodyIndex,
+        probeBodyIndex,
+        bodies,
+        maneuvers
+        );
+
     return 0;
 }
