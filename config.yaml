@@ -1,0 +1,53 @@
+simulation:
+  gravitationalConstant: 0.000000000066743
+  timeStep: 10.0
+  simulationTime: 86400.0
+
+indices:
+  centralBodyIndex: 0
+  secondBodyIndex: 1
+  probeBodyIndex: 2
+
+targetPointFromCentralBody:
+  x: 42164000.0
+  y: 0.0
+  z: 0.0
+
+bodies:
+  # Ciało centralne (Ziemia)
+  - position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    mass: 5972000000000000000000000.0
+
+  # Drugie ciało (np. Księżyc)
+  - position:
+      x: 384400000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 1022.0
+      z: 0.0
+    mass: 73480000000000000000000.0
+
+probe:
+  # Pozycja sondy względem drugiego ciała
+  relativePosition:
+    x: 1000000.0
+    y: 0.0
+    z: 0.0
+
+  # Prędkość sondy względem drugiego ciała
+  relativeVelocity:
+    x: 0.0
+    y: 500.0
+    z: 0.0
+
+  # Masa sondy
+  mass: 1000.0

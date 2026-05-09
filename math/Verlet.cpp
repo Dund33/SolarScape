@@ -99,8 +99,8 @@ namespace Verlet
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             const Vector3 averageAcceleration =
-                (previousAccelerations[i] +
-                 nextAccelerations[i]) * 0.5L;
+            (previousAccelerations[i] +
+                nextAccelerations[i]) * 0.5L;
 
             bodies[i].velocity +=
                 averageAcceleration * timeStep;

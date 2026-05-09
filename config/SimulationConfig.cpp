@@ -1,6 +1,30 @@
 #include "SimulationConfig.h"
 
+#include <stdexcept>
 #include <yaml-cpp/yaml.h>
+
+namespace
+{
+    Real readReal(const YAML::Node& node)
+    {
+        if (!node)
+        {
+            throw std::runtime_error("Missing YAML node.");
+        }
+
+        return static_cast<Real>(node.as<double>());
+    }
+
+    std::size_t readSizeT(const YAML::Node& node)
+    {
+        if (!node)
+        {
+            throw std::runtime_error("Missing YAML node.");
+        }
+
+        return node.as<std::size_t>();
+    }
+}
 
 SimulationConfig SimulationConfig::loadFromFile(
     const std::string& filePath)
@@ -9,58 +33,86 @@ SimulationConfig SimulationConfig::loadFromFile(
 
     SimulationConfig result;
 
+    // ---------------- Simulation ----------------
+    const YAML::Node simulation = config["simulation"];
+
     result.gravitationalConstant =
-        config["simulation"]["gravitationalConstant"]
-            .as<Real>();
+        readReal(
+            simulation["gravitationalConstant"]);
 
     result.timeStep =
-        config["simulation"]["timeStep"]
-            .as<Real>();
+        readReal(
+            simulation["timeStep"]);
 
     result.simulationTime =
-        config["simulation"]["simulationTime"]
-            .as<Real>();
+        readReal(
+            simulation["simulationTime"]);
+
+    // ---------------- Indices ----------------
+    const YAML::Node indices = config["indices"];
 
     result.centralBodyIndex =
-        config["indices"]["centralBodyIndex"]
-            .as<std::size_t>();
+        readSizeT(
+            indices["centralBodyIndex"]);
 
     result.secondBodyIndex =
-        config["indices"]["secondBodyIndex"]
-            .as<std::size_t>();
+        readSizeT(
+            indices["secondBodyIndex"]);
 
     result.probeBodyIndex =
-        config["indices"]["probeBodyIndex"]
-            .as<std::size_t>();
+        readSizeT(
+            indices["probeBodyIndex"]);
 
+    // ---------------- Target point ----------------
     result.targetPointFromCentralBody =
         loadVector3(
             config["targetPointFromCentralBody"]);
 
-    for (const YAML::Node& bodyNode : config["bodies"])
+    // ---------------- Bodies ----------------
+    const YAML::Node bodiesNode = config["bodies"];
+
+    if (!bodiesNode || !bodiesNode.IsSequence())
+    {
+        throw std::runtime_error(
+            "'bodies' must be a YAML sequence.");
+    }
+
+    for (const YAML::Node& bodyNode : bodiesNode)
     {
         result.bodies.push_back(
             loadBody(bodyNode));
     }
 
+    // ---------------- Probe ----------------
+    const YAML::Node probeNode = config["probe"];
+
     const Vector3 probeRelativePosition =
         loadVector3(
-            config["probe"]["relativePosition"]);
+            probeNode["relativePosition"]);
 
     const Vector3 probeRelativeVelocity =
         loadVector3(
-            config["probe"]["relativeVelocity"]);
+            probeNode["relativeVelocity"]);
 
     const Real probeMass =
-        config["probe"]["mass"]
-            .as<Real>();
+        readReal(
+            probeNode["mass"]);
+
+    if (result.secondBodyIndex >= result.bodies.size())
+    {
+        throw std::runtime_error(
+            "secondBodyIndex is out of range.");
+    }
+
+    const Body& secondBody =
+        result.bodies[result.secondBodyIndex];
 
     const Vector3 probeStartPosition =
-        result.bodies[result.secondBodyIndex].position +
+        secondBody.position +
         probeRelativePosition;
 
     const Vector3 probeStartVelocity =
-        result.bodies[result.secondBodyIndex].velocity +
+        secondBody.velocity +
         probeRelativeVelocity;
 
     result.bodies.push_back(
@@ -75,17 +127,32 @@ SimulationConfig SimulationConfig::loadFromFile(
 Vector3 SimulationConfig::loadVector3(
     const YAML::Node& node)
 {
+    if (!node)
+    {
+        throw std::runtime_error(
+            "Missing Vector3 node.");
+    }
+
     return Vector3(
-        node["x"].as<Real>(),
-        node["y"].as<Real>(),
-        node["z"].as<Real>());
+        readReal(node["x"]),
+        readReal(node["y"]),
+        readReal(node["z"]));
 }
 
 Body SimulationConfig::loadBody(
     const YAML::Node& node)
 {
+    if (!node)
+    {
+        throw std::runtime_error(
+            "Missing Body node.");
+    }
+
     return Body(
-        loadVector3(node["position"]),
-        loadVector3(node["velocity"]),
-        node["mass"].as<Real>());
+        loadVector3(
+            node["position"]),
+        loadVector3(
+            node["velocity"]),
+        readReal(
+            node["mass"]));
 }

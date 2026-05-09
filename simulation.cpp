@@ -16,9 +16,23 @@
 
 int main()
 {
-    SimulationConfig config =
-        SimulationConfig::loadFromFile(
-            "config.yaml");
+    SimulationConfig config;
+
+    try
+    {
+        config =
+            SimulationConfig::loadFromFile("config.yaml");
+    }
+    catch (const YAML::Exception& e)
+    {
+        std::cerr << "YAML error: " << e.what() << '\n';
+        return 1;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << '\n';
+        return 1;
+    }
 
     const Real gravitationalConstant =
         config.gravitationalConstant;
@@ -108,18 +122,18 @@ int main()
             for (std::size_t i = 0; i < bodies.size(); ++i)
             {
                 output << step << ','
-                       << time << ','
-                       << i << ','
-                       << bodies[i].position.x << ','
-                       << bodies[i].position.y << ','
-                       << bodies[i].position.z << ','
-                       << bodies[i].velocity.x << ','
-                       << bodies[i].velocity.y << ','
-                       << bodies[i].velocity.z << ','
-                       << bodies[i].mass << ','
-                       << targetPoint.x << ','
-                       << targetPoint.y << ','
-                       << targetPoint.z << '\n';
+                    << time << ','
+                    << i << ','
+                    << bodies[i].position.x << ','
+                    << bodies[i].position.y << ','
+                    << bodies[i].position.z << ','
+                    << bodies[i].velocity.x << ','
+                    << bodies[i].velocity.y << ','
+                    << bodies[i].velocity.z << ','
+                    << bodies[i].mass << ','
+                    << targetPoint.x << ','
+                    << targetPoint.y << ','
+                    << targetPoint.z << '\n';
             }
         }
 
