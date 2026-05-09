@@ -75,11 +75,23 @@ target_link_libraries(SolarScapeConfig
 )
 
 # =====================================
+# Plyczki :3
+# =====================================
+
+configure_file(
+        config.yaml
+        config.yaml
+        COPYONLY
+)
+
+# =====================================
 # Executable
 # =====================================
 
 add_executable(SolarScape
         simulation.cpp
+        visual/plot_trajectory.cpp
+        visual/plot_trajectory.h
 )
 
 target_link_libraries(SolarScape

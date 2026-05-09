@@ -55,16 +55,16 @@ auto SimulationConfig::loadFromFile(
         readSizeT(
             indices["centralBodyIndex"]);
 
-    result.secondBodyIndex =
+    result.targetBodyIndex =
         readSizeT(
-            indices["secondBodyIndex"]);
+            indices["targetBodyIndex"]);
 
     result.probeBodyIndex =
         readSizeT(
             indices["probeBodyIndex"]);
 
     // ---------------- Target point ----------------
-    result.targetPointFromCentralBody =
+    result.targetPointFromTargetBody =
         loadVector3(
             config["targetPointFromCentralBody"]);
 
@@ -98,14 +98,14 @@ auto SimulationConfig::loadFromFile(
         readReal(
             probeNode["mass"]);
 
-    if (result.secondBodyIndex >= result.bodies.size())
+    if (result.targetBodyIndex >= result.bodies.size())
     {
         throw std::runtime_error(
             "secondBodyIndex is out of range.");
     }
 
     const Body& secondBody =
-        result.bodies[result.secondBodyIndex];
+        result.bodies[result.targetBodyIndex];
 
     const Vector3 probeStartPosition =
         secondBody.position +

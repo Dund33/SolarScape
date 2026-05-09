@@ -14,10 +14,10 @@ public:
     Real simulationTime{};
 
     std::size_t centralBodyIndex{};
-    std::size_t secondBodyIndex{};
+    std::size_t targetBodyIndex{};
     std::size_t probeBodyIndex{};
 
-    Vector3 targetPointFromCentralBody;
+    Vector3 targetPointFromTargetBody;
 
     std::vector<Body> bodies;
 
