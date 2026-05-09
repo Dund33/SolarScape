@@ -14,7 +14,7 @@
 #include "math/Verlet.h"
 #include "external/indicators/indicators.hpp"
 
-int main()
+auto main() -> int
 {
     SimulationConfig config;
 
@@ -43,7 +43,7 @@ int main()
     const Real simulationTime =
         config.simulationTime;
 
-    const int steps =
+    const auto steps =
         static_cast<int>(
             simulationTime / timeStep);
 
@@ -117,7 +117,7 @@ int main()
 
         if (step % 1000 == 0)
         {
-            const std::size_t progress = static_cast<std::size_t>(100 * step / steps);
+            const auto progress = static_cast<std::size_t>(100 * step / steps);
             progressBar.set_progress(progress);
             for (std::size_t i = 0; i < bodies.size(); ++i)
             {

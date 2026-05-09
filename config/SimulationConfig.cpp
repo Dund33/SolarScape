@@ -5,7 +5,7 @@
 
 namespace
 {
-    Real readReal(const YAML::Node& node)
+    auto readReal(const YAML::Node& node) -> Real
     {
         if (!node)
         {
@@ -15,7 +15,7 @@ namespace
         return static_cast<Real>(node.as<double>());
     }
 
-    std::size_t readSizeT(const YAML::Node& node)
+    auto readSizeT(const YAML::Node& node) -> std::size_t
     {
         if (!node)
         {
@@ -26,8 +26,8 @@ namespace
     }
 }
 
-SimulationConfig SimulationConfig::loadFromFile(
-    const std::string& filePath)
+auto SimulationConfig::loadFromFile(
+    const std::string& filePath) -> SimulationConfig
 {
     YAML::Node config = YAML::LoadFile(filePath);
 
@@ -115,17 +115,16 @@ SimulationConfig SimulationConfig::loadFromFile(
         secondBody.velocity +
         probeRelativeVelocity;
 
-    result.bodies.push_back(
-        Body(
+    result.bodies.emplace_back(
             probeStartPosition,
             probeStartVelocity,
-            probeMass));
+            probeMass);
 
     return result;
 }
 
-Vector3 SimulationConfig::loadVector3(
-    const YAML::Node& node)
+auto SimulationConfig::loadVector3(
+    const YAML::Node& node) -> Vector3
 {
     if (!node)
     {
@@ -133,14 +132,14 @@ Vector3 SimulationConfig::loadVector3(
             "Missing Vector3 node.");
     }
 
-    return Vector3(
+    return {
         readReal(node["x"]),
         readReal(node["y"]),
-        readReal(node["z"]));
+        readReal(node["z"])};
 }
 
-Body SimulationConfig::loadBody(
-    const YAML::Node& node)
+auto SimulationConfig::loadBody(
+    const YAML::Node& node) -> Body
 {
     if (!node)
     {

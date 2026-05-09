@@ -14,27 +14,27 @@ Vector3::Vector3(Real x, Real y, Real z) : x(x), y(y), z(z)
 {
 }
 
-Vector3 Vector3::operator+(const Vector3& other) const
+auto Vector3::operator+(const Vector3& other) const -> Vector3
 {
-    return Vector3(x + other.x, y + other.y, z + other.z);
+    return {x + other.x, y + other.y, z + other.z};
 }
 
-Vector3 Vector3::operator-(const Vector3& other) const
+auto Vector3::operator-(const Vector3& other) const -> Vector3
 {
-    return Vector3(x - other.x, y - other.y, z - other.z);
+    return {x - other.x, y - other.y, z - other.z};
 }
 
-Vector3 Vector3::operator*(Real scalar) const
+auto Vector3::operator*(Real scalar) const -> Vector3
 {
-    return Vector3(x * scalar, y * scalar, z * scalar);
+    return {x * scalar, y * scalar, z * scalar};
 }
 
-Vector3 Vector3::operator/(Real scalar) const
+auto Vector3::operator/(Real scalar) const -> Vector3
 {
-    return Vector3(x / scalar, y / scalar, z / scalar);
+    return {x / scalar, y / scalar, z / scalar};
 }
 
-Vector3& Vector3::operator+=(const Vector3& other)
+auto Vector3::operator+=(const Vector3& other) -> Vector3&
 {
     x += other.x;
     y += other.y;
@@ -42,7 +42,7 @@ Vector3& Vector3::operator+=(const Vector3& other)
     return *this;
 }
 
-Vector3& Vector3::operator-=(const Vector3& other)
+auto Vector3::operator-=(const Vector3& other) -> Vector3&
 {
     x -= other.x;
     y -= other.y;
@@ -50,7 +50,7 @@ Vector3& Vector3::operator-=(const Vector3& other)
     return *this;
 }
 
-Vector3& Vector3::operator*=(Real scalar)
+auto Vector3::operator*=(Real scalar) -> Vector3&
 {
     x *= scalar;
     y *= scalar;
@@ -58,7 +58,7 @@ Vector3& Vector3::operator*=(Real scalar)
     return *this;
 }
 
-Vector3& Vector3::operator/=(Real scalar)
+auto Vector3::operator/=(Real scalar) -> Vector3&
 {
     x /= scalar;
     y /= scalar;
@@ -66,17 +66,17 @@ Vector3& Vector3::operator/=(Real scalar)
     return *this;
 }
 
-Real Vector3::lengthSquared() const
+auto Vector3::lengthSquared() const -> Real
 {
     return x * x + y * y + z * z;
 }
 
-Real Vector3::length() const
+auto Vector3::length() const -> Real
 {
     return std::sqrt(lengthSquared());
 }
 
-Vector3 operator*(Real scalar, const Vector3& vector)
+auto operator*(Real scalar, const Vector3& vector) -> Vector3
 {
     return vector * scalar;
 }
