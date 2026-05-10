@@ -7,5 +7,6 @@
 const double MAX_IMPULSE = 50000000;
 const double MAX_THRUST = 100000;
 const double MAX_FUEL_FLOW = 10;
+const double STANDARD_GRAVITY = 9.80665;
 
 #endif //SOLARSCAPE_CONSTS_H

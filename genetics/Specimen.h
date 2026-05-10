@@ -6,25 +6,28 @@
 #define SOLARSCAPE_SPECIMEN_H
 
 #include <vector>
-#include <limits>
 #include <optional>
 
 #include "Maneuver.h"
+#include "math/Probe.h"
 
 class Specimen
 {
 public:
     Specimen();
-    explicit Specimen(const std::vector<Maneuver>& maneuvers);
+    explicit Specimen(Probe* probe);
+    Specimen(const std::vector<Maneuver>& maneuvers, Probe* probe);
 
     void addManeuver(const Maneuver& maneuver);
 
     const std::vector<Maneuver>& getManeuvers() const;
+    Probe* getProbe() const;
+    void setProbe(Probe* probe);
 
     std::size_t size() const;
     bool empty() const;
 
-    long double getTotalImpulse() const;
+    long double getTotalFuelUse() const;
 
     const Maneuver& operator[](std::size_t index) const;
     Maneuver& operator[](std::size_t index);
@@ -35,6 +38,7 @@ public:
 
 private:
     std::vector<Maneuver> maneuvers;
+    Probe* probe{};
     std::optional<double> fitness;
 };
 

@@ -1,11 +1,10 @@
 #include "DistanceAnalysis.h"
 
-#include <numeric>
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 
 #include "../math/Verlet.h"
-#include "config/consts.h"
 
 namespace DistanceAnalysis
 {
@@ -17,32 +16,44 @@ namespace DistanceAnalysis
     }
 
     auto absolutePointForBody(
-        const Body& targetBody,
+        const Body* targetBody,
         const Vector3& relativePoint) -> Vector3
     {
-        return targetBody.position() + relativePoint;
+        if (targetBody == nullptr)
+        {
+            throw std::invalid_argument(
+                "target body must not be null");
+        }
+
+        return targetBody->position() + relativePoint;
     }
 
     auto minimumDistanceFromMovingPoint(
-        std::vector<Body> bodies,
-        std::size_t probeBodyIndex,
-        std::size_t targetBodyIndex,
+        std::vector<Body*> bodies,
+        Probe* probe,
+        Body* targetBody,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
         Real gravitationalConstant,
         const std::vector<Maneuver>& maneuvers) -> Real
     {
-        if (probeBodyIndex >= bodies.size())
+        if (probe == nullptr)
         {
-            throw std::out_of_range(
-                "observedBodyIndex is outside bodies vector");
+            throw std::invalid_argument(
+                "probe must not be null");
         }
 
-        if (targetBodyIndex >= bodies.size())
+        if (targetBody == nullptr)
         {
-            throw std::out_of_range(
-                "targetBodyIndex is outside bodies vector");
+            throw std::invalid_argument(
+                "target body must not be null");
+        }
+
+        if (targetBody == probe)
+        {
+            throw std::invalid_argument(
+                "target body must not be the probe");
         }
 
         if (simulationTime < 0.0L)
@@ -57,40 +68,47 @@ namespace DistanceAnalysis
                 "timeStep must be greater than zero");
         }
 
-        struct ScheduledManeuver
+        if (std::ranges::any_of(
+            bodies,
+            [](const Body* body)
+            {
+                return body == nullptr;
+            }))
         {
-            Real startTime;
-            Real endTime;
-            Vector3 thrust;
-        };
+            throw std::invalid_argument(
+                "body pointer must not be null");
+        }
 
-        std::vector<ScheduledManeuver> scheduledManeuvers;
-        scheduledManeuvers.reserve(maneuvers.size());
-
-        Real previousEndTime = 0.0L;
-
-        for (const auto& maneuver : maneuvers)
+        if (std::ranges::find(bodies, static_cast<Body*>(probe)) == bodies.end())
         {
-            const Real startTime = previousEndTime + maneuver.getInitTime();
-            const Real endTime = startTime + maneuver.getDuration();
+            throw std::invalid_argument(
+                "probe is not available in bodies");
+        }
 
-            scheduledManeuvers.push_back(
-                ScheduledManeuver{
-                    startTime,
-                    endTime,
-                    maneuver.getThrust()
-                });
-
-            previousEndTime = endTime;
+        if (std::ranges::find(bodies, targetBody) == bodies.end())
+        {
+            throw std::invalid_argument(
+                "target body is not available in bodies");
         }
 
         Real currentTime = 0.0L;
+        Real previousManeuverEndTime = 0.0L;
+        Real maneuverStartTime = 0.0L;
+        Real maneuverEndTime = 0.0L;
+        std::size_t maneuverIndex = 0;
+
+        if (!maneuvers.empty())
+        {
+            maneuverStartTime = maneuvers[0].getInitTime();
+            maneuverEndTime =
+                maneuverStartTime + maneuvers[0].getDuration();
+        }
 
         Real minimumDistance =
             distance(
-                bodies[probeBodyIndex].position(),
+                probe->position(),
                 absolutePointForBody(
-                    bodies[targetBodyIndex],
+                    targetBody,
                     relativePoint));
 
         while (currentTime < simulationTime)
@@ -103,21 +121,42 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            Vector3 totalForce;
+            Vector3 forceDirection{0.0L, 0.0L, 0.0L};
+            Real throttle = 0.0L;
 
-            for (const auto& scheduledManeuver : scheduledManeuvers)
+            while (maneuverIndex < maneuvers.size() &&
+                currentTime >= maneuverEndTime)
             {
-                if (scheduledManeuver.startTime <= currentTime &&
-                    currentTime < scheduledManeuver.endTime)
+                previousManeuverEndTime = maneuverEndTime;
+                ++maneuverIndex;
+
+                if (maneuverIndex < maneuvers.size())
                 {
-                    totalForce += scheduledManeuver.thrust * MAX_THRUST;
+                    maneuverStartTime =
+                        previousManeuverEndTime +
+                        maneuvers[maneuverIndex].getInitTime();
+
+                    maneuverEndTime =
+                        maneuverStartTime +
+                        maneuvers[maneuverIndex].getDuration();
                 }
+            }
+
+            if (maneuverIndex < maneuvers.size() &&
+                maneuverStartTime <= currentTime &&
+                currentTime < maneuverEndTime)
+            {
+                const Maneuver& maneuver = maneuvers[maneuverIndex];
+
+                forceDirection = maneuver.getThrustDirection();
+                throttle = maneuver.getThrottleValue();
             }
 
             Verlet::step(
                 bodies,
-                probeBodyIndex,
-                totalForce,
+                probe,
+                throttle,
+                forceDirection,
                 stepTime,
                 gravitationalConstant);
 
@@ -125,9 +164,9 @@ namespace DistanceAnalysis
 
             const Real currentDistance =
                 distance(
-                    bodies[probeBodyIndex].position(),
+                    probe->position(),
                     absolutePointForBody(
-                        bodies[targetBodyIndex],
+                        targetBody,
                         relativePoint));
 
             if (currentDistance < minimumDistance)

@@ -2,24 +2,50 @@
 // Created by Luke on 5/9/2026.
 //
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iosfwd>
 #include <iostream>
+#include <limits>
+#include <ranges>
+#include <stdexcept>
 #include "PlotTrajectory.h"
 
-#include <numeric>
+#include "math/Verlet.h"
+#include "simulation/DistanceAnalysis.h"
 
 
-void plotTrajectory(const Real gravitationalConstant,
-    const Real timeStep,
-    const size_t steps,
-    const Vector3 targetPointFromTargetBody,
-    const size_t targetBodyIndex,
-    const size_t probeBodyIndex,
-    std::vector<Body>& bodies,
+void plotTrajectory(
+    Real gravitationalConstant,
+    Real timeStep,
+    std::size_t steps,
+    const Vector3& targetPointFromTargetBody,
+    Body* targetBody,
+    Probe* probe,
+    std::vector<Body*> bodies,
     const std::vector<Maneuver>& maneuvers)
 {
+    if (probe == nullptr)
+    {
+        throw std::invalid_argument("probe must not be null");
+    }
+
+    if (targetBody == nullptr)
+    {
+        throw std::invalid_argument("target body must not be null");
+    }
+
+    if (std::ranges::any_of(
+        bodies,
+        [](const Body* body)
+        {
+            return body == nullptr;
+        }))
+    {
+        throw std::invalid_argument("body pointer must not be null");
+    }
+
     std::ofstream output("simulation.csv");
     if (!output)
     {
@@ -30,39 +56,69 @@ void plotTrajectory(const Real gravitationalConstant,
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
 
-    for (int step = 0; step <= steps; ++step)
+    Real previousManeuverEndTime = 0.0L;
+    Real maneuverStartTime = 0.0L;
+    Real maneuverEndTime = 0.0L;
+    std::size_t maneuverIndex = 0;
+
+    if (!maneuvers.empty())
+    {
+        maneuverStartTime = maneuvers[0].getInitTime();
+        maneuverEndTime =
+            maneuverStartTime + maneuvers[0].getDuration();
+    }
+
+    for (const std::size_t step : std::views::iota(std::size_t{0}, steps + 1))
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = DistanceAnalysis::absolutePointForBody(
-            bodies[targetBodyIndex],
+            targetBody,
             targetPointFromTargetBody);
 
-        auto executedManeuvers =
-                maneuvers
-                | std::views::filter([time](const Maneuver& maneuver)
-                {
-                    return maneuver.getInitTime() < time &&
-                           maneuver.getInitTime() + maneuver.getDuration() > time;
-                });
+        Real thrustValue = 0.0L;
+        Vector3 thrustDirection;
 
-        auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
+        while (maneuverIndex < maneuvers.size() &&
+            time >= maneuverEndTime)
+        {
+            previousManeuverEndTime = maneuverEndTime;
+            ++maneuverIndex;
 
-        const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+            if (maneuverIndex < maneuvers.size())
+            {
+                maneuverStartTime =
+                    previousManeuverEndTime +
+                    maneuvers[maneuverIndex].getInitTime();
+                maneuverEndTime =
+                    maneuverStartTime +
+                    maneuvers[maneuverIndex].getDuration();
+            }
+        }
+
+        if (maneuverIndex < maneuvers.size() &&
+            maneuverStartTime <= time &&
+            time < maneuverEndTime)
+        {
+            const Maneuver& maneuver = maneuvers[maneuverIndex];
+
+            thrustValue = maneuver.getThrottleValue();
+            thrustDirection = maneuver.getThrustDirection();
+        }
 
         if (step % 500 == 0)
         {
-            for (std::size_t i = 0; i < bodies.size(); ++i)
+            for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
             {
                 output << step << ','
                     << time << ','
                     << i << ','
-                    << bodies[i].position().x << ','
-                    << bodies[i].position().y << ','
-                    << bodies[i].position().z << ','
-                    << bodies[i].velocity().x << ','
-                    << bodies[i].velocity().y << ','
-                    << bodies[i].velocity().z << ','
-                    << bodies[i].mass() << ','
+                    << bodies[i]->position().x << ','
+                    << bodies[i]->position().y << ','
+                    << bodies[i]->position().z << ','
+                    << bodies[i]->velocity().x << ','
+                    << bodies[i]->velocity().y << ','
+                    << bodies[i]->velocity().z << ','
+                    << bodies[i]->mass() << ','
                     << targetPoint.x << ','
                     << targetPoint.y << ','
                     << targetPoint.z << '\n';
@@ -71,7 +127,13 @@ void plotTrajectory(const Real gravitationalConstant,
 
         if (step < steps)
         {
-            Verlet::step(bodies, probeBodyIndex, totalForce, timeStep, gravitationalConstant);
+            Verlet::step(
+                bodies,
+                probe,
+                thrustValue,
+                thrustDirection,
+                timeStep,
+                gravitationalConstant);
         }
     }
 }

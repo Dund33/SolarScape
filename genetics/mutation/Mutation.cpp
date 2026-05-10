@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <random>
+#include <ranges>
 #include <stdexcept>
 
 Mutation::Mutation(
@@ -53,7 +54,7 @@ void Mutation::mutate(Specimen& specimen) const
          maxThrustOffset
     );
 
-    for (std::size_t i = 0; i < specimen.size(); ++i)
+    for (const std::size_t i : std::views::iota(std::size_t{0}, specimen.size()))
     {
         Maneuver& maneuver = specimen[i];
 
@@ -80,6 +81,14 @@ void Mutation::mutate(Specimen& specimen) const
             thrust.z += thrustDelta(rng);
         }
 
-        maneuver = Maneuver(thrust, initTime, duration);
+        const long double thrustNorm = thrust.norm();
+
+        if (thrustNorm <= 0.0L)
+        {
+            maneuver = Maneuver(Vector3{}, 0.0L, initTime, duration);
+            continue;
+        }
+
+        maneuver = Maneuver(thrust / thrustNorm, thrustNorm, initTime, duration);
     }
 }

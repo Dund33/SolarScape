@@ -8,22 +8,24 @@
 #include <vector>
 
 #include "Body.h"
+#include "Probe.h"
 
 namespace Verlet
 {
     Vector3 calculateAccelerationForBody(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         std::size_t bodyIndex,
         Real gravitationalConstant);
 
     std::vector<Vector3> calculateAccelerations(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         Real gravitationalConstant);
 
     void step(
-        std::vector<Body>& bodies,
-        size_t probe_idx,
-        const Vector3& force,
+        std::vector<Body*>& bodies,
+        Probe* probe,
+        Real throttleValue,
+        const Vector3& thrustDirection,
         Real timeStep,
         Real gravitationalConstant);
 }

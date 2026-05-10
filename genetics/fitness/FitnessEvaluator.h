@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "math/Body.h"
+#include "math/Probe.h"
 #include "math/Vector3.h"
 #include "genetics/Specimen.h"
 
@@ -15,10 +16,9 @@ public:
         Real timeStep,
         Real simulationTime,
         Vector3 targetPointFromTargetBody,
-        std::size_t probeBodyIndex,
-        std::size_t targetBodyIndex,
-        std::vector<Body> initialBodies,
-        long double maxImpulse
+        std::vector<Body*> initialBodies,
+        Probe* probe,
+        Body* targetBody
     );
 
     void evaluate(Specimen& specimen) const;
@@ -28,10 +28,9 @@ private:
     Real timeStep;
     Real simulationTime;
     Vector3 targetPointFromTargetBody;
-    std::size_t probeBodyIndex;
-    std::size_t targetBodyIndex;
-    std::vector<Body> initialBodies;
-    long double maxImpulse;
+    std::vector<Body*> initialBodies;
+    Probe* probe;
+    Body* targetBody;
 };
 
 #endif // SOLARSCAPE_FITNESSEVALUATOR_H

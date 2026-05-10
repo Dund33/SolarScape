@@ -4,26 +4,40 @@
 
 #include "Verlet.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <ranges>
+#include <stdexcept>
 
 namespace Verlet
 {
     auto calculateAccelerationForBody(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         std::size_t bodyIndex,
         Real gravitationalConstant) -> Vector3
     {
+        if (bodyIndex >= bodies.size() || bodies[bodyIndex] == nullptr)
+        {
+            throw std::invalid_argument("body pointer must not be null");
+        }
+
         Vector3 acceleration;
 
-        for (std::size_t j = 0; j < bodies.size(); ++j)
+        for (const std::size_t j : std::views::iota(std::size_t{0}, bodies.size()))
         {
+            if (bodies[j] == nullptr)
+            {
+                throw std::invalid_argument("body pointer must not be null");
+            }
+
             if (bodyIndex == j)
             {
                 continue;
             }
 
             const Vector3 direction =
-                bodies[j].position() - bodies[bodyIndex].position();
+                bodies[j]->position() - bodies[bodyIndex]->position();
 
             const Real distanceSquared =
                 direction.lengthSquared();
@@ -38,7 +52,7 @@ namespace Verlet
 
             const Real factor =
                 gravitationalConstant *
-                bodies[j].mass() /
+                bodies[j]->mass() /
                 (distanceSquared * distance);
 
             acceleration += direction * factor;
@@ -48,30 +62,54 @@ namespace Verlet
     }
 
     auto calculateAccelerations(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         Real gravitationalConstant) -> std::vector<Vector3>
     {
-        std::vector<Vector3> accelerations(bodies.size());
+        std::vector<Vector3> accelerations;
+        accelerations.reserve(bodies.size());
 
-        for (std::size_t i = 0; i < bodies.size(); ++i)
-        {
-            accelerations[i] =
-                calculateAccelerationForBody(
+        std::ranges::transform(
+            std::views::iota(std::size_t{0}, bodies.size()),
+            std::back_inserter(accelerations),
+            [&bodies, gravitationalConstant](std::size_t i)
+            {
+                return calculateAccelerationForBody(
                     bodies,
                     i,
                     gravitationalConstant);
-        }
+            });
 
         return accelerations;
     }
 
     void step(
-        std::vector<Body>& bodies,
-        size_t probe_idx,
-        const Vector3& force,
+        std::vector<Body*>& bodies,
+        Probe* probe,
+        Real throttleValue,
+        const Vector3& thrustDirection,
         Real timeStep,
         Real gravitationalConstant)
     {
+        if (probe == nullptr)
+        {
+            throw std::invalid_argument("probe must not be null");
+        }
+
+        if (std::ranges::any_of(
+            bodies,
+            [](const Body* body)
+            {
+                return body == nullptr;
+            }))
+        {
+            throw std::invalid_argument("body pointer must not be null");
+        }
+
+        if (std::ranges::find(bodies, static_cast<Body*>(probe)) == bodies.end())
+        {
+            throw std::invalid_argument("probe must be part of bodies");
+        }
+
         const std::vector<Vector3> previousAccelerations =
             calculateAccelerations(
                 bodies,
@@ -80,16 +118,16 @@ namespace Verlet
         const Real timeStepSquared =
             timeStep * timeStep;
 
-        for (std::size_t i = 0; i < bodies.size(); ++i)
+        for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
         {
             const Vector3 velocityPart =
-                bodies[i].velocity() * timeStep;
+                bodies[i]->velocity() * timeStep;
 
             const Vector3 accelerationPart =
                 previousAccelerations[i] *
                 (0.5L * timeStepSquared);
 
-            bodies[i].position() +=
+            bodies[i]->position() +=
                 velocityPart + accelerationPart;
         }
 
@@ -98,19 +136,35 @@ namespace Verlet
                 bodies,
                 gravitationalConstant);
 
-        for (std::size_t i = 0; i < bodies.size(); ++i)
+        Vector3 force;
+
+        if (probe->fuelMass() > 0)
+            force =
+                thrustDirection *
+                throttleValue *
+                probe->fuelFlow() *
+                probe->specificImpulse();
+        else
+            force = Vector3{0,0,0};
+
+        for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
         {
             Vector3 averageAcceleration =
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
 
-            if (i == probe_idx)
+            if (bodies[i] == probe)
             {
-                averageAcceleration += force / bodies[i].mass();
+                averageAcceleration += force / probe->mass();
             }
 
-            bodies[i].velocity() +=
+            bodies[i]->velocity() +=
                 averageAcceleration * timeStep;
         }
+
+        probe->setFuelMass(
+            std::max(
+                static_cast<Real>(0.0L),
+                probe->fuelMass() - probe->fuelFlow() * timeStep));
     }
 }

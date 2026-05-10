@@ -5,10 +5,13 @@
 #include <algorithm>
 #include <execution>
 #include <iostream>
+#include <iterator>
+#include <ranges>
 #include <vector>
 
 #include "config/SimulationConfig.h"
 #include "math/Body.h"
+#include "math/Probe.h"
 #include "visual/PlotTrajectory.h"
 
 #include "genetics/Specimen.h"
@@ -17,8 +20,6 @@
 #include "genetics/crossing/Crossover.h"
 #include "genetics/mutation/Mutation.h"
 #include "genetics/fitness/FitnessEvaluator.h"
-
-#include "config/consts.h"
 
 auto main() -> int
 {
@@ -47,6 +48,31 @@ auto main() -> int
     const std::size_t targetBodyIndex = config.targetBodyIndex;
 
     std::vector<Body> initialBodies = std::move(config.bodies);
+    Probe probe(
+        initialBodies[probeBodyIndex].position(),
+        initialBodies[probeBodyIndex].velocity(),
+        initialBodies[probeBodyIndex].mass());
+
+    std::vector<Body*> initialBodyPointers;
+    initialBodyPointers.reserve(initialBodies.size());
+
+    auto bodyPointerAt =
+        [&](std::size_t index) -> Body*
+        {
+            if (index == probeBodyIndex)
+            {
+                return &probe;
+            }
+
+            return &initialBodies[index];
+        };
+
+    std::ranges::transform(
+        std::views::iota(std::size_t{0}, initialBodies.size()),
+        std::back_inserter(initialBodyPointers),
+        bodyPointerAt);
+
+    Body* targetBody = bodyPointerAt(targetBodyIndex);
 
     const std::size_t populationSize = 250;
     const std::size_t generations = 250;
@@ -60,7 +86,8 @@ auto main() -> int
         1.0L,
         10000.0L,
         -1000.0L,
-        1000.0L
+        1000.0L,
+        &probe
     );
 
     TournamentSelection selection(5);
@@ -80,13 +107,12 @@ auto main() -> int
         timeStep,
         simulationTime,
         targetPointFromTargetBody,
-        probeBodyIndex,
-        targetBodyIndex,
-        initialBodies,
-        MAX_IMPULSE
+        initialBodyPointers,
+        &probe,
+        targetBody
     );
 
-    for (std::size_t generation = 0; generation < generations; ++generation)
+    for (const std::size_t generation : std::views::iota(std::size_t{0}, generations))
     {
         std::for_each(
             std::execution::par,
@@ -98,14 +124,13 @@ auto main() -> int
             }
         );
 
-        std::sort(
-            population.begin(),
-            population.end(),
-            [](const Specimen& a, const Specimen& b)
+        std::ranges::sort(
+            population,
+            {},
+            [](const Specimen& specimen)
             {
-                return a.getFitness() < b.getFitness();
-            }
-        );
+                return specimen.getFitness();
+            });
 
         const Specimen& best = population.front();
 
@@ -118,10 +143,10 @@ auto main() -> int
         std::vector<Specimen> newPopulation;
         newPopulation.reserve(populationSize);
 
-        for (std::size_t i = 0; i < eliteCount && i < population.size(); ++i)
-        {
-            newPopulation.push_back(population[i]);
-        }
+        std::ranges::copy(
+            population |
+            std::views::take(std::min(eliteCount, population.size())),
+            std::back_inserter(newPopulation));
 
         while (newPopulation.size() < populationSize)
         {
@@ -144,10 +169,14 @@ auto main() -> int
         // Add migration
         constexpr std::size_t immigrants = populationSize / 25;
 
-        for (std::size_t i = 0; i < immigrants; ++i)
-        {
-            newPopulation[populationSize - 1 - i] = initializer.create();
-        }
+        std::ranges::generate(
+            newPopulation |
+            std::views::reverse |
+            std::views::take(immigrants),
+            [&initializer]
+            {
+                return initializer.create();
+            });
 
         population = std::move(newPopulation);
     }
@@ -162,14 +191,13 @@ auto main() -> int
         }
     );
 
-    std::sort(
-        population.begin(),
-        population.end(),
-        [](const Specimen& a, const Specimen& b)
+    std::ranges::sort(
+        population,
+        {},
+        [](const Specimen& specimen)
         {
-            return a.getFitness() < b.getFitness();
-        }
-    );
+            return specimen.getFitness();
+        });
 
     const Specimen& best = population.front();
 
@@ -178,7 +206,6 @@ auto main() -> int
         << best.getFitness().value()
         << '\n';
 
-    std::vector<Body> bodies = initialBodies;
     std::vector<Maneuver> maneuvers = best.getManeuvers();
 
     plotTrajectory(
@@ -186,9 +213,9 @@ auto main() -> int
         timeStep,
         static_cast<std::size_t>(simulationTime / timeStep),
         targetPointFromTargetBody,
-        targetBodyIndex,
-        probeBodyIndex,
-        bodies,
+        targetBody,
+        &probe,
+        initialBodyPointers,
         maneuvers
     );
 

@@ -5,6 +5,7 @@
 #include "../Specimen.h"
 
 #include "config/consts.h"
+#include "math/Probe.h"
 
 class RandomInitializer
 {
@@ -17,7 +18,8 @@ public:
         long double minDuration,
         long double maxDuration,
         long double minThrust,
-        long double maxThrust
+        long double maxThrust,
+        Probe* probe
     );
 
     Specimen create() const;
@@ -35,6 +37,7 @@ private:
 
     long double minThrust;
     long double maxThrust;
+    Probe* probe;
 };
 
 #endif // SOLARSCAPE_RANDOMINITIALIZER_H

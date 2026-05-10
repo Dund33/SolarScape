@@ -4,17 +4,22 @@
 
 #ifndef SOLARSCAPE_PLOT_TRAJECTORY_H
 #define SOLARSCAPE_PLOT_TRAJECTORY_H
-#include "math/Body.h"
-#include "math/Real.h"
-#include "math/Verlet.h"
-#include "simulation/DistanceAnalysis.h"
 
-void plotTrajectory(const Real gravitationalConstant,
-    const Real timeStep,
-    const size_t steps,
-    const Vector3 targetPointFromTargetBody,
-    const size_t targetBodyIndex,
-    const size_t probeBodyIndex,
-    std::vector<Body>& bodies,
+#include <vector>
+
+#include "genetics/Maneuver.h"
+#include "math/Body.h"
+#include "math/Probe.h"
+#include "math/Real.h"
+
+void plotTrajectory(
+    Real gravitationalConstant,
+    Real timeStep,
+    std::size_t steps,
+    const Vector3& targetPointFromTargetBody,
+    Body* targetBody,
+    Probe* probe,
+    std::vector<Body*> bodies,
     const std::vector<Maneuver>& maneuvers);
+
 #endif //SOLARSCAPE_PLOT_TRAJECTORY_H

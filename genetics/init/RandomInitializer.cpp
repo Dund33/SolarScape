@@ -1,5 +1,7 @@
 #include "RandomInitializer.h"
 
+#include <algorithm>
+#include <iterator>
 #include <random>
 #include <stdexcept>
 
@@ -11,7 +13,8 @@ RandomInitializer::RandomInitializer(
     long double minDuration,
     long double maxDuration,
     long double minThrust,
-    long double maxThrust
+    long double maxThrust,
+    Probe* probe
 )
     : minManeuvers(minManeuvers),
       maxManeuvers(maxManeuvers),
@@ -20,8 +23,14 @@ RandomInitializer::RandomInitializer(
       minDuration(minDuration),
       maxDuration(maxDuration),
       minThrust(minThrust),
-      maxThrust(maxThrust)
+      maxThrust(maxThrust),
+      probe(probe)
 {
+    if (probe == nullptr)
+    {
+        throw std::invalid_argument("probe must not be null.");
+    }
+
     if (minManeuvers > maxManeuvers)
     {
         throw std::invalid_argument("minManeuvers cannot be greater than maxManeuvers.");
@@ -64,7 +73,7 @@ Specimen RandomInitializer::create() const
 
     const std::size_t maneuverCount = maneuverCountDist(rng);
 
-    Specimen specimen;
+    Specimen specimen(probe);
     long double totalImpulse = 0.0L;
 
     for (std::size_t i = 0; i < maneuverCount; ++i)
@@ -90,8 +99,16 @@ Specimen RandomInitializer::create() const
             break;
         }
 
+        const long double impulseRate =
+            thrustNorm * probe->specificImpulse();
+
+        if (impulseRate <= 0.0L)
+        {
+            continue;
+        }
+
         const long double maxAllowedDuration =
-            remainingImpulse / thrustNorm;
+            remainingImpulse / impulseRate;
 
         if (maxAllowedDuration < minDuration)
         {
@@ -107,10 +124,10 @@ Specimen RandomInitializer::create() const
         const long double initTime = initTimeDist(rng);
 
         specimen.addManeuver(
-            Maneuver(thrust, initTime, duration)
+            Maneuver(thrust / thrustNorm, thrustNorm, initTime, duration)
         );
 
-        totalImpulse += thrustNorm * duration;
+        totalImpulse += impulseRate * duration;
     }
 
     return specimen;
@@ -123,10 +140,13 @@ std::vector<Specimen> RandomInitializer::createPopulation(
     std::vector<Specimen> population;
     population.reserve(populationSize);
 
-    for (std::size_t i = 0; i < populationSize; ++i)
-    {
-        population.push_back(create());
-    }
+    std::generate_n(
+        std::back_inserter(population),
+        populationSize,
+        [this]
+        {
+            return create();
+        });
 
     return population;
 }

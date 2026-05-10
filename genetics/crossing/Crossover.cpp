@@ -1,8 +1,8 @@
 #include "Crossover.h"
 
 #include <algorithm>
-#include <limits>
 #include <random>
+#include <ranges>
 
 std::pair<Specimen, Specimen> Crossover::cross(
     const Specimen& parent1,
@@ -25,28 +25,29 @@ std::pair<Specimen, Specimen> Crossover::cross(
     const std::size_t cut1 = dist1(rng);
     const std::size_t cut2 = dist2(rng);
 
-    Specimen child1;
-    Specimen child2;
+    Specimen child1(parent1.getProbe());
+    Specimen child2(parent1.getProbe());
 
-    for (std::size_t i = 0; i < cut1; ++i)
+    auto appendTo = [](Specimen& child)
     {
-        child1.addManeuver(parent1[i]);
-    }
+        return [&child](const Maneuver& maneuver)
+        {
+            child.addManeuver(maneuver);
+        };
+    };
 
-    for (std::size_t i = cut2; i < size2; ++i)
-    {
-        child1.addManeuver(parent2[i]);
-    }
-
-    for (std::size_t i = 0; i < cut2; ++i)
-    {
-        child2.addManeuver(parent2[i]);
-    }
-
-    for (std::size_t i = cut1; i < size1; ++i)
-    {
-        child2.addManeuver(parent1[i]);
-    }
+    std::ranges::for_each(
+        parent1.getManeuvers() | std::views::take(cut1),
+        appendTo(child1));
+    std::ranges::for_each(
+        parent2.getManeuvers() | std::views::drop(cut2),
+        appendTo(child1));
+    std::ranges::for_each(
+        parent2.getManeuvers() | std::views::take(cut2),
+        appendTo(child2));
+    std::ranges::for_each(
+        parent1.getManeuvers() | std::views::drop(cut1),
+        appendTo(child2));
 
     return {std::move(child1), std::move(child2)};
 }
