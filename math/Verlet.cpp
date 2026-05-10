@@ -23,7 +23,7 @@ namespace Verlet
             }
 
             const Vector3 direction =
-                bodies[j].position - bodies[bodyIndex].position;
+                bodies[j].position() - bodies[bodyIndex].position();
 
             const Real distanceSquared =
                 direction.lengthSquared();
@@ -38,7 +38,7 @@ namespace Verlet
 
             const Real factor =
                 gravitationalConstant *
-                bodies[j].mass /
+                bodies[j].mass() /
                 (distanceSquared * distance);
 
             acceleration += direction * factor;
@@ -83,13 +83,13 @@ namespace Verlet
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             const Vector3 velocityPart =
-                bodies[i].velocity * timeStep;
+                bodies[i].velocity() * timeStep;
 
             const Vector3 accelerationPart =
                 previousAccelerations[i] *
                 (0.5L * timeStepSquared);
 
-            bodies[i].position +=
+            bodies[i].position() +=
                 velocityPart + accelerationPart;
         }
 
@@ -106,10 +106,10 @@ namespace Verlet
 
             if (i == probe_idx)
             {
-                averageAcceleration += force / bodies[i].mass;
+                averageAcceleration += force / bodies[i].mass();
             }
 
-            bodies[i].velocity +=
+            bodies[i].velocity() +=
                 averageAcceleration * timeStep;
         }
     }

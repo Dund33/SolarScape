@@ -20,7 +20,7 @@ namespace DistanceAnalysis
         const Body& targetBody,
         const Vector3& relativePoint) -> Vector3
     {
-        return targetBody.position + relativePoint;
+        return targetBody.position() + relativePoint;
     }
 
     auto minimumDistanceFromMovingPoint(
@@ -88,7 +88,7 @@ namespace DistanceAnalysis
 
         Real minimumDistance =
             distance(
-                bodies[probeBodyIndex].position,
+                bodies[probeBodyIndex].position(),
                 absolutePointForBody(
                     bodies[targetBodyIndex],
                     relativePoint));
@@ -125,7 +125,7 @@ namespace DistanceAnalysis
 
             const Real currentDistance =
                 distance(
-                    bodies[probeBodyIndex].position,
+                    bodies[probeBodyIndex].position(),
                     absolutePointForBody(
                         bodies[targetBodyIndex],
                         relativePoint));

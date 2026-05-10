@@ -108,11 +108,11 @@ auto SimulationConfig::loadFromFile(
         result.bodies[result.targetBodyIndex];
 
     const Vector3 probeStartPosition =
-        secondBody.position +
+        secondBody.position() +
         probeRelativePosition;
 
     const Vector3 probeStartVelocity =
-        secondBody.velocity +
+        secondBody.velocity() +
         probeRelativeVelocity;
 
     result.bodies.emplace_back(
