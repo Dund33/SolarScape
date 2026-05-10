@@ -90,6 +90,23 @@ target_include_directories(SolarScapeVisual
 )
 
 # =====================================
+# Genetics Library
+# =====================================
+
+add_library(SolarScapeGenetic STATIC
+        genetics/Specimen.cpp
+        genetics/selection/TournamentSelection.cpp
+)
+
+add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
+
+target_include_directories(SolarScapeGenetic
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+
+# =====================================
 # Plyczki :3
 # =====================================
 
@@ -112,4 +129,5 @@ target_link_libraries(SolarScape
         SolarScape::Simulation
         SolarScape::Config
         SolarScape::Visual
+        SolarScape::Genetic
 )

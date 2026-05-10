@@ -53,7 +53,7 @@ auto main() -> int
     std::vector<Body> bodies =
         std::move(config.bodies);
 
-    auto maneuvers = std::vector{Maneuver(Vector3(10000, 0, 0), 1000, 2000)};
+    auto maneuvers = std::vector{Maneuver(Vector3(1, 0, 0), 1000, 1000000)};
 
     const Real minimumDistance = DistanceAnalysis::minimumDistanceFromMovingPoint(
         bodies,
