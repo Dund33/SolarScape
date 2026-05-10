@@ -18,7 +18,7 @@ void plotTrajectory(const Real gravitationalConstant,
     const size_t targetBodyIndex,
     const size_t probeBodyIndex,
     std::vector<Body>& bodies,
-    std::vector<Maneuver>& maneuvers)
+    const std::vector<Maneuver>& maneuvers)
 {
     std::ofstream output("simulation.csv");
     if (!output)
@@ -29,19 +29,6 @@ void plotTrajectory(const Real gravitationalConstant,
 
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
-
-    indicators::ProgressBar progressBar{
-        indicators::option::BarWidth{50},
-        indicators::option::Start{"["},
-        indicators::option::Fill{"="},
-        indicators::option::Lead{">"},
-        indicators::option::Remainder{" "},
-        indicators::option::End{"]"},
-        indicators::option::PrefixText{"Generating trajectory"},
-        indicators::option::ShowPercentage{true},
-        indicators::option::ShowElapsedTime{true},
-        indicators::option::ShowRemainingTime{true}
-    };
 
     for (int step = 0; step <= steps; ++step)
     {
@@ -64,8 +51,6 @@ void plotTrajectory(const Real gravitationalConstant,
 
         if (step % 500 == 0)
         {
-            const auto progress = static_cast<std::size_t>(100 * step / steps);
-            progressBar.set_progress(progress);
             for (std::size_t i = 0; i < bodies.size(); ++i)
             {
                 output << step << ','

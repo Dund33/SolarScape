@@ -22,6 +22,8 @@ public:
     std::size_t size() const;
     bool empty() const;
 
+    long double getTotalImpulse() const;
+
     const Maneuver& operator[](std::size_t index) const;
     Maneuver& operator[](std::size_t index);
 

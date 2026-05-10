@@ -35,6 +35,20 @@ bool Specimen::empty() const
     return maneuvers.empty();
 }
 
+long double Specimen::getTotalImpulse() const
+{
+    long double totalImpulse = 0.0L;
+
+    for (const auto& maneuver : maneuvers)
+    {
+        totalImpulse +=
+            maneuver.getThrust().norm() *
+            maneuver.getDuration();
+    }
+
+    return totalImpulse;
+}
+
 const Maneuver& Specimen::operator[](std::size_t index) const
 {
     return maneuvers[index];

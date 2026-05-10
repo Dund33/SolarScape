@@ -3,7 +3,7 @@ simulation:
   gravitationalConstant: 0.000000000066743
 
   # Krok całkowania [s]
-  timeStep: 60.0            # 1 minuta
+  timeStep: 600.0            # 10 minut
 
   # Czas symulacji [s]
   simulationTime: 31536000.0  # 1 rok

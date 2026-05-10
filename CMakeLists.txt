@@ -106,6 +106,10 @@ add_library(SolarScapeGenetic STATIC
         genetics/selection/TournamentSelection.h
         genetics/mutation/Mutation.cpp
         genetics/mutation/Mutation.h
+        genetics/init/RandomInitializer.cpp
+        genetics/init/RandomInitializer.h
+        genetics/crossing/Crossover.cpp
+        genetics/crossing/Crossover.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
