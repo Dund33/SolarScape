@@ -1,31 +1,19 @@
 simulation:
-  # Stała grawitacji [m^3 kg^-1 s^-2]
   gravitationalConstant: 0.000000000066743
-
-  # Krok całkowania [s]
-  timeStep: 600.0            # 10 minut
-
-  # Czas symulacji [s]
-  simulationTime: 31536000.0  # 1 rok
+  timeStep: 600.0
+  simulationTime: 63072000.0
 
 indices:
-  # 0 = Słońce
   centralBodyIndex: 0
-
-  # 3 = Ziemia (względem niej definiujemy pozycję sondy)
   targetBodyIndex: 3
-
-  # Sonda zostanie dodana na końcu tablicy bodies
   probeBodyIndex: 6
 
 targetPointFromCentralBody:
-  # Przybliżona pozycja Marsa względem Słońca
   x: 227939200000.0
   y: 0.0
   z: 0.0
 
 bodies:
-  # 0. Słońce
   - position:
       x: 0.0
       y: 0.0
@@ -36,7 +24,6 @@ bodies:
       z: 0.0
     mass: 1988500000000000000000000000000.0
 
-  # 1. Merkury
   - position:
       x: 57909050000.0
       y: 0.0
@@ -47,7 +34,6 @@ bodies:
       z: 0.0
     mass: 330110000000000000000000.0
 
-  # 2. Wenus
   - position:
       x: 108208000000.0
       y: 0.0
@@ -58,7 +44,6 @@ bodies:
       z: 0.0
     mass: 4867500000000000000000000.0
 
-  # 3. Ziemia
   - position:
       x: 149597870700.0
       y: 0.0
@@ -69,7 +54,6 @@ bodies:
       z: 0.0
     mass: 5972000000000000000000000.0
 
-  # 4. Mars
   - position:
       x: 227939200000.0
       y: 0.0
@@ -80,7 +64,6 @@ bodies:
       z: 0.0
     mass: 641710000000000000000000.0
 
-  # 5. Jowisz
   - position:
       x: 778570000000.0
       y: 0.0
@@ -92,19 +75,17 @@ bodies:
     mass: 1898200000000000000000000000.0
 
 probe:
-  # Start z niskiej orbity okołoziemskiej (~400 km nad powierzchnią Ziemi)
   relativePosition:
     x: 6771000.0
     y: 0.0
     z: 0.0
 
-  # Dodatkowa prędkość względem Ziemi.
-  # ~11.3 km/s to wartość zbliżona do prędkości potrzebnej
-  # do transferu w kierunku Marsa.
+  # Prędkość kołowa na orbicie 400 km nad Ziemią:
+  # v = sqrt(mu / r) ≈ 7670 m/s
+  # Kierunek +Y oznacza ruch styczny do orbity.
   relativeVelocity:
     x: 0.0
-    y: 11300.0
+    y: 7670.0
     z: 0.0
 
-  # Masa sondy
   mass: 1000.0

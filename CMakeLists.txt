@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(SolarScape VERSION 1.0 LANGUAGES CXX)
 
 # =====================================
-# C++17
+# C++ Standard
 # =====================================
 
 set(CMAKE_CXX_STANDARD 23)
@@ -27,6 +27,8 @@ add_library(SolarScapeMath STATIC
         math/Body.h
         math/Verlet.cpp
         math/Verlet.h
+        math/Probe.cpp
+        math/Probe.h
 )
 
 add_library(SolarScape::Math ALIAS SolarScapeMath)
@@ -80,7 +82,7 @@ target_link_libraries(SolarScapeConfig
 )
 
 # =====================================
-# Gfx Library
+# Visual Library
 # =====================================
 
 add_library(SolarScapeVisual STATIC
@@ -110,6 +112,8 @@ add_library(SolarScapeGenetic STATIC
         genetics/init/RandomInitializer.h
         genetics/crossing/Crossover.cpp
         genetics/crossing/Crossover.h
+        genetics/fitness/FitnessEvaluator.cpp
+        genetics/fitness/FitnessEvaluator.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
@@ -119,9 +123,14 @@ target_include_directories(SolarScapeGenetic
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_link_libraries(SolarScapeGenetic
+        PUBLIC
+        SolarScape::Math
+        SolarScape::Simulation
+)
 
 # =====================================
-# Plyczki :3
+# Copy config.yaml
 # =====================================
 
 configure_file(

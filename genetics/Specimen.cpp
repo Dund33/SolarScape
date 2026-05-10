@@ -5,13 +5,11 @@
 #include "Specimen.h"
 
 Specimen::Specimen()
-    : fitness(std::numeric_limits<double>::max())
 {
 }
 
 Specimen::Specimen(const std::vector<Maneuver>& maneuvers)
-    : maneuvers(maneuvers),
-      fitness(std::numeric_limits<double>::max())
+    : maneuvers(maneuvers)
 {
 }
 
@@ -59,7 +57,7 @@ Maneuver& Specimen::operator[](std::size_t index)
     return maneuvers[index];
 }
 
-double Specimen::getFitness() const
+std::optional<double> Specimen::getFitness() const
 {
     return fitness;
 }

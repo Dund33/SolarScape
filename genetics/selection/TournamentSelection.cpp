@@ -29,13 +29,13 @@ const Specimen& TournamentSelection::select(
     std::uniform_int_distribution<std::size_t> dist(0, population.size() - 1);
 
     std::size_t bestIndex = dist(rng);
-    double bestFitness = population[bestIndex].getFitness();
+    double bestFitness = population[bestIndex].getFitness().value();
 
     // Mniejszy fitness = lepszy osobnik
     for (std::size_t i = 1; i < tournamentSize; ++i)
     {
         std::size_t candidateIndex = dist(rng);
-        double candidateFitness = population[candidateIndex].getFitness();
+        double candidateFitness = population[candidateIndex].getFitness().value();
 
         if (candidateFitness < bestFitness)
         {

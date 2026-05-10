@@ -4,6 +4,8 @@
 
 #ifndef SOLARSCAPE_CONSTS_H
 #define SOLARSCAPE_CONSTS_H
-const double MAX_IMPULSE = 1000000000;
+const double MAX_IMPULSE = 50000000;
+const double MAX_THRUST = 100000;
+const double MAX_FUEL_FLOW = 10;
 
 #endif //SOLARSCAPE_CONSTS_H

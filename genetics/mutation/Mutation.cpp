@@ -82,6 +82,4 @@ void Mutation::mutate(Specimen& specimen) const
 
         maneuver = Maneuver(thrust, initTime, duration);
     }
-
-    specimen.setFitness(std::numeric_limits<double>::max());
 }

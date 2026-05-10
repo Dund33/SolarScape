@@ -48,8 +48,5 @@ std::pair<Specimen, Specimen> Crossover::cross(
         child2.addManeuver(parent1[i]);
     }
 
-    child1.setFitness(std::numeric_limits<double>::max());
-    child2.setFitness(std::numeric_limits<double>::max());
-
     return {std::move(child1), std::move(child2)};
 }

@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <limits>
+#include <optional>
+
 #include "Maneuver.h"
 
 class Specimen
@@ -28,12 +30,12 @@ public:
     Maneuver& operator[](std::size_t index);
 
     // Fitness
-    double getFitness() const;
+    std::optional<double> getFitness() const;
     void setFitness(double fitness);
 
 private:
     std::vector<Maneuver> maneuvers;
-    double fitness;
+    std::optional<double> fitness;
 };
 
 #endif // SOLARSCAPE_SPECIMEN_H

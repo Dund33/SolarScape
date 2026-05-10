@@ -1,13 +1,11 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #include "DistanceAnalysis.h"
 
 #include <numeric>
 #include <stdexcept>
+#include <vector>
 
 #include "../math/Verlet.h"
+#include "config/consts.h"
 
 namespace DistanceAnalysis
 {
@@ -33,7 +31,7 @@ namespace DistanceAnalysis
         Real simulationTime,
         Real timeStep,
         Real gravitationalConstant,
-        std::vector<Maneuver> const& maneuvers) -> Real
+        const std::vector<Maneuver>& maneuvers) -> Real
     {
         if (probeBodyIndex >= bodies.size())
         {
@@ -59,6 +57,33 @@ namespace DistanceAnalysis
                 "timeStep must be greater than zero");
         }
 
+        struct ScheduledManeuver
+        {
+            Real startTime;
+            Real endTime;
+            Vector3 thrust;
+        };
+
+        std::vector<ScheduledManeuver> scheduledManeuvers;
+        scheduledManeuvers.reserve(maneuvers.size());
+
+        Real previousEndTime = 0.0L;
+
+        for (const auto& maneuver : maneuvers)
+        {
+            const Real startTime = previousEndTime + maneuver.getInitTime();
+            const Real endTime = startTime + maneuver.getDuration();
+
+            scheduledManeuvers.push_back(
+                ScheduledManeuver{
+                    startTime,
+                    endTime,
+                    maneuver.getThrust()
+                });
+
+            previousEndTime = endTime;
+        }
+
         Real currentTime = 0.0L;
 
         Real minimumDistance =
@@ -78,17 +103,16 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            auto executedManeuvers =
-                maneuvers
-                | std::views::filter([currentTime](const Maneuver& maneuver)
+            Vector3 totalForce;
+
+            for (const auto& scheduledManeuver : scheduledManeuvers)
+            {
+                if (scheduledManeuver.startTime <= currentTime &&
+                    currentTime < scheduledManeuver.endTime)
                 {
-                    return maneuver.getInitTime() < currentTime &&
-                           maneuver.getInitTime() + maneuver.getDuration() > currentTime;
-                });
-
-            auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
-
-            const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+                    totalForce += scheduledManeuver.thrust * MAX_THRUST;
+                }
+            }
 
             Verlet::step(
                 bodies,
