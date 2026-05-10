@@ -12,15 +12,15 @@ FitnessEvaluator::FitnessEvaluator(
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
-    std::vector<Body*> initialBodies,
-    Probe* probe,
-    Body* targetBody
+    std::vector<Body>& initialBodies,
+    Probe& probe,
+    Body& targetBody
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
       simulationTime(simulationTime),
       targetPointFromTargetBody(targetPointFromTargetBody),
-      initialBodies(std::move(initialBodies)),
+      initialBodies(initialBodies),
       probe(probe),
       targetBody(targetBody)
 {
@@ -33,68 +33,31 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
         return;
     }
 
-    if (probe == nullptr)
-    {
-        throw std::invalid_argument("probe must not be null");
-    }
-
-    if (targetBody == nullptr)
-    {
-        throw std::invalid_argument("target body must not be null");
-    }
-
-    if (targetBody == probe)
+    if (&targetBody == &probe)
     {
         throw std::invalid_argument("target body cannot point to the probe");
     }
 
-    Probe probeCopy = *probe;
+    std::vector<Body> bodyCopies = initialBodies;
+    Body targetBodyCopy = targetBody;
+    Probe probeCopy = probe;
 
-    if (std::ranges::any_of(
-        initialBodies,
-        [](const Body* body)
-        {
-            return body == nullptr;
-        }))
-    {
-        throw std::invalid_argument("body pointer must not be null");
-    }
-
-    std::vector<Body> bodyCopies;
-    bodyCopies.reserve(initialBodies.size());
     std::vector<Body*> bodyPointers;
-    bodyPointers.reserve(initialBodies.size());
-    Body* targetBodyCopy = nullptr;
+    bodyPointers.reserve(bodyCopies.size() + 2);
 
-    for (Body* body : initialBodies)
+    for (Body& bodyCopy : bodyCopies)
     {
-        if (body == probe)
-        {
-            bodyPointers.push_back(&probeCopy);
-            continue;
-        }
-
-        bodyCopies.push_back(*body);
-        Body* bodyCopy = &bodyCopies.back();
-
-        if (body == targetBody)
-        {
-            targetBodyCopy = bodyCopy;
-        }
-
-        bodyPointers.push_back(bodyCopy);
+        bodyPointers.push_back(&bodyCopy);
     }
 
-    if (targetBodyCopy == nullptr)
-    {
-        throw std::invalid_argument("target body is not available in initialBodies");
-    }
+    bodyPointers.push_back(&targetBodyCopy);
+    bodyPointers.push_back(&probeCopy);
 
     const Real minimumDistance =
         DistanceAnalysis::minimumDistanceFromMovingPoint(
             bodyPointers,
             &probeCopy,
-            targetBodyCopy,
+            &targetBodyCopy,
             targetPointFromTargetBody,
             simulationTime,
             timeStep,

@@ -136,17 +136,6 @@ namespace Verlet
                 bodies,
                 gravitationalConstant);
 
-        Vector3 force;
-
-        if (probe->fuelMass() > 0)
-            force =
-                thrustDirection *
-                throttleValue *
-                probe->fuelFlow() *
-                probe->specificImpulse();
-        else
-            force = Vector3{0,0,0};
-
         for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
         {
             Vector3 averageAcceleration =
@@ -155,6 +144,15 @@ namespace Verlet
 
             if (bodies[i] == probe)
             {
+                Vector3 force {0,0,0};
+
+                if (probe->fuelMass() > 0)
+                    force =
+                        thrustDirection *
+                        throttleValue *
+                        probe->fuelFlow() *
+                        probe->specificImpulse();
+
                 averageAcceleration += force / probe->mass();
             }
 
@@ -164,7 +162,7 @@ namespace Verlet
 
         probe->setFuelMass(
             std::max(
-                static_cast<Real>(0.0L),
+                0.0L,
                 probe->fuelMass() - probe->fuelFlow() * timeStep));
     }
 }

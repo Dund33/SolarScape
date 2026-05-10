@@ -3,17 +3,13 @@ simulation:
   timeStep: 600.0
   simulationTime: 63072000.0
 
-indices:
-  centralBodyIndex: 0
-  targetBodyIndex: 3
-  probeBodyIndex: 6
-
-targetPointFromCentralBody:
-  x: 227939200000.0
+targetPointFromTargetBody:
+  x: 0.0
   y: 0.0
   z: 0.0
 
 bodies:
+  # Sun
   - position:
       x: 0.0
       y: 0.0
@@ -24,6 +20,7 @@ bodies:
       z: 0.0
     mass: 1988500000000000000000000000000.0
 
+  # Mercury
   - position:
       x: 57909050000.0
       y: 0.0
@@ -34,6 +31,7 @@ bodies:
       z: 0.0
     mass: 330110000000000000000000.0
 
+  # Venus
   - position:
       x: 108208000000.0
       y: 0.0
@@ -44,6 +42,7 @@ bodies:
       z: 0.0
     mass: 4867500000000000000000000.0
 
+  # Earth
   - position:
       x: 149597870700.0
       y: 0.0
@@ -54,16 +53,7 @@ bodies:
       z: 0.0
     mass: 5972000000000000000000000.0
 
-  - position:
-      x: 227939200000.0
-      y: 0.0
-      z: 0.0
-    velocity:
-      x: 0.0
-      y: 24070.0
-      z: 0.0
-    mass: 641710000000000000000000.0
-
+  # Jupiter
   - position:
       x: 778570000000.0
       y: 0.0
@@ -74,18 +64,35 @@ bodies:
       z: 0.0
     mass: 1898200000000000000000000000.0
 
-probe:
-  relativePosition:
-    x: 6771000.0
+# Mars
+targetBody:
+  position:
+    x: 227939200000.0
     y: 0.0
     z: 0.0
-
-  # Prędkość kołowa na orbicie 400 km nad Ziemią:
-  # v = sqrt(mu / r) ≈ 7670 m/s
-  # Kierunek +Y oznacza ruch styczny do orbity.
-  relativeVelocity:
+  velocity:
     x: 0.0
-    y: 7670.0
+    y: 24070.0
+    z: 0.0
+  mass: 641710000000000000000000.0
+
+# Probe starting near Earth:
+# Earth position + relativePosition:
+# x = 149597870700.0 + 6771000.0 = 149604641700.0
+#
+# Earth velocity + relativeVelocity:
+# y = 29780.0 + 7670.0 = 37450.0
+probe:
+  position:
+    x: 149604641700.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 37450.0
     z: 0.0
 
-  mass: 1000.0
+  emptyMass: 1000.0
+  fuelMass: 5000.0
+  fuelFlow: 1.0
+  specificImpulse: 600.0

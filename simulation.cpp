@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iterator>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 
 #include "config/SimulationConfig.h"
@@ -21,109 +22,134 @@
 #include "genetics/mutation/Mutation.h"
 #include "genetics/fitness/FitnessEvaluator.h"
 
-auto main() -> int
+namespace
 {
-    SimulationConfig config;
+    constexpr std::size_t POPULATION_SIZE = 250;
+    constexpr std::size_t GENERATIONS = 250;
+    constexpr std::size_t ELITE_COUNT = 2;
 
-    try
+    constexpr std::size_t MIN_MANEUVERS = 1;
+    constexpr std::size_t MAX_MANEUVERS = 25;
+
+    constexpr Real MIN_MANEUVER_TIME = 0.0L;
+    constexpr Real MIN_MANEUVER_DURATION = 1.0L;
+    constexpr Real MAX_MANEUVER_DURATION = 10000.0L;
+
+    constexpr Real MIN_THRUST = -1000.0L;
+    constexpr Real MAX_THRUST = 1000.0L;
+
+    constexpr double MUTATION_PROBABILITY = 0.1;
+    constexpr Real MUTATION_TIME_RANGE = 10000.0L;
+    constexpr Real MUTATION_DURATION_RANGE = 5000.0L;
+    constexpr Real MUTATION_THRUST_RANGE = 1000.0L;
+
+    constexpr std::size_t TOURNAMENT_SIZE = 5;
+
+    struct SimulationState
     {
-        config = SimulationConfig::loadFromFile("config.yaml");
-    }
-    catch (const YAML::Exception& e)
+        Real gravitationalConstant{};
+        Real timeStep{};
+        Real simulationTime{};
+
+        Vector3 targetPointFromTargetBody;
+
+        std::vector<Body> initialBodies;
+        Body targetBody;
+        Probe probe;
+
+        std::vector<Body*> bodyPointers;
+    };
+
+    auto loadConfig(const std::string& filePath) -> SimulationConfig
     {
-        std::cerr << "YAML error: " << e.what() << '\n';
-        return 1;
+        return SimulationConfig::loadFromFile(filePath);
     }
-    catch (const std::exception& e)
+
+    auto createBodyPointers(
+        std::vector<Body>& bodies,
+        Body& targetBody,
+        Probe& probe) -> std::vector<Body*>
     {
-        std::cerr << "Error: " << e.what() << '\n';
-        return 1;
-    }
+        std::vector<Body*> bodyPointers;
+        bodyPointers.reserve(bodies.size() + 2);
 
-    const Real gravitationalConstant = config.gravitationalConstant;
-    const Real timeStep = config.timeStep;
-    const Real simulationTime = config.simulationTime;
-    const Vector3 targetPointFromTargetBody = config.targetPointFromTargetBody;
-    const std::size_t probeBodyIndex = config.probeBodyIndex;
-    const std::size_t targetBodyIndex = config.targetBodyIndex;
-
-    std::vector<Body> initialBodies = std::move(config.bodies);
-    Probe probe(
-        initialBodies[probeBodyIndex].position(),
-        initialBodies[probeBodyIndex].velocity(),
-        initialBodies[probeBodyIndex].mass());
-
-    std::vector<Body*> initialBodyPointers;
-    initialBodyPointers.reserve(initialBodies.size());
-
-    auto bodyPointerAt =
-        [&](std::size_t index) -> Body*
+        for (Body& body : bodies)
         {
-            if (index == probeBodyIndex)
-            {
-                return &probe;
-            }
+            bodyPointers.push_back(&body);
+        }
 
-            return &initialBodies[index];
-        };
+        bodyPointers.push_back(&targetBody);
+        bodyPointers.push_back(&probe);
 
-    std::ranges::transform(
-        std::views::iota(std::size_t{0}, initialBodies.size()),
-        std::back_inserter(initialBodyPointers),
-        bodyPointerAt);
+        return bodyPointers;
+    }
 
-    Body* targetBody = bodyPointerAt(targetBodyIndex);
+    auto createSimulationState(SimulationConfig&& config) -> SimulationState
+    {
+        SimulationState state;
 
-    const std::size_t populationSize = 250;
-    const std::size_t generations = 250;
-    const std::size_t eliteCount = 2;
+        state.gravitationalConstant = config.gravitationalConstant;
+        state.timeStep = config.timeStep;
+        state.simulationTime = config.simulationTime;
+        state.targetPointFromTargetBody = config.targetPointFromTargetBody;
 
-    RandomInitializer initializer(
-        1,
-        25,
-        0.0L,
-        simulationTime,
-        1.0L,
-        10000.0L,
-        -1000.0L,
-        1000.0L,
-        &probe
-    );
+        state.initialBodies = std::move(config.bodies);
+        state.targetBody = std::move(config.targetBody);
+        state.probe = std::move(config.probe);
 
-    TournamentSelection selection(5);
-    Crossover crossover;
+        state.bodyPointers =
+            createBodyPointers(
+                state.initialBodies,
+                state.targetBody,
+                state.probe);
 
-    Mutation mutation(
-        0.1,
-        10000.0L,
-        5000.0L,
-        1000.0L
-    );
+        return state;
+    }
 
-    std::vector<Specimen> population = initializer.createPopulation(populationSize);
+    auto createInitializer(
+        Real simulationTime,
+        Probe& probe) -> RandomInitializer
+    {
+        return RandomInitializer(
+            MIN_MANEUVERS,
+            MAX_MANEUVERS,
+            MIN_MANEUVER_TIME,
+            simulationTime,
+            MIN_MANEUVER_DURATION,
+            MAX_MANEUVER_DURATION,
+            MIN_THRUST,
+            MAX_THRUST,
+            &probe
+        );
+    }
 
-    FitnessEvaluator fitnessEvaluator(
-        gravitationalConstant,
-        timeStep,
-        simulationTime,
-        targetPointFromTargetBody,
-        initialBodyPointers,
-        &probe,
-        targetBody
-    );
+    auto createMutation() -> Mutation
+    {
+        return Mutation(
+            MUTATION_PROBABILITY,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE
+        );
+    }
 
-    for (const std::size_t generation : std::views::iota(std::size_t{0}, generations))
+    void evaluatePopulationUnsequenced(
+        std::vector<Specimen>& population,
+        const FitnessEvaluator& fitnessEvaluator)
     {
         std::for_each(
-            std::execution::par,
+            std::execution::par_unseq,
             population.begin(),
             population.end(),
             [&](Specimen& specimen)
             {
                 fitnessEvaluator.evaluate(specimen);
-            }
-        );
+            });
+    }
 
+    void sortPopulationByFitness(
+        std::vector<Specimen>& population)
+    {
         std::ranges::sort(
             population,
             {},
@@ -131,24 +157,46 @@ auto main() -> int
             {
                 return specimen.getFitness();
             });
+    }
 
-        const Specimen& best = population.front();
-
+    void printGenerationResult(
+        std::size_t generation,
+        const Specimen& best)
+    {
         std::cout
             << "Generation " << generation
             << " | Best fitness = "
             << best.getFitness().value()
             << '\n';
+    }
 
-        std::vector<Specimen> newPopulation;
-        newPopulation.reserve(populationSize);
+    void printFinalResult(
+        const Specimen& best)
+    {
+        std::cout
+            << "\nFinal best fitness: "
+            << best.getFitness().value()
+            << '\n';
+    }
 
+    void copyElite(
+        const std::vector<Specimen>& population,
+        std::vector<Specimen>& newPopulation)
+    {
         std::ranges::copy(
             population |
-            std::views::take(std::min(eliteCount, population.size())),
+            std::views::take(std::min(ELITE_COUNT, population.size())),
             std::back_inserter(newPopulation));
+    }
 
-        while (newPopulation.size() < populationSize)
+    void fillPopulationWithChildren(
+        const std::vector<Specimen>& population,
+        std::vector<Specimen>& newPopulation,
+        TournamentSelection& selection,
+        Crossover& crossover,
+        Mutation& mutation)
+    {
+        while (newPopulation.size() < POPULATION_SIZE)
         {
             const Specimen& parent1 = selection.select(population);
             const Specimen& parent2 = selection.select(population);
@@ -160,64 +208,177 @@ auto main() -> int
 
             newPopulation.push_back(std::move(child1));
 
-            if (newPopulation.size() < populationSize)
+            if (newPopulation.size() < POPULATION_SIZE)
             {
                 newPopulation.push_back(std::move(child2));
             }
         }
+    }
 
-        // Add migration
-        constexpr std::size_t immigrants = populationSize / 25;
+    void addImmigrants(
+        std::vector<Specimen>& population,
+        RandomInitializer& initializer)
+    {
+        constexpr std::size_t immigrants = POPULATION_SIZE / 25;
 
         std::ranges::generate(
-            newPopulation |
+            population |
             std::views::reverse |
             std::views::take(immigrants),
             [&initializer]
             {
                 return initializer.create();
             });
-
-        population = std::move(newPopulation);
     }
 
-    std::for_each(
-        std::execution::par_unseq,
-        population.begin(),
-        population.end(),
-        [&](Specimen& specimen)
+    auto createNextGeneration(
+        const std::vector<Specimen>& population,
+        RandomInitializer& initializer,
+        TournamentSelection& selection,
+        Crossover& crossover,
+        Mutation& mutation) -> std::vector<Specimen>
+    {
+        std::vector<Specimen> newPopulation;
+        newPopulation.reserve(POPULATION_SIZE);
+
+        copyElite(
+            population,
+            newPopulation);
+
+        fillPopulationWithChildren(
+            population,
+            newPopulation,
+            selection,
+            crossover,
+            mutation);
+
+        addImmigrants(
+            newPopulation,
+            initializer);
+
+        return newPopulation;
+    }
+
+    auto runGeneticAlgorithm(
+        SimulationState& state) -> Specimen
+    {
+        RandomInitializer initializer =
+            createInitializer(
+                state.simulationTime,
+                state.probe);
+
+        TournamentSelection selection(
+            TOURNAMENT_SIZE);
+
+        Crossover crossover;
+
+        Mutation mutation =
+            createMutation();
+
+        FitnessEvaluator fitnessEvaluator(
+            state.gravitationalConstant,
+            state.timeStep,
+            state.simulationTime,
+            state.targetPointFromTargetBody,
+            state.initialBodies,
+            state.probe,
+            state.targetBody
+        );
+
+        std::vector<Specimen> population =
+            initializer.createPopulation(
+                POPULATION_SIZE);
+
+        for (const std::size_t generation : std::views::iota(std::size_t{0}, GENERATIONS))
         {
-            fitnessEvaluator.evaluate(specimen);
+            evaluatePopulationUnsequenced(
+                population,
+                fitnessEvaluator);
+
+            sortPopulationByFitness(
+                population);
+
+            printGenerationResult(
+                generation,
+                population.front());
+
+            population =
+                createNextGeneration(
+                    population,
+                    initializer,
+                    selection,
+                    crossover,
+                    mutation);
         }
-    );
 
-    std::ranges::sort(
-        population,
-        {},
-        [](const Specimen& specimen)
-        {
-            return specimen.getFitness();
-        });
+        evaluatePopulationUnsequenced(
+            population,
+            fitnessEvaluator);
 
-    const Specimen& best = population.front();
+        sortPopulationByFitness(
+            population);
 
-    std::cout
-        << "\nFinal best fitness: "
-        << best.getFitness().value()
-        << '\n';
+        return population.front();
+    }
 
-    std::vector<Maneuver> maneuvers = best.getManeuvers();
+    void plotBestTrajectory(
+        const SimulationState& state,
+        const Specimen& best)
+    {
+        std::vector<Maneuver> maneuvers =
+            best.getManeuvers();
 
-    plotTrajectory(
-        gravitationalConstant,
-        timeStep,
-        static_cast<std::size_t>(simulationTime / timeStep),
-        targetPointFromTargetBody,
-        targetBody,
-        &probe,
-        initialBodyPointers,
-        maneuvers
-    );
+        plotTrajectory(
+            state.gravitationalConstant,
+            state.timeStep,
+            static_cast<std::size_t>(state.simulationTime / state.timeStep),
+            state.targetPointFromTargetBody,
+            const_cast<Body*>(&state.targetBody),
+            const_cast<Probe*>(&state.probe),
+            state.bodyPointers,
+            maneuvers
+        );
+    }
 
-    return 0;
+    auto run() -> int
+    {
+        SimulationConfig config =
+            loadConfig(
+                "config.yaml");
+
+        SimulationState state =
+            createSimulationState(
+                std::move(config));
+
+        const Specimen best =
+            runGeneticAlgorithm(
+                state);
+
+        printFinalResult(
+            best);
+
+        plotBestTrajectory(
+            state,
+            best);
+
+        return 0;
+    }
+}
+
+auto main() -> int
+{
+    try
+    {
+        return run();
+    }
+    catch (const YAML::Exception& e)
+    {
+        std::cerr << "YAML error: " << e.what() << '\n';
+        return 1;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << '\n';
+        return 1;
+    }
 }
