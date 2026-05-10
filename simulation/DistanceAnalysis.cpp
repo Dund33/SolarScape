@@ -4,6 +4,7 @@
 
 #include "DistanceAnalysis.h"
 
+#include <numeric>
 #include <stdexcept>
 
 #include "../math/Verlet.h"
@@ -26,14 +27,15 @@ namespace DistanceAnalysis
 
     auto minimumDistanceFromMovingPoint(
         std::vector<Body> bodies,
-        std::size_t observedBodyIndex,
+        std::size_t probeBodyIndex,
         std::size_t targetBodyIndex,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
-        Real gravitationalConstant) -> Real
+        Real gravitationalConstant,
+        std::vector<Maneuver> const& maneuvers) -> Real
     {
-        if (observedBodyIndex >= bodies.size())
+        if (probeBodyIndex >= bodies.size())
         {
             throw std::out_of_range(
                 "observedBodyIndex is outside bodies vector");
@@ -61,7 +63,7 @@ namespace DistanceAnalysis
 
         Real minimumDistance =
             distance(
-                bodies[observedBodyIndex].position,
+                bodies[probeBodyIndex].position,
                 absolutePointForBody(
                     bodies[targetBodyIndex],
                     relativePoint));
@@ -76,8 +78,22 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
+            auto executedManeuvers =
+                maneuvers
+                | std::views::filter([currentTime](const Maneuver& maneuver)
+                {
+                    return maneuver.getInitTime() < currentTime &&
+                           maneuver.getInitTime() + maneuver.getDuration() > currentTime;
+                });
+
+            auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
+
+            const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+
             Verlet::step(
                 bodies,
+                probeBodyIndex,
+                totalForce,
                 stepTime,
                 gravitationalConstant);
 
@@ -85,7 +101,7 @@ namespace DistanceAnalysis
 
             const Real currentDistance =
                 distance(
-                    bodies[observedBodyIndex].position,
+                    bodies[probeBodyIndex].position,
                     absolutePointForBody(
                         bodies[targetBodyIndex],
                         relativePoint));

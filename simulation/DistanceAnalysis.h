@@ -6,8 +6,10 @@
 #define SOLARSCAPE_DISTANCE_ANALYSIS_H
 
 #include <vector>
+#include <ranges>
 
 #include "../math/Body.h"
+#include "../genetics/Maneuver.h"
 
 namespace DistanceAnalysis
 {
@@ -21,12 +23,13 @@ namespace DistanceAnalysis
 
     Real minimumDistanceFromMovingPoint(
         std::vector<Body> bodies,
-        std::size_t observedBodyIndex,
+        std::size_t probeBodyIndex,
         std::size_t targetBodyIndex,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
-        Real gravitationalConstant);
+        Real gravitationalConstant,
+        std::vector<Maneuver> const& maneuvers);
 }
 
 #endif // SOLARSCAPE_DISTANCE_ANALYSIS_H
