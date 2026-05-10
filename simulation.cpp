@@ -35,9 +35,6 @@ namespace
     constexpr Real MIN_MANEUVER_DURATION = 1.0L;
     constexpr Real MAX_MANEUVER_DURATION = 10000.0L;
 
-    constexpr Real MIN_THRUST = -1000.0L;
-    constexpr Real MAX_THRUST = 1000.0L;
-
     constexpr double MUTATION_PROBABILITY = 0.1;
     constexpr Real MUTATION_TIME_RANGE = 10000.0L;
     constexpr Real MUTATION_DURATION_RANGE = 5000.0L;
@@ -110,17 +107,15 @@ namespace
         Real simulationTime,
         Probe& probe) -> RandomInitializer
     {
-        return RandomInitializer(
+        return {
             MIN_MANEUVERS,
             MAX_MANEUVERS,
             MIN_MANEUVER_TIME,
             simulationTime,
             MIN_MANEUVER_DURATION,
             MAX_MANEUVER_DURATION,
-            MIN_THRUST,
-            MAX_THRUST,
             &probe
-        );
+        };
     }
 
     auto createMutation() -> Mutation

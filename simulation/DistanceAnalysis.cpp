@@ -121,9 +121,6 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            Vector3 forceDirection{0.0L, 0.0L, 0.0L};
-            Real throttle = 0.0L;
-
             while (maneuverIndex < maneuvers.size() &&
                 currentTime >= maneuverEndTime)
             {
@@ -141,6 +138,9 @@ namespace DistanceAnalysis
                         maneuvers[maneuverIndex].getDuration();
                 }
             }
+
+            Vector3 forceDirection{0.0L, 0.0L, 0.0L};
+            Real throttle = 0.0L;
 
             if (maneuverIndex < maneuvers.size() &&
                 maneuverStartTime <= currentTime &&

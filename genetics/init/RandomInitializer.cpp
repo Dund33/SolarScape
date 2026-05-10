@@ -12,8 +12,6 @@ RandomInitializer::RandomInitializer(
     long double maxInitTime,
     long double minDuration,
     long double maxDuration,
-    long double minThrust,
-    long double maxThrust,
     Probe* probe
 )
     : minManeuvers(minManeuvers),
@@ -22,8 +20,6 @@ RandomInitializer::RandomInitializer(
       maxInitTime(maxInitTime),
       minDuration(minDuration),
       maxDuration(maxDuration),
-      minThrust(minThrust),
-      maxThrust(maxThrust),
       probe(probe)
 {
     if (probe == nullptr)
@@ -46,9 +42,14 @@ RandomInitializer::RandomInitializer(
         throw std::invalid_argument("minDuration cannot be greater than maxDuration.");
     }
 
-    if (minThrust > maxThrust)
+    if (probe->fuelMass() < 0.0L)
     {
-        throw std::invalid_argument("minThrust cannot be greater than maxThrust.");
+        throw std::invalid_argument("probe fuelMass cannot be negative.");
+    }
+
+    if (probe->fuelFlow() < 0.0L)
+    {
+        throw std::invalid_argument("probe fuelFlow cannot be negative.");
     }
 }
 
@@ -66,49 +67,63 @@ Specimen RandomInitializer::create() const
         maxInitTime
     );
 
-    std::uniform_real_distribution<long double> thrustDist(
-        minThrust,
-        maxThrust
+    std::uniform_real_distribution<long double> directionDist(
+        -1.0L,
+        1.0L
+    );
+
+    std::uniform_real_distribution<long double> throttleDist(
+        0.0L,
+        1.0L
     );
 
     const std::size_t maneuverCount = maneuverCountDist(rng);
 
     Specimen specimen(probe);
-    long double totalImpulse = 0.0L;
+    long double usedFuel = 0.0L;
 
     for (std::size_t i = 0; i < maneuverCount; ++i)
     {
-        Vector3 thrust(
-            thrustDist(rng),
-            thrustDist(rng),
-            thrustDist(rng)
+        Vector3 direction(
+            directionDist(rng),
+            directionDist(rng),
+            directionDist(rng)
         );
 
-        const long double thrustNorm = thrust.norm();
+        const long double directionNorm = direction.norm();
 
-        if (thrustNorm <= 0.0L)
+        if (directionNorm <= 0.0L)
         {
             continue;
         }
 
-        const long double remainingImpulse =
-            MAX_IMPULSE - totalImpulse;
+        direction = direction / directionNorm;
 
-        if (remainingImpulse <= 0.0L)
+        const long double throttleValue = throttleDist(rng);
+
+        if (throttleValue <= 0.0L)
+        {
+            continue;
+        }
+
+        const long double remainingFuel =
+            probe->fuelMass() - usedFuel;
+
+        if (remainingFuel <= 0.0L)
         {
             break;
         }
 
-        const long double impulseRate =
-            thrustNorm * probe->specificImpulse();
+        const long double fuelUsageRate =
+            throttleValue * probe->fuelFlow();
 
-        if (impulseRate <= 0.0L)
+        if (fuelUsageRate <= 0.0L)
         {
             continue;
         }
 
         const long double maxAllowedDuration =
-            remainingImpulse / impulseRate;
+            remainingFuel / fuelUsageRate;
 
         if (maxAllowedDuration < minDuration)
         {
@@ -124,10 +139,10 @@ Specimen RandomInitializer::create() const
         const long double initTime = initTimeDist(rng);
 
         specimen.addManeuver(
-            Maneuver(thrust / thrustNorm, thrustNorm, initTime, duration)
+            Maneuver(direction, throttleValue, initTime, duration)
         );
 
-        totalImpulse += impulseRate * duration;
+        usedFuel += fuelUsageRate * duration;
     }
 
     return specimen;

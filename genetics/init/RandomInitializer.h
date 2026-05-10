@@ -17,8 +17,6 @@ public:
         long double maxInitTime,
         long double minDuration,
         long double maxDuration,
-        long double minThrust,
-        long double maxThrust,
         Probe* probe
     );
 
@@ -35,8 +33,6 @@ private:
     long double minDuration;
     long double maxDuration;
 
-    long double minThrust;
-    long double maxThrust;
     Probe* probe;
 };
 
