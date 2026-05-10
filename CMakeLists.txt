@@ -22,8 +22,11 @@ find_package(yaml-cpp CONFIG REQUIRED)
 
 add_library(SolarScapeMath STATIC
         math/Vector3.cpp
+        math/Vector3.h
         math/Body.cpp
+        math/Body.h
         math/Verlet.cpp
+        math/Verlet.h
 )
 
 add_library(SolarScape::Math ALIAS SolarScapeMath)
@@ -39,6 +42,7 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/DistanceAnalysis.cpp
+        simulation/DistanceAnalysis.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -59,6 +63,7 @@ target_link_libraries(SolarScapeSimulation
 
 add_library(SolarScapeConfig STATIC
         config/SimulationConfig.cpp
+        config/SimulationConfig.h
 )
 
 add_library(SolarScape::Config ALIAS SolarScapeConfig)
@@ -80,6 +85,7 @@ target_link_libraries(SolarScapeConfig
 
 add_library(SolarScapeVisual STATIC
         visual/PlotTrajectory.cpp
+        visual/PlotTrajectory.h
 )
 
 add_library(SolarScape::Visual ALIAS SolarScapeVisual)
@@ -95,7 +101,11 @@ target_include_directories(SolarScapeVisual
 
 add_library(SolarScapeGenetic STATIC
         genetics/Specimen.cpp
+        genetics/Specimen.h
         genetics/selection/TournamentSelection.cpp
+        genetics/selection/TournamentSelection.h
+        genetics/mutation/Mutation.cpp
+        genetics/mutation/Mutation.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
