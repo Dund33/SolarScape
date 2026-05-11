@@ -5,6 +5,7 @@
 #include "Mutation.h"
 
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <ranges>
 #include <stdexcept>
@@ -35,21 +36,21 @@ void Mutation::mutate(Specimen& specimen) const
         return;
     }
 
-    static thread_local std::mt19937 rng(std::random_device{}());
+    thread_local std::mt19937 rng(std::random_device{}());
 
     std::bernoulli_distribution shouldMutate(mutationProbability);
 
-    std::uniform_real_distribution<long double> timeDelta(
+    std::uniform_real_distribution timeDelta(
         -maxTimeOffset,
          maxTimeOffset
     );
 
-    std::uniform_real_distribution<long double> durationDelta(
+    std::uniform_real_distribution durationDelta(
         -maxDurationOffset,
          maxDurationOffset
     );
 
-    std::uniform_real_distribution<long double> thrustDelta(
+    std::uniform_real_distribution thrustDelta(
         -maxThrustOffset,
          maxThrustOffset
     );
@@ -57,8 +58,18 @@ void Mutation::mutate(Specimen& specimen) const
     for (const std::size_t i : std::views::iota(std::size_t{0}, specimen.size()))
     {
         Maneuver& maneuver = specimen[i];
+        const Probe* probe = specimen.getProbe();
+        if (probe == nullptr)
+        {
+            throw std::invalid_argument("probe must not be null.");
+        }
 
-        Vector3 thrust = maneuver.getThrust();
+        const long double maxPhysicalThrust =
+            probe->fuelFlow() * probe->specificImpulse();
+        Vector3 throttleVector =
+            maneuver.getThrustDirection() *
+            maneuver.getThrottleValue();
+
         long double initTime = maneuver.getInitTime();
         long double duration = maneuver.getDuration();
 
@@ -76,19 +87,34 @@ void Mutation::mutate(Specimen& specimen) const
 
         if (shouldMutate(rng))
         {
-            thrust.x += thrustDelta(rng);
-            thrust.y += thrustDelta(rng);
-            thrust.z += thrustDelta(rng);
+            const long double thrustScale =
+                maxPhysicalThrust > 0.0L
+                    ? maxPhysicalThrust
+                    : 1.0L;
+
+            throttleVector.x += thrustDelta(rng) / thrustScale;
+            throttleVector.y += thrustDelta(rng) / thrustScale;
+            throttleVector.z += thrustDelta(rng) / thrustScale;
         }
 
-        const long double thrustNorm = thrust.norm();
+        const long double throttleNorm =
+            std::clamp(
+                throttleVector.norm(),
+                0.0L,
+                1.0L);
 
-        if (thrustNorm <= 0.0L)
+        if (throttleNorm <= 0.0L)
         {
             maneuver = Maneuver(Vector3{}, 0.0L, initTime, duration);
             continue;
         }
 
-        maneuver = Maneuver(thrust / thrustNorm, thrustNorm, initTime, duration);
+        maneuver = Maneuver(
+            throttleVector / throttleVector.norm(),
+            throttleNorm,
+            initTime,
+            duration);
     }
+
+    specimen.clearFitness();
 }

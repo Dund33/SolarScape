@@ -92,16 +92,24 @@ namespace DistanceAnalysis
         }
 
         Real currentTime = 0.0L;
-        Real previousManeuverEndTime = 0.0L;
+        std::vector<Maneuver> sortedManeuvers = maneuvers;
+        std::ranges::sort(
+            sortedManeuvers,
+            {},
+            [](const Maneuver& maneuver)
+            {
+                return maneuver.getInitTime();
+            });
+
         Real maneuverStartTime = 0.0L;
         Real maneuverEndTime = 0.0L;
         std::size_t maneuverIndex = 0;
 
-        if (!maneuvers.empty())
+        if (!sortedManeuvers.empty())
         {
-            maneuverStartTime = maneuvers[0].getInitTime();
+            maneuverStartTime = sortedManeuvers[0].getInitTime();
             maneuverEndTime =
-                maneuverStartTime + maneuvers[0].getDuration();
+                maneuverStartTime + sortedManeuvers[0].getDuration();
         }
 
         Real minimumDistance =
@@ -121,42 +129,34 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            while (maneuverIndex < maneuvers.size() &&
+            while (maneuverIndex < sortedManeuvers.size() &&
                 currentTime >= maneuverEndTime)
             {
-                previousManeuverEndTime = maneuverEndTime;
                 ++maneuverIndex;
 
-                if (maneuverIndex < maneuvers.size())
+                if (maneuverIndex < sortedManeuvers.size())
                 {
                     maneuverStartTime =
-                        previousManeuverEndTime +
-                        maneuvers[maneuverIndex].getInitTime();
+                        sortedManeuvers[maneuverIndex].getInitTime();
 
                     maneuverEndTime =
                         maneuverStartTime +
-                        maneuvers[maneuverIndex].getDuration();
+                        sortedManeuvers[maneuverIndex].getDuration();
                 }
             }
 
-            Vector3 forceDirection{0.0L, 0.0L, 0.0L};
-            Real throttle = 0.0L;
-
-            if (maneuverIndex < maneuvers.size() &&
+            std::optional<Maneuver> maneuver;
+            if (maneuverIndex < sortedManeuvers.size() &&
                 maneuverStartTime <= currentTime &&
                 currentTime < maneuverEndTime)
             {
-                const Maneuver& maneuver = maneuvers[maneuverIndex];
-
-                forceDirection = maneuver.getThrustDirection();
-                throttle = maneuver.getThrottleValue();
+                maneuver = sortedManeuvers[maneuverIndex];
             }
 
             Verlet::step(
                 bodies,
                 probe,
-                throttle,
-                forceDirection,
+                maneuver,
                 stepTime,
                 gravitationalConstant);
 

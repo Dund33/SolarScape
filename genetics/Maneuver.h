@@ -23,7 +23,6 @@ public:
 
     const Vector3& getThrustDirection() const { return thrustDirection; }
     Real getThrottleValue() const { return throttleValue; }
-    Vector3 getThrust() const { return thrustDirection * throttleValue; }
     long double getInitTime() const { return initTime; }
     long double getDuration() const { return duration; }
 

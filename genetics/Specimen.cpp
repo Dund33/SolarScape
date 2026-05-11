@@ -90,3 +90,8 @@ void Specimen::setFitness(double fitness)
 {
     this->fitness = fitness;
 }
+
+void Specimen::clearFitness()
+{
+    fitness.reset();
+}

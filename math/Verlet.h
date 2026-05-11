@@ -5,10 +5,12 @@
 #ifndef SOLARSCAPE_VERLET_H
 #define SOLARSCAPE_VERLET_H
 
+#include <optional>
 #include <vector>
 
 #include "Body.h"
 #include "Probe.h"
+#include "genetics/Maneuver.h"
 
 namespace Verlet
 {
@@ -24,8 +26,7 @@ namespace Verlet
     void step(
         std::vector<Body*>& bodies,
         Probe* probe,
-        Real throttleValue,
-        const Vector3& thrustDirection,
+        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant);
 }

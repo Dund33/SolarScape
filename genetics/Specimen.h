@@ -35,6 +35,7 @@ public:
     // Fitness
     std::optional<double> getFitness() const;
     void setFitness(double fitness);
+    void clearFitness();
 
 private:
     std::vector<Maneuver> maneuvers;

@@ -56,16 +56,24 @@ void plotTrajectory(
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
 
-    Real previousManeuverEndTime = 0.0L;
+    std::vector<Maneuver> sortedManeuvers = maneuvers;
+    std::ranges::sort(
+        sortedManeuvers,
+        {},
+        [](const Maneuver& maneuver)
+        {
+            return maneuver.getInitTime();
+        });
+
     Real maneuverStartTime = 0.0L;
     Real maneuverEndTime = 0.0L;
     std::size_t maneuverIndex = 0;
 
-    if (!maneuvers.empty())
+    if (!sortedManeuvers.empty())
     {
-        maneuverStartTime = maneuvers[0].getInitTime();
+        maneuverStartTime = sortedManeuvers[0].getInitTime();
         maneuverEndTime =
-            maneuverStartTime + maneuvers[0].getDuration();
+            maneuverStartTime + sortedManeuvers[0].getDuration();
     }
 
     for (const std::size_t step : std::views::iota(std::size_t{0}, steps + 1))
@@ -75,34 +83,27 @@ void plotTrajectory(
             targetBody,
             targetPointFromTargetBody);
 
-        Real thrustValue = 0.0L;
-        Vector3 thrustDirection;
-
-        while (maneuverIndex < maneuvers.size() &&
+        while (maneuverIndex < sortedManeuvers.size() &&
             time >= maneuverEndTime)
         {
-            previousManeuverEndTime = maneuverEndTime;
             ++maneuverIndex;
 
-            if (maneuverIndex < maneuvers.size())
+            if (maneuverIndex < sortedManeuvers.size())
             {
                 maneuverStartTime =
-                    previousManeuverEndTime +
-                    maneuvers[maneuverIndex].getInitTime();
+                    sortedManeuvers[maneuverIndex].getInitTime();
                 maneuverEndTime =
                     maneuverStartTime +
-                    maneuvers[maneuverIndex].getDuration();
+                    sortedManeuvers[maneuverIndex].getDuration();
             }
         }
 
-        if (maneuverIndex < maneuvers.size() &&
+        std::optional<Maneuver> maneuver;
+        if (maneuverIndex < sortedManeuvers.size() &&
             maneuverStartTime <= time &&
             time < maneuverEndTime)
         {
-            const Maneuver& maneuver = maneuvers[maneuverIndex];
-
-            thrustValue = maneuver.getThrottleValue();
-            thrustDirection = maneuver.getThrustDirection();
+            maneuver = sortedManeuvers[maneuverIndex];
         }
 
         if (step % 500 == 0)
@@ -130,8 +131,7 @@ void plotTrajectory(
             Verlet::step(
                 bodies,
                 probe,
-                thrustValue,
-                thrustDirection,
+                maneuver,
                 timeStep,
                 gravitationalConstant);
         }

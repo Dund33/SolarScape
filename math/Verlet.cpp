@@ -85,8 +85,7 @@ namespace Verlet
     void step(
         std::vector<Body*>& bodies,
         Probe* probe,
-        Real throttleValue,
-        const Vector3& thrustDirection,
+        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant)
     {
@@ -144,25 +143,50 @@ namespace Verlet
 
             if (bodies[i] == probe)
             {
-                Vector3 force {0,0,0};
+                if (probe->fuelMass() > 0 && maneuver.has_value())
+                {
+                    const Real throttleValue =
+                        std::clamp(
+                            maneuver.value().getThrottleValue(),
+                            0.0L,
+                            1.0L);
+                    const auto thrustDirection = maneuver.value().getThrustDirection();
 
-                if (probe->fuelMass() > 0)
-                    force =
+                    const Real fuelNeeded =
+                        probe->fuelFlow() * throttleValue * timeStep;
+                    const Real fuelScale =
+                        fuelNeeded > 0.0L
+                            ? std::min(1.0L, probe->fuelMass() / fuelNeeded)
+                            : 0.0L;
+                    const Real effectiveThrottle = throttleValue * fuelScale;
+
+                    Vector3 force =
                         thrustDirection *
-                        throttleValue *
+                        effectiveThrottle *
                         probe->fuelFlow() *
                         probe->specificImpulse();
 
-                averageAcceleration += force / probe->mass();
+                    averageAcceleration += force / probe->mass();
+                }
             }
 
             bodies[i]->velocity() +=
                 averageAcceleration * timeStep;
         }
 
-        probe->setFuelMass(
-            std::max(
-                0.0L,
-                probe->fuelMass() - probe->fuelFlow() * timeStep));
+        if (maneuver.has_value())
+        {
+            const Real throttleValue =
+                std::clamp(
+                    maneuver.value().getThrottleValue(),
+                    0.0L,
+                    1.0L);
+
+            probe->setFuelMass(
+                std::max(
+                    0.0L,
+                    probe->fuelMass() -
+                    probe->fuelFlow() * throttleValue * timeStep));
+        }
     }
 }

@@ -11,7 +11,10 @@ std::pair<Specimen, Specimen> Crossover::cross(
 {
     if (parent1.empty() || parent2.empty())
     {
-        return {parent1, parent2};
+        return {
+            Specimen(parent1.getManeuvers(), parent1.getProbe()),
+            Specimen(parent2.getManeuvers(), parent2.getProbe())
+        };
     }
 
     static thread_local std::mt19937 rng(std::random_device{}());
