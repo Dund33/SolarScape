@@ -3,6 +3,7 @@
 //
 
 #include "Verlet.h"
+#include "config/consts.h"
 
 #include <algorithm>
 #include <cmath>
@@ -150,7 +151,8 @@ namespace Verlet
                         thrustDirection *
                         effectiveThrottle *
                         probe.fuelFlow() *
-                        probe.specificImpulse();
+                        probe.specificImpulse() *
+                        STANDARD_GRAVITY;
 
                     averageAcceleration += force / probe.mass();
                 }

@@ -82,6 +82,7 @@ targetBody:
 #
 # Earth velocity + relativeVelocity:
 # y = 29780.0 + 7670.0 = 37450.0
+# specific impulse denoted in seconds!
 probe:
   position:
     x: 149604641700.0
@@ -95,4 +96,4 @@ probe:
   emptyMass: 1000.0
   fuelMass: 1000.0
   fuelFlow: 1.0
-  specificImpulse: 6000.0
+  specificImpulse: 3600.0
