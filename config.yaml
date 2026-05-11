@@ -1,31 +1,15 @@
 simulation:
-  # Stała grawitacji [m^3 kg^-1 s^-2]
   gravitationalConstant: 0.000000000066743
+  timeStep: 600.0
+  simulationTime: 63072000.0
 
-  # Krok całkowania [s]
-  timeStep: 60.0            # 1 minuta
-
-  # Czas symulacji [s]
-  simulationTime: 31536000.0  # 1 rok
-
-indices:
-  # 0 = Słońce
-  centralBodyIndex: 0
-
-  # 3 = Ziemia (względem niej definiujemy pozycję sondy)
-  targetBodyIndex: 3
-
-  # Sonda zostanie dodana na końcu tablicy bodies
-  probeBodyIndex: 6
-
-targetPointFromCentralBody:
-  # Przybliżona pozycja Marsa względem Słońca
-  x: 227939200000.0
+targetPointFromTargetBody:
+  x: 0.0
   y: 0.0
   z: 0.0
 
 bodies:
-  # 0. Słońce
+  # Sun
   - position:
       x: 0.0
       y: 0.0
@@ -36,7 +20,7 @@ bodies:
       z: 0.0
     mass: 1988500000000000000000000000000.0
 
-  # 1. Merkury
+  # Mercury
   - position:
       x: 57909050000.0
       y: 0.0
@@ -47,7 +31,7 @@ bodies:
       z: 0.0
     mass: 330110000000000000000000.0
 
-  # 2. Wenus
+  # Venus
   - position:
       x: 108208000000.0
       y: 0.0
@@ -58,7 +42,7 @@ bodies:
       z: 0.0
     mass: 4867500000000000000000000.0
 
-  # 3. Ziemia
+  # Earth
   - position:
       x: 149597870700.0
       y: 0.0
@@ -69,18 +53,7 @@ bodies:
       z: 0.0
     mass: 5972000000000000000000000.0
 
-  # 4. Mars
-  - position:
-      x: 227939200000.0
-      y: 0.0
-      z: 0.0
-    velocity:
-      x: 0.0
-      y: 24070.0
-      z: 0.0
-    mass: 641710000000000000000000.0
-
-  # 5. Jowisz
+  # Jupiter
   - position:
       x: 778570000000.0
       y: 0.0
@@ -91,20 +64,36 @@ bodies:
       z: 0.0
     mass: 1898200000000000000000000000.0
 
-probe:
-  # Start z niskiej orbity okołoziemskiej (~400 km nad powierzchnią Ziemi)
-  relativePosition:
-    x: 6771000.0
+# Mars
+targetBody:
+  position:
+    x: 227939200000.0
     y: 0.0
     z: 0.0
-
-  # Dodatkowa prędkość względem Ziemi.
-  # ~11.3 km/s to wartość zbliżona do prędkości potrzebnej
-  # do transferu w kierunku Marsa.
-  relativeVelocity:
+  velocity:
     x: 0.0
-    y: 11300.0
+    y: 24070.0
+    z: 0.0
+  mass: 641710000000000000000000.0
+
+# Probe starting near Earth:
+# Earth position + relativePosition:
+# x = 149597870700.0 + 6771000.0 = 149604641700.0
+#
+# Earth velocity + relativeVelocity:
+# y = 29780.0 + 7670.0 = 37450.0
+# specific impulse denoted in seconds!
+probe:
+  position:
+    x: 149604641700.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 37450.0
     z: 0.0
 
-  # Masa sondy
-  mass: 1000.0
+  emptyMass: 1000.0
+  fuelMass: 1000.0
+  fuelFlow: 1.0
+  specificImpulse: 3600.0

@@ -5,17 +5,27 @@
 #ifndef SOLARSCAPE_BODY_H
 #define SOLARSCAPE_BODY_H
 
-#include "Vector3.h"
+#include "math/Vector3.h"
 
 class Body
 {
 public:
-    Vector3 position;
-    Vector3 velocity;
-    Real mass;
-
     Body();
     Body(const Vector3& position, const Vector3& velocity, Real mass);
+    virtual ~Body() = default;
+
+    auto position() -> Vector3&;
+    auto position() const -> const Vector3&;
+
+    auto velocity() -> Vector3&;
+    auto velocity() const -> const Vector3&;
+
+    virtual auto mass() const -> Real;
+
+private:
+    Vector3 position_;
+    Vector3 velocity_;
+    Real mass_;
 };
 
 

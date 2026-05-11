@@ -4,14 +4,22 @@
 
 #include "Specimen.h"
 
+#include <numeric>
+#include <stdexcept>
+
+#include "math/Probe.h"
+
 Specimen::Specimen()
-    : fitness(std::numeric_limits<double>::max())
 {
 }
 
-Specimen::Specimen(const std::vector<Maneuver>& maneuvers)
-    : maneuvers(maneuvers),
-      fitness(std::numeric_limits<double>::max())
+Specimen::Specimen(Probe* probe)
+    : probe(probe)
+{
+}
+
+Specimen::Specimen(const std::vector<Maneuver>& maneuvers, Probe* probe)
+    : maneuvers(maneuvers), probe(probe)
 {
 }
 
@@ -25,6 +33,16 @@ const std::vector<Maneuver>& Specimen::getManeuvers() const
     return maneuvers;
 }
 
+Probe* Specimen::getProbe() const
+{
+    return probe;
+}
+
+void Specimen::setProbe(Probe* probe)
+{
+    this->probe = probe;
+}
+
 std::size_t Specimen::size() const
 {
     return maneuvers.size();
@@ -33,6 +51,26 @@ std::size_t Specimen::size() const
 bool Specimen::empty() const
 {
     return maneuvers.empty();
+}
+
+long double Specimen::getTotalFuelUse() const
+{
+    if (probe == nullptr)
+    {
+        throw std::invalid_argument("probe must not be null");
+    }
+
+    return std::accumulate(
+        maneuvers.begin(),
+        maneuvers.end(),
+        0.0L,
+        [this](long double totalFuelUse, const Maneuver& maneuver)
+        {
+            return totalFuelUse +
+            probe->fuelFlow() *
+            maneuver.getThrottleValue() *
+            maneuver.getDuration();
+        });
 }
 
 const Maneuver& Specimen::operator[](std::size_t index) const
@@ -45,7 +83,7 @@ Maneuver& Specimen::operator[](std::size_t index)
     return maneuvers[index];
 }
 
-double Specimen::getFitness() const
+std::optional<double> Specimen::getFitness() const
 {
     return fitness;
 }
@@ -53,4 +91,9 @@ double Specimen::getFitness() const
 void Specimen::setFitness(double fitness)
 {
     this->fitness = fitness;
+}
+
+void Specimen::clearFitness()
+{
+    fitness.reset();
 }

@@ -2,24 +2,80 @@
 // Created by Luke on 5/9/2026.
 //
 
-#include <fstream>
-#include <iomanip>
-#include <iosfwd>
-#include <iostream>
 #include "PlotTrajectory.h"
 
-#include <numeric>
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <vector>
+
+#include "math/Verlet.h"
+#include "simulation/DistanceAnalysis.h"
 
 
-void plotTrajectory(const Real gravitationalConstant,
-    const Real timeStep,
-    const size_t steps,
-    const Vector3 targetPointFromTargetBody,
-    const size_t targetBodyIndex,
-    const size_t probeBodyIndex,
-    std::vector<Body>& bodies,
-    std::vector<Maneuver>& maneuvers)
+void plotTrajectory(
+    Real gravitationalConstant,
+    Real timeStep,
+    std::size_t steps,
+    const Vector3& targetPointFromTargetBody,
+    const Body& targetBody,
+    const Probe& probe,
+    const std::vector<Body*>& bodies,
+    const std::vector<Maneuver>& maneuvers)
 {
+    if (std::ranges::any_of(
+        bodies,
+        [](const Body* body)
+        {
+            return body == nullptr;
+        }))
+    {
+        throw std::invalid_argument("body pointer must not be null");
+    }
+
+    const Body* targetBodyPointer = &targetBody;
+    const Body* probePointer = static_cast<const Body*>(&probe);
+
+    if (std::ranges::find(bodies, targetBodyPointer) == bodies.end())
+    {
+        throw std::invalid_argument("target body is not available in bodies");
+    }
+
+    if (std::ranges::find(bodies, probePointer) == bodies.end())
+    {
+        throw std::invalid_argument("probe is not available in bodies");
+    }
+
+    std::vector<Body> bodyCopies;
+    bodyCopies.reserve(bodies.size());
+
+    Body targetBodyCopy = targetBody;
+    Probe probeCopy = probe;
+
+    std::vector<Body*> simulationBodies;
+    simulationBodies.reserve(bodies.size());
+
+    for (const Body* body : bodies)
+    {
+        if (body == targetBodyPointer)
+        {
+            simulationBodies.push_back(&targetBodyCopy);
+        }
+        else if (body == probePointer)
+        {
+            simulationBodies.push_back(&probeCopy);
+        }
+        else
+        {
+            bodyCopies.push_back(*body);
+            simulationBodies.push_back(&bodyCopies.back());
+        }
+    }
+
     std::ofstream output("simulation.csv");
     if (!output)
     {
@@ -30,54 +86,70 @@ void plotTrajectory(const Real gravitationalConstant,
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
 
-    indicators::ProgressBar progressBar{
-        indicators::option::BarWidth{50},
-        indicators::option::Start{"["},
-        indicators::option::Fill{"="},
-        indicators::option::Lead{">"},
-        indicators::option::Remainder{" "},
-        indicators::option::End{"]"},
-        indicators::option::PrefixText{"Generating trajectory"},
-        indicators::option::ShowPercentage{true},
-        indicators::option::ShowElapsedTime{true},
-        indicators::option::ShowRemainingTime{true}
-    };
+    std::vector<Maneuver> sortedManeuvers = maneuvers;
+    std::ranges::sort(
+        sortedManeuvers,
+        {},
+        [](const Maneuver& maneuver)
+        {
+            return maneuver.getInitTime();
+        });
 
-    for (int step = 0; step <= steps; ++step)
+    Real maneuverStartTime = 0.0L;
+    Real maneuverEndTime = 0.0L;
+    std::size_t maneuverIndex = 0;
+
+    if (!sortedManeuvers.empty())
+    {
+        maneuverStartTime = sortedManeuvers[0].getInitTime();
+        maneuverEndTime =
+            maneuverStartTime + sortedManeuvers[0].getDuration();
+    }
+
+    for (std::size_t step = 0; step <= steps; ++step)
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = DistanceAnalysis::absolutePointForBody(
-            bodies[targetBodyIndex],
+            targetBodyCopy,
             targetPointFromTargetBody);
 
-        auto executedManeuvers =
-                maneuvers
-                | std::views::filter([time](const Maneuver& maneuver)
-                {
-                    return maneuver.getInitTime() < time &&
-                           maneuver.getInitTime() + maneuver.getDuration() > time;
-                });
+        while (maneuverIndex < sortedManeuvers.size() &&
+            time >= maneuverEndTime)
+        {
+            ++maneuverIndex;
 
-        auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
+            if (maneuverIndex < sortedManeuvers.size())
+            {
+                maneuverStartTime =
+                    sortedManeuvers[maneuverIndex].getInitTime();
+                maneuverEndTime =
+                    maneuverStartTime +
+                    sortedManeuvers[maneuverIndex].getDuration();
+            }
+        }
 
-        const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+        std::optional<Maneuver> maneuver;
+        if (maneuverIndex < sortedManeuvers.size() &&
+            maneuverStartTime <= time &&
+            time < maneuverEndTime)
+        {
+            maneuver = sortedManeuvers[maneuverIndex];
+        }
 
         if (step % 500 == 0)
         {
-            const auto progress = static_cast<std::size_t>(100 * step / steps);
-            progressBar.set_progress(progress);
-            for (std::size_t i = 0; i < bodies.size(); ++i)
+            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
             {
                 output << step << ','
                     << time << ','
                     << i << ','
-                    << bodies[i].position.x << ','
-                    << bodies[i].position.y << ','
-                    << bodies[i].position.z << ','
-                    << bodies[i].velocity.x << ','
-                    << bodies[i].velocity.y << ','
-                    << bodies[i].velocity.z << ','
-                    << bodies[i].mass << ','
+                    << simulationBodies[i]->position().x << ','
+                    << simulationBodies[i]->position().y << ','
+                    << simulationBodies[i]->position().z << ','
+                    << simulationBodies[i]->velocity().x << ','
+                    << simulationBodies[i]->velocity().y << ','
+                    << simulationBodies[i]->velocity().z << ','
+                    << simulationBodies[i]->mass() << ','
                     << targetPoint.x << ','
                     << targetPoint.y << ','
                     << targetPoint.z << '\n';
@@ -86,7 +158,12 @@ void plotTrajectory(const Real gravitationalConstant,
 
         if (step < steps)
         {
-            Verlet::step(bodies, probeBodyIndex, totalForce, timeStep, gravitationalConstant);
+            Verlet::step(
+                simulationBodies,
+                probeCopy,
+                maneuver,
+                timeStep,
+                gravitationalConstant);
         }
     }
 }

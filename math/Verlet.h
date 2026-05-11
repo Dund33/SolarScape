@@ -5,25 +5,29 @@
 #ifndef SOLARSCAPE_VERLET_H
 #define SOLARSCAPE_VERLET_H
 
+#include <cstddef>
+#include <optional>
 #include <vector>
 
-#include "Body.h"
+#include "genetics/Maneuver.h"
+#include "math/Body.h"
+#include "math/Probe.h"
 
 namespace Verlet
 {
     Vector3 calculateAccelerationForBody(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         std::size_t bodyIndex,
         Real gravitationalConstant);
 
     std::vector<Vector3> calculateAccelerations(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         Real gravitationalConstant);
 
     void step(
-        std::vector<Body>& bodies,
-        size_t probe_idx,
-        const Vector3& force,
+        std::vector<Body*>& bodies,
+        Probe& probe,
+        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant);
 }

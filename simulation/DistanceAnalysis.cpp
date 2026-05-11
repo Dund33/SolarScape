@@ -1,13 +1,12 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #include "DistanceAnalysis.h"
 
-#include <numeric>
+#include <algorithm>
+#include <functional>
+#include <optional>
 #include <stdexcept>
+#include <vector>
 
-#include "../math/Verlet.h"
+#include "math/Verlet.h"
 
 namespace DistanceAnalysis
 {
@@ -22,30 +21,19 @@ namespace DistanceAnalysis
         const Body& targetBody,
         const Vector3& relativePoint) -> Vector3
     {
-        return targetBody.position + relativePoint;
+        return targetBody.position() + relativePoint;
     }
 
     auto minimumDistanceFromMovingPoint(
-        std::vector<Body> bodies,
-        std::size_t probeBodyIndex,
-        std::size_t targetBodyIndex,
+        std::vector<Body*>& bodies,
+        Probe& probe,
+        Body& targetBody,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
         Real gravitationalConstant,
-        std::vector<Maneuver> const& maneuvers) -> Real
+        const std::vector<Maneuver>& maneuvers) -> Real
     {
-        if (probeBodyIndex >= bodies.size())
-        {
-            throw std::out_of_range(
-                "observedBodyIndex is outside bodies vector");
-        }
-
-        if (targetBodyIndex >= bodies.size())
-        {
-            throw std::out_of_range(
-                "targetBodyIndex is outside bodies vector");
-        }
 
         if (simulationTime < 0.0L)
         {
@@ -59,13 +47,32 @@ namespace DistanceAnalysis
                 "timeStep must be greater than zero");
         }
 
+        if (std::ranges::any_of(
+            bodies,
+            [](const Body* body)
+            {
+                return body == nullptr;
+            }))
+        {
+            throw std::invalid_argument(
+                "body pointer must not be null");
+        }
+
         Real currentTime = 0.0L;
+        std::vector<Maneuver> sortedManeuvers = maneuvers;
+        std::ranges::sort(
+            sortedManeuvers,
+            {},
+            [](const Maneuver& maneuver)
+            {
+                return maneuver.getInitTime();
+            });
 
         Real minimumDistance =
             distance(
-                bodies[probeBodyIndex].position,
+                probe.position(),
                 absolutePointForBody(
-                    bodies[targetBodyIndex],
+                    targetBody,
                     relativePoint));
 
         while (currentTime < simulationTime)
@@ -78,22 +85,35 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            auto executedManeuvers =
-                maneuvers
-                | std::views::filter([currentTime](const Maneuver& maneuver)
+            std::optional<Maneuver> maneuver;
+            auto maneuverIt = std::ranges::upper_bound(
+                sortedManeuvers,
+                currentTime,
+                std::less<>{},
+                [](const Maneuver& candidate)
                 {
-                    return maneuver.getInitTime() < currentTime &&
-                           maneuver.getInitTime() + maneuver.getDuration() > currentTime;
+                    return candidate.getInitTime();
                 });
 
-            auto appliedForces = executedManeuvers | std::views::transform(&Maneuver::getThrust);
+            if (maneuverIt != sortedManeuvers.begin())
+            {
+                --maneuverIt;
 
-            const auto totalForce = std::accumulate(appliedForces.begin(), appliedForces.end(), Vector3{});
+                const Real maneuverStartTime =
+                    maneuverIt->getInitTime();
+                const Real maneuverEndTime =
+                    maneuverStartTime + maneuverIt->getDuration();
+
+                if (currentTime < maneuverEndTime)
+                {
+                    maneuver = *maneuverIt;
+                }
+            }
 
             Verlet::step(
                 bodies,
-                probeBodyIndex,
-                totalForce,
+                probe,
+                maneuver,
                 stepTime,
                 gravitationalConstant);
 
@@ -101,9 +121,9 @@ namespace DistanceAnalysis
 
             const Real currentDistance =
                 distance(
-                    bodies[probeBodyIndex].position,
+                    probe.position(),
                     absolutePointForBody(
-                        bodies[targetBodyIndex],
+                        targetBody,
                         relativePoint));
 
             if (currentDistance < minimumDistance)

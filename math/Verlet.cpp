@@ -3,27 +3,40 @@
 //
 
 #include "Verlet.h"
+#include "config/consts.h"
 
+#include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace Verlet
 {
     auto calculateAccelerationForBody(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         std::size_t bodyIndex,
         Real gravitationalConstant) -> Vector3
     {
+        if (bodyIndex >= bodies.size() || bodies[bodyIndex] == nullptr)
+        {
+            throw std::invalid_argument("body pointer must not be null");
+        }
+
         Vector3 acceleration;
 
         for (std::size_t j = 0; j < bodies.size(); ++j)
         {
+            if (bodies[j] == nullptr)
+            {
+                throw std::invalid_argument("body pointer must not be null");
+            }
+
             if (bodyIndex == j)
             {
                 continue;
             }
 
             const Vector3 direction =
-                bodies[j].position - bodies[bodyIndex].position;
+                bodies[j]->position() - bodies[bodyIndex]->position();
 
             const Real distanceSquared =
                 direction.lengthSquared();
@@ -38,7 +51,7 @@ namespace Verlet
 
             const Real factor =
                 gravitationalConstant *
-                bodies[j].mass /
+                bodies[j]->mass() /
                 (distanceSquared * distance);
 
             acceleration += direction * factor;
@@ -48,30 +61,41 @@ namespace Verlet
     }
 
     auto calculateAccelerations(
-        const std::vector<Body>& bodies,
+        const std::vector<Body*>& bodies,
         Real gravitationalConstant) -> std::vector<Vector3>
     {
-        std::vector<Vector3> accelerations(bodies.size());
+        std::vector<Vector3> accelerations;
+        accelerations.reserve(bodies.size());
 
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
-            accelerations[i] =
+            accelerations.push_back(
                 calculateAccelerationForBody(
                     bodies,
                     i,
-                    gravitationalConstant);
+                    gravitationalConstant));
         }
 
         return accelerations;
     }
 
     void step(
-        std::vector<Body>& bodies,
-        size_t probe_idx,
-        const Vector3& force,
+        std::vector<Body*>& bodies,
+        Probe& probe,
+        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant)
     {
+        if (std::ranges::any_of(
+            bodies,
+            [](const Body* body)
+            {
+                return body == nullptr;
+            }))
+        {
+            throw std::invalid_argument("body pointer must not be null");
+        }
+
         const std::vector<Vector3> previousAccelerations =
             calculateAccelerations(
                 bodies,
@@ -83,13 +107,13 @@ namespace Verlet
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             const Vector3 velocityPart =
-                bodies[i].velocity * timeStep;
+                bodies[i]->velocity() * timeStep;
 
             const Vector3 accelerationPart =
                 previousAccelerations[i] *
                 (0.5L * timeStepSquared);
 
-            bodies[i].position +=
+            bodies[i]->position() +=
                 velocityPart + accelerationPart;
         }
 
@@ -104,13 +128,53 @@ namespace Verlet
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
 
-            if (i == probe_idx)
+            if (bodies[i] == &probe)
             {
-                averageAcceleration += force / bodies[i].mass;
+                if (probe.fuelMass() > 0 && maneuver.has_value())
+                {
+                    const Real throttleValue =
+                        std::clamp(
+                            maneuver.value().getThrottleValue(),
+                            0.0L,
+                            1.0L);
+                    const auto thrustDirection = maneuver.value().getThrustDirection();
+
+                    const Real fuelNeeded =
+                        probe.fuelFlow() * throttleValue * timeStep;
+                    const Real fuelScale =
+                        fuelNeeded > 0.0L
+                            ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
+                            : 0.0L;
+                    const Real effectiveThrottle = throttleValue * fuelScale;
+
+                    Vector3 force =
+                        thrustDirection *
+                        effectiveThrottle *
+                        probe.fuelFlow() *
+                        probe.specificImpulse() *
+                        STANDARD_GRAVITY;
+
+                    averageAcceleration += force / probe.mass();
+                }
             }
 
-            bodies[i].velocity +=
+            bodies[i]->velocity() +=
                 averageAcceleration * timeStep;
+        }
+
+        if (maneuver.has_value())
+        {
+            const Real throttleValue =
+                std::clamp(
+                    maneuver.value().getThrottleValue(),
+                    0.0L,
+                    1.0L);
+
+            probe.setFuelMass(
+                std::max(
+                    0.0L,
+                    probe.fuelMass() -
+                    probe.fuelFlow() * throttleValue * timeStep));
         }
     }
 }

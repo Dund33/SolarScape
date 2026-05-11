@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(SolarScape VERSION 1.0 LANGUAGES CXX)
 
 # =====================================
-# C++17
+# C++ Standard
 # =====================================
 
 set(CMAKE_CXX_STANDARD 23)
@@ -22,8 +22,13 @@ find_package(yaml-cpp CONFIG REQUIRED)
 
 add_library(SolarScapeMath STATIC
         math/Vector3.cpp
+        math/Vector3.h
         math/Body.cpp
+        math/Body.h
         math/Verlet.cpp
+        math/Verlet.h
+        math/Probe.cpp
+        math/Probe.h
 )
 
 add_library(SolarScape::Math ALIAS SolarScapeMath)
@@ -39,6 +44,7 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/DistanceAnalysis.cpp
+        simulation/DistanceAnalysis.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -59,6 +65,7 @@ target_link_libraries(SolarScapeSimulation
 
 add_library(SolarScapeConfig STATIC
         config/SimulationConfig.cpp
+        config/SimulationConfig.h
 )
 
 add_library(SolarScape::Config ALIAS SolarScapeConfig)
@@ -75,11 +82,12 @@ target_link_libraries(SolarScapeConfig
 )
 
 # =====================================
-# Gfx Library
+# Visual Library
 # =====================================
 
 add_library(SolarScapeVisual STATIC
         visual/PlotTrajectory.cpp
+        visual/PlotTrajectory.h
 )
 
 add_library(SolarScape::Visual ALIAS SolarScapeVisual)
@@ -95,7 +103,17 @@ target_include_directories(SolarScapeVisual
 
 add_library(SolarScapeGenetic STATIC
         genetics/Specimen.cpp
+        genetics/Specimen.h
         genetics/selection/TournamentSelection.cpp
+        genetics/selection/TournamentSelection.h
+        genetics/mutation/Mutation.cpp
+        genetics/mutation/Mutation.h
+        genetics/init/RandomInitializer.cpp
+        genetics/init/RandomInitializer.h
+        genetics/crossing/Crossover.cpp
+        genetics/crossing/Crossover.h
+        genetics/fitness/FitnessEvaluator.cpp
+        genetics/fitness/FitnessEvaluator.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
@@ -105,9 +123,14 @@ target_include_directories(SolarScapeGenetic
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_link_libraries(SolarScapeGenetic
+        PUBLIC
+        SolarScape::Math
+        SolarScape::Simulation
+)
 
 # =====================================
-# Plyczki :3
+# Copy config.yaml
 # =====================================
 
 configure_file(
