@@ -11,6 +11,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # =====================================
+# Flags for release mode
+# =====================================
+
+set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+
+# =====================================
 # Dependencies
 # =====================================
 
@@ -139,6 +146,14 @@ configure_file(
         COPYONLY
 )
 
+
+# =====================================
+# Include TBB for Linux scenarios
+# =====================================
+if(LINUX)
+    find_package(TBB REQUIRED)
+endif()
+
 # =====================================
 # Executable
 # =====================================
@@ -153,4 +168,5 @@ target_link_libraries(SolarScape
         SolarScape::Config
         SolarScape::Visual
         SolarScape::Genetic
+        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
