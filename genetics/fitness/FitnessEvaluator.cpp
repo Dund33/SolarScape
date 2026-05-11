@@ -12,9 +12,9 @@ FitnessEvaluator::FitnessEvaluator(
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
-    std::vector<Body>& initialBodies,
-    Probe& probe,
-    Body& targetBody
+    const std::vector<Body>& initialBodies,
+    const Probe& probe,
+    const Body& targetBody
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
@@ -33,7 +33,7 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
         return;
     }
 
-    if (&targetBody == &probe)
+    if (&targetBody == static_cast<const Body*>(&probe))
     {
         throw std::invalid_argument("target body cannot point to the probe");
     }
@@ -56,8 +56,8 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
     const Real minimumDistance =
         DistanceAnalysis::minimumDistanceFromMovingPoint(
             bodyPointers,
-            &probeCopy,
-            &targetBodyCopy,
+            probeCopy,
+            targetBodyCopy,
             targetPointFromTargetBody,
             simulationTime,
             timeStep,

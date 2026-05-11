@@ -93,6 +93,6 @@ probe:
     z: 0.0
 
   emptyMass: 1000.0
-  fuelMass: 50000.0
+  fuelMass: 1000.0
   fuelFlow: 1.0
   specificImpulse: 6000.0

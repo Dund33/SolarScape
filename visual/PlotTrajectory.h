@@ -17,9 +17,9 @@ void plotTrajectory(
     Real timeStep,
     std::size_t steps,
     const Vector3& targetPointFromTargetBody,
-    Body* targetBody,
-    Probe* probe,
-    std::vector<Body*> bodies,
+    const Body& targetBody,
+    const Probe& probe,
+    const std::vector<Body*>& bodies,
     const std::vector<Maneuver>& maneuvers);
 
 #endif //SOLARSCAPE_PLOT_TRAJECTORY_H

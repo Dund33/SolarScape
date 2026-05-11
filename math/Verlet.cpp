@@ -24,7 +24,7 @@ namespace Verlet
 
         Vector3 acceleration;
 
-        for (const std::size_t j : std::views::iota(std::size_t{0}, bodies.size()))
+        for (std::size_t j = 0; j < bodies.size(); ++j)
         {
             if (bodies[j] == nullptr)
             {
@@ -68,32 +68,25 @@ namespace Verlet
         std::vector<Vector3> accelerations;
         accelerations.reserve(bodies.size());
 
-        std::ranges::transform(
-            std::views::iota(std::size_t{0}, bodies.size()),
-            std::back_inserter(accelerations),
-            [&bodies, gravitationalConstant](std::size_t i)
-            {
-                return calculateAccelerationForBody(
+        for (std::size_t i = 0; i < bodies.size(); ++i)
+        {
+            accelerations.push_back(
+                calculateAccelerationForBody(
                     bodies,
                     i,
-                    gravitationalConstant);
-            });
+                    gravitationalConstant));
+        }
 
         return accelerations;
     }
 
     void step(
         std::vector<Body*>& bodies,
-        Probe* probe,
+        Probe& probe,
         const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant)
     {
-        if (probe == nullptr)
-        {
-            throw std::invalid_argument("probe must not be null");
-        }
-
         if (std::ranges::any_of(
             bodies,
             [](const Body* body)
@@ -104,11 +97,6 @@ namespace Verlet
             throw std::invalid_argument("body pointer must not be null");
         }
 
-        if (std::ranges::find(bodies, static_cast<Body*>(probe)) == bodies.end())
-        {
-            throw std::invalid_argument("probe must be part of bodies");
-        }
-
         const std::vector<Vector3> previousAccelerations =
             calculateAccelerations(
                 bodies,
@@ -117,7 +105,7 @@ namespace Verlet
         const Real timeStepSquared =
             timeStep * timeStep;
 
-        for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
+        for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             const Vector3 velocityPart =
                 bodies[i]->velocity() * timeStep;
@@ -135,15 +123,15 @@ namespace Verlet
                 bodies,
                 gravitationalConstant);
 
-        for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
+        for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             Vector3 averageAcceleration =
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
 
-            if (bodies[i] == probe)
+            if (bodies[i] == &probe)
             {
-                if (probe->fuelMass() > 0 && maneuver.has_value())
+                if (probe.fuelMass() > 0 && maneuver.has_value())
                 {
                     const Real throttleValue =
                         std::clamp(
@@ -153,20 +141,20 @@ namespace Verlet
                     const auto thrustDirection = maneuver.value().getThrustDirection();
 
                     const Real fuelNeeded =
-                        probe->fuelFlow() * throttleValue * timeStep;
+                        probe.fuelFlow() * throttleValue * timeStep;
                     const Real fuelScale =
                         fuelNeeded > 0.0L
-                            ? std::min(1.0L, probe->fuelMass() / fuelNeeded)
+                            ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
                             : 0.0L;
                     const Real effectiveThrottle = throttleValue * fuelScale;
 
                     Vector3 force =
                         thrustDirection *
                         effectiveThrottle *
-                        probe->fuelFlow() *
-                        probe->specificImpulse();
+                        probe.fuelFlow() *
+                        probe.specificImpulse();
 
-                    averageAcceleration += force / probe->mass();
+                    averageAcceleration += force / probe.mass();
                 }
             }
 
@@ -182,11 +170,11 @@ namespace Verlet
                     0.0L,
                     1.0L);
 
-            probe->setFuelMass(
+            probe.setFuelMass(
                 std::max(
                     0.0L,
-                    probe->fuelMass() -
-                    probe->fuelFlow() * throttleValue * timeStep));
+                    probe.fuelMass() -
+                    probe.fuelFlow() * throttleValue * timeStep));
         }
     }
 }

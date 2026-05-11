@@ -55,7 +55,7 @@ void Mutation::mutate(Specimen& specimen) const
          maxThrustOffset
     );
 
-    for (const std::size_t i : std::views::iota(std::size_t{0}, specimen.size()))
+    for (std::size_t i = 0; i < specimen.size(); ++i)
     {
         Maneuver& maneuver = specimen[i];
         const Probe* probe = specimen.getProbe();

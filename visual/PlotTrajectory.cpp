@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include "PlotTrajectory.h"
@@ -21,21 +22,11 @@ void plotTrajectory(
     Real timeStep,
     std::size_t steps,
     const Vector3& targetPointFromTargetBody,
-    Body* targetBody,
-    Probe* probe,
-    std::vector<Body*> bodies,
+    const Body& targetBody,
+    const Probe& probe,
+    const std::vector<Body*>& bodies,
     const std::vector<Maneuver>& maneuvers)
 {
-    if (probe == nullptr)
-    {
-        throw std::invalid_argument("probe must not be null");
-    }
-
-    if (targetBody == nullptr)
-    {
-        throw std::invalid_argument("target body must not be null");
-    }
-
     if (std::ranges::any_of(
         bodies,
         [](const Body* body)
@@ -44,6 +35,45 @@ void plotTrajectory(
         }))
     {
         throw std::invalid_argument("body pointer must not be null");
+    }
+
+    const Body* targetBodyPointer = &targetBody;
+    const Body* probePointer = static_cast<const Body*>(&probe);
+
+    if (std::ranges::find(bodies, targetBodyPointer) == bodies.end())
+    {
+        throw std::invalid_argument("target body is not available in bodies");
+    }
+
+    if (std::ranges::find(bodies, probePointer) == bodies.end())
+    {
+        throw std::invalid_argument("probe is not available in bodies");
+    }
+
+    std::vector<Body> bodyCopies;
+    bodyCopies.reserve(bodies.size());
+
+    Body targetBodyCopy = targetBody;
+    Probe probeCopy = probe;
+
+    std::vector<Body*> simulationBodies;
+    simulationBodies.reserve(bodies.size());
+
+    for (const Body* body : bodies)
+    {
+        if (body == targetBodyPointer)
+        {
+            simulationBodies.push_back(&targetBodyCopy);
+        }
+        else if (body == probePointer)
+        {
+            simulationBodies.push_back(&probeCopy);
+        }
+        else
+        {
+            bodyCopies.push_back(*body);
+            simulationBodies.push_back(&bodyCopies.back());
+        }
     }
 
     std::ofstream output("simulation.csv");
@@ -76,11 +106,11 @@ void plotTrajectory(
             maneuverStartTime + sortedManeuvers[0].getDuration();
     }
 
-    for (const std::size_t step : std::views::iota(std::size_t{0}, steps + 1))
+    for (std::size_t step = 0; step <= steps; ++step)
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = DistanceAnalysis::absolutePointForBody(
-            targetBody,
+            targetBodyCopy,
             targetPointFromTargetBody);
 
         while (maneuverIndex < sortedManeuvers.size() &&
@@ -108,18 +138,18 @@ void plotTrajectory(
 
         if (step % 500 == 0)
         {
-            for (const std::size_t i : std::views::iota(std::size_t{0}, bodies.size()))
+            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
             {
                 output << step << ','
                     << time << ','
                     << i << ','
-                    << bodies[i]->position().x << ','
-                    << bodies[i]->position().y << ','
-                    << bodies[i]->position().z << ','
-                    << bodies[i]->velocity().x << ','
-                    << bodies[i]->velocity().y << ','
-                    << bodies[i]->velocity().z << ','
-                    << bodies[i]->mass() << ','
+                    << simulationBodies[i]->position().x << ','
+                    << simulationBodies[i]->position().y << ','
+                    << simulationBodies[i]->position().z << ','
+                    << simulationBodies[i]->velocity().x << ','
+                    << simulationBodies[i]->velocity().y << ','
+                    << simulationBodies[i]->velocity().z << ','
+                    << simulationBodies[i]->mass() << ','
                     << targetPoint.x << ','
                     << targetPoint.y << ','
                     << targetPoint.z << '\n';
@@ -129,8 +159,8 @@ void plotTrajectory(
         if (step < steps)
         {
             Verlet::step(
-                bodies,
-                probe,
+                simulationBodies,
+                probeCopy,
                 maneuver,
                 timeStep,
                 gravitationalConstant);

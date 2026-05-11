@@ -25,7 +25,7 @@ namespace Verlet
 
     void step(
         std::vector<Body*>& bodies,
-        Probe* probe,
+        Probe& probe,
         const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant);

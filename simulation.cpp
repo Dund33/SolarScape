@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "config/consts.h"
 #include "config/SimulationConfig.h"
 #include "math/Body.h"
 #include "math/Probe.h"
@@ -24,24 +25,6 @@
 
 namespace
 {
-    constexpr std::size_t POPULATION_SIZE = 250;
-    constexpr std::size_t GENERATIONS = 250;
-    constexpr std::size_t ELITE_COUNT = 2;
-
-    constexpr std::size_t MIN_MANEUVERS = 1;
-    constexpr std::size_t MAX_MANEUVERS = 25;
-
-    constexpr Real MIN_MANEUVER_TIME = 0.0L;
-    constexpr Real MIN_MANEUVER_DURATION = 1.0L;
-    constexpr Real MAX_MANEUVER_DURATION = 10000.0L;
-
-    constexpr double MUTATION_PROBABILITY = 0.1;
-    constexpr Real MUTATION_TIME_RANGE = 10000.0L;
-    constexpr Real MUTATION_DURATION_RANGE = 5000.0L;
-    constexpr Real MUTATION_THRUST_RANGE = 1000.0L;
-
-    constexpr std::size_t TOURNAMENT_SIZE = 5;
-
     struct SimulationState
     {
         Real gravitationalConstant{};
@@ -284,7 +267,7 @@ namespace
             initializer.createPopulation(
                 POPULATION_SIZE);
 
-        for (const std::size_t generation : std::views::iota(std::size_t{0}, GENERATIONS))
+        for (std::size_t generation = 0; generation < GENERATIONS; ++generation)
         {
             evaluatePopulationUnsequenced(
                 population,
@@ -328,8 +311,8 @@ namespace
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
             state.targetPointFromTargetBody,
-            const_cast<Body*>(&state.targetBody),
-            const_cast<Probe*>(&state.probe),
+            state.targetBody,
+            state.probe,
             state.bodyPointers,
             maneuvers
         );

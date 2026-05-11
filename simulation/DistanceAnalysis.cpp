@@ -16,45 +16,22 @@ namespace DistanceAnalysis
     }
 
     auto absolutePointForBody(
-        const Body* targetBody,
+        const Body& targetBody,
         const Vector3& relativePoint) -> Vector3
     {
-        if (targetBody == nullptr)
-        {
-            throw std::invalid_argument(
-                "target body must not be null");
-        }
-
-        return targetBody->position() + relativePoint;
+        return targetBody.position() + relativePoint;
     }
 
     auto minimumDistanceFromMovingPoint(
         std::vector<Body*>& bodies,
-        Probe* probe,
-        Body* targetBody,
+        Probe& probe,
+        Body& targetBody,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
         Real gravitationalConstant,
         const std::vector<Maneuver>& maneuvers) -> Real
     {
-        if (probe == nullptr)
-        {
-            throw std::invalid_argument(
-                "probe must not be null");
-        }
-
-        if (targetBody == nullptr)
-        {
-            throw std::invalid_argument(
-                "target body must not be null");
-        }
-
-        if (targetBody == probe)
-        {
-            throw std::invalid_argument(
-                "target body must not be the probe");
-        }
 
         if (simulationTime < 0.0L)
         {
@@ -77,18 +54,6 @@ namespace DistanceAnalysis
         {
             throw std::invalid_argument(
                 "body pointer must not be null");
-        }
-
-        if (std::ranges::find(bodies, static_cast<Body*>(probe)) == bodies.end())
-        {
-            throw std::invalid_argument(
-                "probe is not available in bodies");
-        }
-
-        if (std::ranges::find(bodies, targetBody) == bodies.end())
-        {
-            throw std::invalid_argument(
-                "target body is not available in bodies");
         }
 
         Real currentTime = 0.0L;
@@ -114,7 +79,7 @@ namespace DistanceAnalysis
 
         Real minimumDistance =
             distance(
-                probe->position(),
+                probe.position(),
                 absolutePointForBody(
                     targetBody,
                     relativePoint));
@@ -164,7 +129,7 @@ namespace DistanceAnalysis
 
             const Real currentDistance =
                 distance(
-                    probe->position(),
+                    probe.position(),
                     absolutePointForBody(
                         targetBody,
                         relativePoint));

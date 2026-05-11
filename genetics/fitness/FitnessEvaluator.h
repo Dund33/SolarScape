@@ -16,9 +16,9 @@ public:
         Real timeStep,
         Real simulationTime,
         Vector3 targetPointFromTargetBody,
-        std::vector<Body>& initialBodies,
-        Probe& probe,
-        Body& targetBody
+        const std::vector<Body>& initialBodies,
+        const Probe& probe,
+        const Body& targetBody
     );
 
     void evaluate(Specimen& specimen) const;
@@ -28,9 +28,9 @@ private:
     Real timeStep;
     Real simulationTime;
     Vector3 targetPointFromTargetBody;
-    std::vector<Body>& initialBodies;
-    Probe& probe;
-    Body& targetBody;
+    const std::vector<Body>& initialBodies;
+    const Probe& probe;
+    const Body& targetBody;
 };
 
 #endif // SOLARSCAPE_FITNESSEVALUATOR_H

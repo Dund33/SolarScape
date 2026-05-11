@@ -18,13 +18,13 @@ namespace DistanceAnalysis
         const Vector3& right);
 
     Vector3 absolutePointForBody(
-        const Body* targetBody,
+        const Body& targetBody,
         const Vector3& relativePoint);
 
     Real minimumDistanceFromMovingPoint(
         std::vector<Body*>& bodies,
-        Probe* probe,
-        Body* targetBody,
+        Probe& probe,
+        Body& targetBody,
         const Vector3& relativePoint,
         Real simulationTime,
         Real timeStep,
