@@ -7,9 +7,9 @@
 
 #include <vector>
 
-#include "../math/Body.h"
-#include "../math/Probe.h"
-#include "../genetics/Maneuver.h"
+#include "genetics/Maneuver.h"
+#include "math/Body.h"
+#include "math/Probe.h"
 
 namespace DistanceAnalysis
 {

@@ -1,11 +1,12 @@
 #ifndef SOLARSCAPE_RANDOMINITIALIZER_H
 #define SOLARSCAPE_RANDOMINITIALIZER_H
 
+#include <cstddef>
 #include <vector>
-#include "../Specimen.h"
 
-#include "config/consts.h"
-#include "math/Probe.h"
+#include "genetics/Specimen.h"
+
+class Probe;
 
 class RandomInitializer
 {

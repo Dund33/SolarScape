@@ -4,8 +4,8 @@
 
 #ifndef SOLARSCAPE_PROBE_H
 #define SOLARSCAPE_PROBE_H
-#include "Body.h"
 
+#include "math/Body.h"
 
 class Probe : public Body
 {

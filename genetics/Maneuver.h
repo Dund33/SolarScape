@@ -4,8 +4,8 @@
 
 #ifndef SOLARSCAPE_MANEUVER_H
 #define SOLARSCAPE_MANEUVER_H
-#include "math/Vector3.h"
 
+#include "math/Vector3.h"
 
 class Maneuver
 {

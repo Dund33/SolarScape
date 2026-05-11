@@ -3,25 +3,28 @@
 //
 
 #include <algorithm>
+#include <exception>
 #include <execution>
 #include <iostream>
 #include <iterator>
 #include <ranges>
-#include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
-#include "config/consts.h"
+#include <yaml-cpp/yaml.h>
+
 #include "config/SimulationConfig.h"
+#include "config/consts.h"
+#include "genetics/crossing/Crossover.h"
+#include "genetics/fitness/FitnessEvaluator.h"
+#include "genetics/init/RandomInitializer.h"
+#include "genetics/mutation/Mutation.h"
+#include "genetics/selection/TournamentSelection.h"
+#include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "visual/PlotTrajectory.h"
-
-#include "genetics/Specimen.h"
-#include "genetics/init/RandomInitializer.h"
-#include "genetics/selection/TournamentSelection.h"
-#include "genetics/crossing/Crossover.h"
-#include "genetics/mutation/Mutation.h"
-#include "genetics/fitness/FitnessEvaluator.h"
 
 namespace
 {

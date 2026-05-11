@@ -6,8 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iterator>
-#include <ranges>
 #include <stdexcept>
 
 namespace Verlet

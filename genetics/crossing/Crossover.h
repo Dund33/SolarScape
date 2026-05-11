@@ -2,7 +2,8 @@
 #define SOLARSCAPE_CROSSOVER_H
 
 #include <utility>
-#include "../Specimen.h"
+
+#include "genetics/Specimen.h"
 
 class Crossover
 {

@@ -5,11 +5,13 @@
 #ifndef SOLARSCAPE_SPECIMEN_H
 #define SOLARSCAPE_SPECIMEN_H
 
-#include <vector>
+#include <cstddef>
 #include <optional>
+#include <vector>
 
-#include "Maneuver.h"
-#include "math/Probe.h"
+#include "genetics/Maneuver.h"
+
+class Probe;
 
 class Specimen
 {

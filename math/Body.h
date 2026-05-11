@@ -5,7 +5,7 @@
 #ifndef SOLARSCAPE_BODY_H
 #define SOLARSCAPE_BODY_H
 
-#include "Vector3.h"
+#include "math/Vector3.h"
 
 class Body
 {

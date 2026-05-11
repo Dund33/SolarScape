@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <ranges>
+#include <utility>
 
 std::pair<Specimen, Specimen> Crossover::cross(
     const Specimen& parent1,

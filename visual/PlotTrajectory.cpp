@@ -2,16 +2,16 @@
 // Created by Luke on 5/9/2026.
 //
 
+#include "PlotTrajectory.h"
+
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <iosfwd>
 #include <iostream>
 #include <limits>
 #include <optional>
-#include <ranges>
 #include <stdexcept>
-#include "PlotTrajectory.h"
+#include <vector>
 
 #include "math/Verlet.h"
 #include "simulation/DistanceAnalysis.h"

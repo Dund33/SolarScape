@@ -5,12 +5,13 @@
 #ifndef SOLARSCAPE_VERLET_H
 #define SOLARSCAPE_VERLET_H
 
+#include <cstddef>
 #include <optional>
 #include <vector>
 
-#include "Body.h"
-#include "Probe.h"
 #include "genetics/Maneuver.h"
+#include "math/Body.h"
+#include "math/Probe.h"
 
 namespace Verlet
 {

@@ -1,10 +1,12 @@
 #include "DistanceAnalysis.h"
 
 #include <algorithm>
+#include <functional>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
-#include "../math/Verlet.h"
+#include "math/Verlet.h"
 
 namespace DistanceAnalysis
 {
@@ -66,17 +68,6 @@ namespace DistanceAnalysis
                 return maneuver.getInitTime();
             });
 
-        Real maneuverStartTime = 0.0L;
-        Real maneuverEndTime = 0.0L;
-        std::size_t maneuverIndex = 0;
-
-        if (!sortedManeuvers.empty())
-        {
-            maneuverStartTime = sortedManeuvers[0].getInitTime();
-            maneuverEndTime =
-                maneuverStartTime + sortedManeuvers[0].getDuration();
-        }
-
         Real minimumDistance =
             distance(
                 probe.position(),
@@ -94,28 +85,29 @@ namespace DistanceAnalysis
                     ? remainingTime
                     : timeStep;
 
-            while (maneuverIndex < sortedManeuvers.size() &&
-                currentTime >= maneuverEndTime)
-            {
-                ++maneuverIndex;
-
-                if (maneuverIndex < sortedManeuvers.size())
-                {
-                    maneuverStartTime =
-                        sortedManeuvers[maneuverIndex].getInitTime();
-
-                    maneuverEndTime =
-                        maneuverStartTime +
-                        sortedManeuvers[maneuverIndex].getDuration();
-                }
-            }
-
             std::optional<Maneuver> maneuver;
-            if (maneuverIndex < sortedManeuvers.size() &&
-                maneuverStartTime <= currentTime &&
-                currentTime < maneuverEndTime)
+            auto maneuverIt = std::ranges::upper_bound(
+                sortedManeuvers,
+                currentTime,
+                std::less<>{},
+                [](const Maneuver& candidate)
+                {
+                    return candidate.getInitTime();
+                });
+
+            if (maneuverIt != sortedManeuvers.begin())
             {
-                maneuver = sortedManeuvers[maneuverIndex];
+                --maneuverIt;
+
+                const Real maneuverStartTime =
+                    maneuverIt->getInitTime();
+                const Real maneuverEndTime =
+                    maneuverStartTime + maneuverIt->getDuration();
+
+                if (currentTime < maneuverEndTime)
+                {
+                    maneuver = *maneuverIt;
+                }
             }
 
             Verlet::step(

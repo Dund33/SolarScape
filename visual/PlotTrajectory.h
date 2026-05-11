@@ -5,6 +5,7 @@
 #ifndef SOLARSCAPE_PLOT_TRAJECTORY_H
 #define SOLARSCAPE_PLOT_TRAJECTORY_H
 
+#include <cstddef>
 #include <vector>
 
 #include "genetics/Maneuver.h"

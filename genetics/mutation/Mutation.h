@@ -5,7 +5,7 @@
 #ifndef SOLARSCAPE_MUTATION_H
 #define SOLARSCAPE_MUTATION_H
 
-#include "../Specimen.h"
+class Specimen;
 
 class Mutation
 {

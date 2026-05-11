@@ -1,6 +1,5 @@
 #include "FitnessEvaluator.h"
 
-#include <algorithm>
 #include <stdexcept>
 
 #include "simulation/DistanceAnalysis.h"

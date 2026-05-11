@@ -5,6 +5,8 @@
 #include <random>
 #include <stdexcept>
 
+#include "math/Probe.h"
+
 RandomInitializer::RandomInitializer(
     std::size_t minManeuvers,
     std::size_t maxManeuvers,

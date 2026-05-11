@@ -6,8 +6,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "../math/Body.h"
-#include "../math/Probe.h"
+#include "math/Body.h"
+#include "math/Probe.h"
 
 class SimulationConfig
 {

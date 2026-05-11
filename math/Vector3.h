@@ -5,7 +5,7 @@
 #ifndef SOLARSCAPE_VECTOR3_H
 #define SOLARSCAPE_VECTOR3_H
 
-#include "Real.h"
+#include "math/Real.h"
 
 struct Vector3
 {

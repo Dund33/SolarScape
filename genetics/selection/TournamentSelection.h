@@ -5,8 +5,10 @@
 #ifndef SOLARSCAPE_TOURNAMENTSELECTION_H
 #define SOLARSCAPE_TOURNAMENTSELECTION_H
 
+#include <cstddef>
 #include <vector>
-#include "../Specimen.h"
+
+#include "genetics/Specimen.h"
 
 class TournamentSelection
 {

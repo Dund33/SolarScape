@@ -7,6 +7,8 @@
 #include <numeric>
 #include <stdexcept>
 
+#include "math/Probe.h"
+
 Specimen::Specimen()
 {
 }
