@@ -1,0 +1,130 @@
+#include "SimulationConfig.h"
+
+#include <stdexcept>
+
+#include <yaml-cpp/yaml.h>
+
+namespace
+{
+    auto readReal(const YAML::Node& node) -> Real
+    {
+        if (!node)
+        {
+            throw std::runtime_error("Missing YAML node.");
+        }
+
+        return static_cast<Real>(node.as<double>());
+    }
+}
+
+auto SimulationConfig::loadFromFile(
+    const std::string& filePath) -> SimulationConfig
+{
+    YAML::Node config = YAML::LoadFile(filePath);
+
+    SimulationConfig result;
+
+    // ---------------- Simulation ----------------
+    const YAML::Node simulation = config["simulation"];
+
+    result.gravitationalConstant =
+        readReal(
+            simulation["gravitationalConstant"]);
+
+    result.timeStep =
+        readReal(
+            simulation["timeStep"]);
+
+    result.simulationTime =
+        readReal(
+            simulation["simulationTime"]);
+
+    // ---------------- Target point ----------------
+    result.targetPointFromTargetBody =
+        loadVector3(
+            config["targetPointFromTargetBody"]);
+
+    // ---------------- Bodies ----------------
+    const YAML::Node bodiesNode = config["bodies"];
+
+    if (!bodiesNode || !bodiesNode.IsSequence())
+    {
+        throw std::runtime_error(
+            "'bodies' must be a YAML sequence.");
+    }
+
+    for (const YAML::Node& bodyNode : bodiesNode)
+    {
+        result.bodies.push_back(
+            loadBody(bodyNode));
+    }
+
+    // ---------------- Target body ----------------
+    result.targetBody =
+        loadBody(
+            config["targetBody"]);
+
+    // ---------------- Probe ----------------
+    result.probe =
+        loadProbe(
+            config["probe"]);
+
+    return result;
+}
+
+auto SimulationConfig::loadVector3(
+    const YAML::Node& node) -> Vector3
+{
+    if (!node)
+    {
+        throw std::runtime_error(
+            "Missing Vector3 node.");
+    }
+
+    return {
+        readReal(node["x"]),
+        readReal(node["y"]),
+        readReal(node["z"])};
+}
+
+auto SimulationConfig::loadBody(
+    const YAML::Node& node) -> Body
+{
+    if (!node)
+    {
+        throw std::runtime_error(
+            "Missing Body node.");
+    }
+
+    return Body(
+        loadVector3(
+            node["position"]),
+        loadVector3(
+            node["velocity"]),
+        readReal(
+            node["mass"]));
+}
+
+auto SimulationConfig::loadProbe(
+    const YAML::Node& node) -> Probe
+{
+    if (!node)
+    {
+        throw std::runtime_error(
+            "Missing Probe node.");
+    }
+
+    return Probe(
+        loadVector3(
+            node["position"]),
+        loadVector3(
+            node["velocity"]),
+        readReal(
+            node["emptyMass"]),
+        readReal(
+            node["fuelMass"]),
+        readReal(
+            node["fuelFlow"]),
+        readReal(
+            node["specificImpulse"]));
+}

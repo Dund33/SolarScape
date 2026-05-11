@@ -1,0 +1,99 @@
+simulation:
+  gravitationalConstant: 0.000000000066743
+  timeStep: 600.0
+  simulationTime: 63072000.0
+
+targetPointFromTargetBody:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+
+bodies:
+  # Sun
+  - position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    mass: 1988500000000000000000000000000.0
+
+  # Mercury
+  - position:
+      x: 57909050000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 47870.0
+      z: 0.0
+    mass: 330110000000000000000000.0
+
+  # Venus
+  - position:
+      x: 108208000000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 35020.0
+      z: 0.0
+    mass: 4867500000000000000000000.0
+
+  # Earth
+  - position:
+      x: 149597870700.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 29780.0
+      z: 0.0
+    mass: 5972000000000000000000000.0
+
+  # Jupiter
+  - position:
+      x: 778570000000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 13070.0
+      z: 0.0
+    mass: 1898200000000000000000000000.0
+
+# Mars
+targetBody:
+  position:
+    x: 227939200000.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 24070.0
+    z: 0.0
+  mass: 641710000000000000000000.0
+
+# Probe starting near Earth:
+# Earth position + relativePosition:
+# x = 149597870700.0 + 6771000.0 = 149604641700.0
+#
+# Earth velocity + relativeVelocity:
+# y = 29780.0 + 7670.0 = 37450.0
+# specific impulse denoted in seconds!
+probe:
+  position:
+    x: 149604641700.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 37450.0
+    z: 0.0
+
+  emptyMass: 1000.0
+  fuelMass: 1000.0
+  fuelFlow: 1.0
+  specificImpulse: 3600.0
