@@ -9,8 +9,6 @@
 
 namespace
 {
-    constexpr Real FUEL_USE_PENALTY = 1000.0L;
-
     Real distance(
         const Vector3& left,
         const Vector3& right)
@@ -60,13 +58,7 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
     const FitnessResult fitnessResult =
         calculateFitnessResult(specimen.getManeuvers());
 
-    const Real minimumDistance = fitnessResult.minimumDistance();
-    const Real totalFuelUse = specimen.getTotalFuelUse();
-
-    const Real fitness =
-        minimumDistance + FUEL_USE_PENALTY * totalFuelUse;
-
-    specimen.setFitness(static_cast<double>(fitness));
+    specimen.setFitness(fitnessResult);
 }
 
 FitnessResult FitnessEvaluator::calculateFitnessResult(

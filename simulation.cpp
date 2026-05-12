@@ -136,7 +136,7 @@ namespace
             {},
             [](const Specimen& specimen)
             {
-                return specimen.getFitness();
+                return specimen.getFitness().value().minimumDistance();
             });
     }
 
@@ -147,7 +147,7 @@ namespace
         std::cout
             << "Generation " << generation
             << " | Best fitness = "
-            << best.getFitness().value()
+            << best.getFitness().value().minimumDistance()
             << '\n';
     }
 
@@ -156,7 +156,7 @@ namespace
     {
         std::cout
             << "\nFinal best fitness: "
-            << best.getFitness().value()
+            << best.getFitness().value().minimumDistance()
             << '\n';
     }
 

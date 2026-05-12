@@ -83,12 +83,12 @@ Maneuver& Specimen::operator[](std::size_t index)
     return maneuvers[index];
 }
 
-std::optional<double> Specimen::getFitness() const
+const std::optional<FitnessResult>& Specimen::getFitness() const
 {
     return fitness;
 }
 
-void Specimen::setFitness(double fitness)
+void Specimen::setFitness(const FitnessResult& fitness)
 {
     this->fitness = fitness;
 }

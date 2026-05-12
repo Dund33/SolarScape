@@ -4,9 +4,16 @@
 
 #include "TournamentSelection.h"
 
-#include <stdexcept>
 #include <random>
-#include <ranges>
+#include <stdexcept>
+
+namespace
+{
+    double fitnessScore(const Specimen& specimen)
+    {
+        return specimen.getFitness().value().minimumDistance();
+    }
+}
 
 TournamentSelection::TournamentSelection(std::size_t tournamentSize)
     : tournamentSize(tournamentSize)
@@ -30,14 +37,13 @@ const Specimen& TournamentSelection::select(
     std::uniform_int_distribution<std::size_t> dist(0, population.size() - 1);
 
     std::size_t bestIndex = dist(rng);
-    double bestFitness = population[bestIndex].getFitness().value();
+    double bestFitness = fitnessScore(population[bestIndex]);
 
     // Mniejszy fitness = lepszy osobnik
-    for ([[maybe_unused]] const std::size_t _ :
-        std::views::iota(std::size_t{1}, tournamentSize))
+    for (std::size_t i = 1; i < tournamentSize; ++i)
     {
         std::size_t candidateIndex = dist(rng);
-        double candidateFitness = population[candidateIndex].getFitness().value();
+        double candidateFitness = fitnessScore(population[candidateIndex]);
 
         if (candidateFitness < bestFitness)
         {
