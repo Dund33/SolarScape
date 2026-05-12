@@ -2,12 +2,50 @@
 // Created by Luke on 5/7/2026.
 //
 
-#include "Verlet.h"
+#include "simulation/Verlet.h"
 #include "config/consts.h"
 
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+
+namespace
+{
+    Vector3 calculateManeuverAcceleration(
+        const Probe& probe,
+        const std::optional<Maneuver>& maneuver,
+        Real timeStep)
+    {
+        if (probe.fuelMass() <= 0.0L || !maneuver.has_value())
+        {
+            return {};
+        }
+
+        const Maneuver& activeManeuver = maneuver.value();
+        const Real throttleValue =
+            std::clamp(
+                activeManeuver.getThrottleValue(),
+                0.0L,
+                1.0L);
+
+        const Real fuelNeeded =
+            probe.fuelFlow() * throttleValue * timeStep;
+        const Real fuelScale =
+            fuelNeeded > 0.0L
+                ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
+                : 0.0L;
+        const Real effectiveThrottle = throttleValue * fuelScale;
+
+        const Vector3 force =
+            activeManeuver.getThrustDirection() *
+            effectiveThrottle *
+            probe.fuelFlow() *
+            probe.specificImpulse() *
+            STANDARD_GRAVITY;
+
+        return force / probe.mass();
+    }
+}
 
 namespace Verlet
 {
@@ -122,44 +160,25 @@ namespace Verlet
                 bodies,
                 gravitationalConstant);
 
+        const Vector3 maneuverAcceleration =
+            calculateManeuverAcceleration(
+                probe,
+                maneuver,
+                timeStep);
+
         for (std::size_t i = 0; i < bodies.size(); ++i)
         {
             Vector3 averageAcceleration =
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
 
-            if (bodies[i] == &probe)
-            {
-                if (probe.fuelMass() > 0 && maneuver.has_value())
-                {
-                    const Real throttleValue =
-                        std::clamp(
-                            maneuver.value().getThrottleValue(),
-                            0.0L,
-                            1.0L);
-                    const auto thrustDirection = maneuver.value().getThrustDirection();
-
-                    const Real fuelNeeded =
-                        probe.fuelFlow() * throttleValue * timeStep;
-                    const Real fuelScale =
-                        fuelNeeded > 0.0L
-                            ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
-                            : 0.0L;
-                    const Real effectiveThrottle = throttleValue * fuelScale;
-
-                    Vector3 force =
-                        thrustDirection *
-                        effectiveThrottle *
-                        probe.fuelFlow() *
-                        probe.specificImpulse() *
-                        STANDARD_GRAVITY;
-
-                    averageAcceleration += force / probe.mass();
-                }
-            }
-
             bodies[i]->velocity() +=
                 averageAcceleration * timeStep;
+        }
+
+        if (std::ranges::find(bodies, static_cast<Body*>(&probe)) != bodies.end())
+        {
+            probe.velocity() += maneuverAcceleration * timeStep;
         }
 
         if (maneuver.has_value())

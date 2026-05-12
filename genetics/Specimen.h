@@ -9,7 +9,7 @@
 #include <optional>
 #include <vector>
 
-#include "genetics/Maneuver.h"
+#include "simulation/Maneuver.h"
 
 class Probe;
 

@@ -6,6 +6,8 @@
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "math/Vector3.h"
+#include "simulation/Maneuver.h"
+#include "genetics/fitness/FitnessResult.h"
 #include "genetics/Specimen.h"
 
 class FitnessEvaluator
@@ -24,6 +26,9 @@ public:
     void evaluate(Specimen& specimen) const;
 
 private:
+    FitnessResult calculateFitnessResult(
+        const std::vector<Maneuver>& maneuvers) const;
+
     Real gravitationalConstant;
     Real timeStep;
     Real simulationTime;
