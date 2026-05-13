@@ -20,6 +20,7 @@
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/init/RandomInitializer.h"
 #include "genetics/mutation/Mutation.h"
+#include "genetics/search/NormalRandomSearch.h"
 #include "genetics/selection/TournamentSelection.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
@@ -28,6 +29,8 @@
 
 namespace
 {
+    constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
+
     struct SimulationState
     {
         Real gravitationalConstant{};
@@ -112,6 +115,21 @@ namespace
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE
         );
+    }
+
+    auto createLocalSearch(
+        const Probe& probe) -> NormalRandomSearch
+    {
+        const Real maxPhysicalThrust =
+            std::max(
+                probe.fuelFlow() * probe.specificImpulse(),
+                1.0L);
+
+        return NormalRandomSearch(
+            LOCAL_SEARCH_ITERATIONS,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE / maxPhysicalThrust);
     }
 
     void evaluatePopulationUnsequenced(
@@ -256,6 +274,10 @@ namespace
         Mutation mutation =
             createMutation();
 
+        NormalRandomSearch localSearch =
+            createLocalSearch(
+                state.probe);
+
         FitnessEvaluator fitnessEvaluator(
             state.gravitationalConstant,
             state.timeStep,
@@ -278,6 +300,10 @@ namespace
 
             sortPopulationByFitness(
                 population);
+
+            localSearch.improve(
+                population.front(),
+                fitnessEvaluator);
 
             printGenerationResult(
                 generation,

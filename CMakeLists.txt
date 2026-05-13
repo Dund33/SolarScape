@@ -127,6 +127,8 @@ add_library(SolarScapeGenetic STATIC
         genetics/fitness/FitnessResult.h
         genetics/fitness/FitnessEvaluator.cpp
         genetics/fitness/FitnessEvaluator.h
+        genetics/search/NormalRandomSearch.cpp
+        genetics/search/NormalRandomSearch.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
