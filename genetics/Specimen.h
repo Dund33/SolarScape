@@ -6,6 +6,7 @@
 #define SOLARSCAPE_SPECIMEN_H
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -45,5 +46,19 @@ private:
     Probe* probe{};
     std::optional<FitnessResult> fitness;
 };
+
+bool operator<(const Specimen& lhs, const Specimen& rhs);
+
+namespace std
+{
+    template<>
+    struct less<Specimen>
+    {
+        bool operator()(const Specimen& lhs, const Specimen& rhs) const
+        {
+            return lhs < rhs;
+        }
+    };
+}
 
 #endif // SOLARSCAPE_SPECIMEN_H

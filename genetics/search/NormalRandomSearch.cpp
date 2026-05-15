@@ -134,24 +134,5 @@ bool NormalRandomSearch::isBetter(
     const Specimen& candidate,
     const Specimen& currentBest) const
 {
-    const FitnessResult& candidateFitness = candidate.getFitness().value();
-    const FitnessResult& currentBestFitness = currentBest.getFitness().value();
-
-    const bool noWorse =
-        candidateFitness.minimumDistance() <=
-            currentBestFitness.minimumDistance() &&
-        candidateFitness.minimumDistanceTime() <=
-            currentBestFitness.minimumDistanceTime() &&
-        candidateFitness.minimumDistanceFuelMass() >=
-            currentBestFitness.minimumDistanceFuelMass();
-
-    const bool strictlyBetter =
-        candidateFitness.minimumDistance() <
-            currentBestFitness.minimumDistance() ||
-        candidateFitness.minimumDistanceTime() <
-            currentBestFitness.minimumDistanceTime() ||
-        candidateFitness.minimumDistanceFuelMass() >
-            currentBestFitness.minimumDistanceFuelMass();
-
-    return noWorse && strictlyBetter;
+    return candidate < currentBest;
 }

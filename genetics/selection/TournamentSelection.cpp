@@ -4,16 +4,9 @@
 
 #include "TournamentSelection.h"
 
+#include <functional>
 #include <random>
 #include <stdexcept>
-
-namespace
-{
-    double fitnessScore(const Specimen& specimen)
-    {
-        return specimen.getFitness().value().minimumDistance();
-    }
-}
 
 TournamentSelection::TournamentSelection(std::size_t tournamentSize)
     : tournamentSize(tournamentSize)
@@ -37,17 +30,15 @@ const Specimen& TournamentSelection::select(
     std::uniform_int_distribution<std::size_t> dist(0, population.size() - 1);
 
     std::size_t bestIndex = dist(rng);
-    double bestFitness = fitnessScore(population[bestIndex]);
 
-    // Mniejszy fitness = lepszy osobnik
+    // Operator < porównuje osobniki według dominacji FitnessResult.
+    const std::less<Specimen> isBetter;
     for (std::size_t i = 1; i < tournamentSize; ++i)
     {
         std::size_t candidateIndex = dist(rng);
-        double candidateFitness = fitnessScore(population[candidateIndex]);
 
-        if (candidateFitness < bestFitness)
+        if (isBetter(population[candidateIndex], population[bestIndex]))
         {
-            bestFitness = candidateFitness;
             bestIndex = candidateIndex;
         }
     }

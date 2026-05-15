@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <exception>
 #include <execution>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <ranges>
@@ -151,11 +152,25 @@ namespace
     {
         std::ranges::sort(
             population,
-            {},
-            [](const Specimen& specimen)
+            std::less<Specimen>{});
+    }
+
+    void printFitnessResult(
+        const FitnessResult& fitness)
+    {
+        std::cout << '[';
+
+        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
+        {
+            if (i > 0)
             {
-                return specimen.getFitness().value().minimumDistance();
-            });
+                std::cout << ", ";
+            }
+
+            std::cout << fitness.get(i);
+        }
+
+        std::cout << ']';
     }
 
     void printGenerationResult(
@@ -164,18 +179,18 @@ namespace
     {
         std::cout
             << "Generation " << generation
-            << " | Best fitness = "
-            << best.getFitness().value().minimumDistance()
-            << '\n';
+            << " | Best fitness = ";
+        printFitnessResult(best.getFitness().value());
+        std::cout << '\n';
     }
 
     void printFinalResult(
         const Specimen& best)
     {
         std::cout
-            << "\nFinal best fitness: "
-            << best.getFitness().value().minimumDistance()
-            << '\n';
+            << "\nFinal best fitness: ";
+        printFitnessResult(best.getFitness().value());
+        std::cout << '\n';
     }
 
     void copyElite(
