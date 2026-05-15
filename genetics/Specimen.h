@@ -6,10 +6,12 @@
 #define SOLARSCAPE_SPECIMEN_H
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <vector>
 
-#include "genetics/Maneuver.h"
+#include "genetics/fitness/FitnessResult.h"
+#include "simulation/Maneuver.h"
 
 class Probe;
 
@@ -35,14 +37,28 @@ public:
     Maneuver& operator[](std::size_t index);
 
     // Fitness
-    std::optional<double> getFitness() const;
-    void setFitness(double fitness);
+    const std::optional<FitnessResult>& getFitness() const;
+    void setFitness(const FitnessResult& fitness);
     void clearFitness();
 
 private:
     std::vector<Maneuver> maneuvers;
     Probe* probe{};
-    std::optional<double> fitness;
+    std::optional<FitnessResult> fitness;
 };
+
+bool operator<(const Specimen& lhs, const Specimen& rhs);
+
+namespace std
+{
+    template<>
+    struct less<Specimen>
+    {
+        bool operator()(const Specimen& lhs, const Specimen& rhs) const
+        {
+            return lhs < rhs;
+        }
+    };
+}
 
 #endif // SOLARSCAPE_SPECIMEN_H
