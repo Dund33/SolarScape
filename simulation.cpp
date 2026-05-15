@@ -16,6 +16,7 @@
 #include "genetics/crossing/Crossover.h"
 #include "genetics/crossing/RandomCutCrossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
+#include "genetics/init/Initializer.h"
 #include "genetics/init/RandomInitializer.h"
 #include "genetics/mutation/Mutation.h"
 #include "genetics/mutation/RandomUniformMutation.h"
@@ -225,7 +226,7 @@ namespace
 
     void addImmigrants(
         std::vector<Specimen>& population,
-        RandomInitializer& initializer)
+        Initializer& initializer)
     {
         constexpr std::size_t immigrants = POPULATION_SIZE / 25;
 
@@ -241,7 +242,7 @@ namespace
 
     auto createNextGeneration(
         const std::vector<Specimen>& population,
-        RandomInitializer& initializer,
+        Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) -> std::vector<Specimen>

@@ -89,6 +89,7 @@ add_library(SolarScapeGenetic STATIC
         genetics/mutation/Mutation.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
+        genetics/init/Initializer.h
         genetics/init/RandomInitializer.cpp
         genetics/init/RandomInitializer.h
         genetics/crossing/Crossover.h
