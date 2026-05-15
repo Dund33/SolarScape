@@ -115,6 +115,7 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGenetic STATIC
         genetics/Specimen.cpp
         genetics/Specimen.h
+        genetics/selection/Selection.h
         genetics/selection/TournamentSelection.cpp
         genetics/selection/TournamentSelection.h
         genetics/mutation/Mutation.h

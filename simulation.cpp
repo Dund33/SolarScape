@@ -24,6 +24,7 @@
 #include "genetics/mutation/Mutation.h"
 #include "genetics/mutation/RandomUniformMutation.h"
 #include "genetics/search/NormalRandomSearch.h"
+#include "genetics/selection/Selection.h"
 #include "genetics/selection/TournamentSelection.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
@@ -203,7 +204,7 @@ namespace
     void fillPopulationWithChildren(
         const std::vector<Specimen>& population,
         std::vector<Specimen>& newPopulation,
-        TournamentSelection& selection,
+        Selection& selection,
         Crossover& crossover,
         Mutation& mutation)
     {
@@ -245,7 +246,7 @@ namespace
     auto createNextGeneration(
         const std::vector<Specimen>& population,
         RandomInitializer& initializer,
-        TournamentSelection& selection,
+        Selection& selection,
         Crossover& crossover,
         Mutation& mutation) -> std::vector<Specimen>
     {
