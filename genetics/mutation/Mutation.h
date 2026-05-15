@@ -10,21 +10,9 @@ class Specimen;
 class Mutation
 {
 public:
-    Mutation(
-        double mutationProbability,
-        long double maxTimeOffset,
-        long double maxDurationOffset,
-        long double maxThrustOffset
-    );
+    virtual ~Mutation() = default;
 
-    void mutate(Specimen& specimen) const;
-
-private:
-    double mutationProbability;
-
-    long double maxTimeOffset;
-    long double maxDurationOffset;
-    long double maxThrustOffset;
+    virtual void mutate(Specimen& specimen) const = 0;
 };
 
 #endif // SOLARSCAPE_MUTATION_H

@@ -2,7 +2,7 @@
 // Created by Luke on 5/10/2026.
 //
 
-#include "Mutation.h"
+#include "RandomUniformMutation.h"
 
 #include <algorithm>
 #include <random>
@@ -11,7 +11,7 @@
 #include "genetics/Specimen.h"
 #include "math/Probe.h"
 
-Mutation::Mutation(
+RandomUniformMutation::RandomUniformMutation(
     double mutationProbability,
     long double maxTimeOffset,
     long double maxDurationOffset,
@@ -30,7 +30,7 @@ Mutation::Mutation(
     }
 }
 
-void Mutation::mutate(Specimen& specimen) const
+void RandomUniformMutation::mutate(Specimen& specimen) const
 {
     if (specimen.empty())
     {
