@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "genetics/Maneuver.h"
+#include "simulation/Maneuver.h"
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "math/Real.h"

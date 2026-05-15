@@ -13,9 +13,17 @@
 #include <stdexcept>
 #include <vector>
 
-#include "math/Verlet.h"
-#include "simulation/DistanceAnalysis.h"
+#include "simulation/Verlet.h"
 
+namespace
+{
+    Vector3 absolutePointForBody(
+        const Body& targetBody,
+        const Vector3& relativePoint)
+    {
+        return targetBody.position() + relativePoint;
+    }
+}
 
 void plotTrajectory(
     Real gravitationalConstant,
@@ -109,7 +117,7 @@ void plotTrajectory(
     for (std::size_t step = 0; step <= steps; ++step)
     {
         const Real time = step * timeStep;
-        const Vector3 targetPoint = DistanceAnalysis::absolutePointForBody(
+        const Vector3 targetPoint = absolutePointForBody(
             targetBodyCopy,
             targetPointFromTargetBody);
 

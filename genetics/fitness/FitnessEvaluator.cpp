@@ -1,10 +1,28 @@
 #include "FitnessEvaluator.h"
 
+#include <algorithm>
+#include <functional>
+#include <optional>
 #include <stdexcept>
 
-#include "simulation/DistanceAnalysis.h"
+#include "simulation/Verlet.h"
 
-const double FUEL_USE_PENALTY = 1000.0;
+namespace
+{
+    Real distance(
+        const Vector3& left,
+        const Vector3& right)
+    {
+        return (left - right).length();
+    }
+
+    Vector3 absolutePointForBody(
+        const Body& targetBody,
+        const Vector3& relativePoint)
+    {
+        return targetBody.position() + relativePoint;
+    }
+}
 
 FitnessEvaluator::FitnessEvaluator(
     Real gravitationalConstant,
@@ -37,6 +55,25 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
         throw std::invalid_argument("target body cannot point to the probe");
     }
 
+    const FitnessResult fitnessResult =
+        calculateFitnessResult(specimen.getManeuvers());
+
+    specimen.setFitness(fitnessResult);
+}
+
+FitnessResult FitnessEvaluator::calculateFitnessResult(
+    const std::vector<Maneuver>& maneuvers) const
+{
+    if (simulationTime < 0.0L)
+    {
+        throw std::invalid_argument("simulationTime must be non-negative");
+    }
+
+    if (timeStep <= 0.0L)
+    {
+        throw std::invalid_argument("timeStep must be greater than zero");
+    }
+
     std::vector<Body> bodyCopies = initialBodies;
     Body targetBodyCopy = targetBody;
     Probe probeCopy = probe;
@@ -52,22 +89,87 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
     bodyPointers.push_back(&targetBodyCopy);
     bodyPointers.push_back(&probeCopy);
 
-    const Real minimumDistance =
-        DistanceAnalysis::minimumDistanceFromMovingPoint(
+    Real currentTime = 0.0L;
+    std::vector<Maneuver> sortedManeuvers = maneuvers;
+    std::ranges::sort(
+        sortedManeuvers,
+        {},
+        [](const Maneuver& maneuver)
+        {
+            return maneuver.getInitTime();
+        });
+
+    Real minimumDistance =
+        distance(
+            probeCopy.position(),
+            absolutePointForBody(
+                targetBodyCopy,
+                targetPointFromTargetBody));
+
+    Real minimumDistanceTime = currentTime;
+    Real minimumDistanceFuelMass = probeCopy.fuelMass();
+
+    while (currentTime < simulationTime)
+    {
+        const Real remainingTime =
+            simulationTime - currentTime;
+
+        const Real stepTime =
+            remainingTime < timeStep
+                ? remainingTime
+                : timeStep;
+
+        std::optional<Maneuver> maneuver;
+        auto maneuverIt = std::ranges::upper_bound(
+            sortedManeuvers,
+            currentTime,
+            std::less<>{},
+            [](const Maneuver& candidate)
+            {
+                return candidate.getInitTime();
+            });
+
+        if (maneuverIt != sortedManeuvers.begin())
+        {
+            --maneuverIt;
+
+            const Real maneuverStartTime =
+                maneuverIt->getInitTime();
+            const Real maneuverEndTime =
+                maneuverStartTime + maneuverIt->getDuration();
+
+            if (currentTime < maneuverEndTime)
+            {
+                maneuver = *maneuverIt;
+            }
+        }
+
+        Verlet::step(
             bodyPointers,
             probeCopy,
-            targetBodyCopy,
-            targetPointFromTargetBody,
-            simulationTime,
-            timeStep,
-            gravitationalConstant,
-            specimen.getManeuvers()
-        );
+            maneuver,
+            stepTime,
+            gravitationalConstant);
 
-    const Real totalFuelUse = specimen.getTotalFuelUse();
+        currentTime += stepTime;
 
-    const Real fitness =
-        minimumDistance + FUEL_USE_PENALTY * totalFuelUse;
+        const Real currentDistance =
+            distance(
+                probeCopy.position(),
+                absolutePointForBody(
+                    targetBodyCopy,
+                    targetPointFromTargetBody));
 
-    specimen.setFitness(static_cast<double>(fitness));
+        if (currentDistance < minimumDistance)
+        {
+            minimumDistance = currentDistance;
+            minimumDistanceTime = currentTime;
+            minimumDistanceFuelMass = probeCopy.fuelMass();
+        }
+    }
+
+    return FitnessResult(
+        minimumDistance,
+        minimumDistanceTime,
+        minimumDistanceFuelMass);
 }

@@ -4,9 +4,9 @@
 
 #include "TournamentSelection.h"
 
-#include <stdexcept>
+#include <functional>
 #include <random>
-#include <ranges>
+#include <stdexcept>
 
 TournamentSelection::TournamentSelection(std::size_t tournamentSize)
     : tournamentSize(tournamentSize)
@@ -30,18 +30,15 @@ const Specimen& TournamentSelection::select(
     std::uniform_int_distribution<std::size_t> dist(0, population.size() - 1);
 
     std::size_t bestIndex = dist(rng);
-    double bestFitness = population[bestIndex].getFitness().value();
 
-    // Mniejszy fitness = lepszy osobnik
-    for ([[maybe_unused]] const std::size_t _ :
-        std::views::iota(std::size_t{1}, tournamentSize))
+    // Operator < porównuje osobniki według dominacji FitnessResult.
+    const std::less<Specimen> isBetter;
+    for (std::size_t i = 1; i < tournamentSize; ++i)
     {
         std::size_t candidateIndex = dist(rng);
-        double candidateFitness = population[candidateIndex].getFitness().value();
 
-        if (candidateFitness < bestFitness)
+        if (isBetter(population[candidateIndex], population[bestIndex]))
         {
-            bestFitness = candidateFitness;
             bestIndex = candidateIndex;
         }
     }

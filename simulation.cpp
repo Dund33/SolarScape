@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <exception>
 #include <execution>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <ranges>
@@ -20,6 +21,7 @@
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/init/RandomInitializer.h"
 #include "genetics/mutation/Mutation.h"
+#include "genetics/search/NormalRandomSearch.h"
 #include "genetics/selection/TournamentSelection.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
@@ -28,6 +30,8 @@
 
 namespace
 {
+    constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
+
     struct SimulationState
     {
         Real gravitationalConstant{};
@@ -42,11 +46,6 @@ namespace
 
         std::vector<Body*> bodyPointers;
     };
-
-    auto loadConfig(const std::string& filePath) -> SimulationConfig
-    {
-        return SimulationConfig::loadFromFile(filePath);
-    }
 
     auto createBodyPointers(
         std::vector<Body>& bodies,
@@ -114,6 +113,21 @@ namespace
         );
     }
 
+    auto createLocalSearch(
+        const Probe& probe) -> NormalRandomSearch
+    {
+        const Real maxPhysicalThrust =
+            std::max(
+                probe.fuelFlow() * probe.specificImpulse(),
+                1.0L);
+
+        return NormalRandomSearch(
+            LOCAL_SEARCH_ITERATIONS,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE / maxPhysicalThrust);
+    }
+
     void evaluatePopulationUnsequenced(
         std::vector<Specimen>& population,
         const FitnessEvaluator& fitnessEvaluator)
@@ -133,11 +147,25 @@ namespace
     {
         std::ranges::sort(
             population,
-            {},
-            [](const Specimen& specimen)
+            std::less<Specimen>{});
+    }
+
+    void printFitnessResult(
+        const FitnessResult& fitness)
+    {
+        std::cout << '[';
+
+        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
+        {
+            if (i > 0)
             {
-                return specimen.getFitness();
-            });
+                std::cout << ", ";
+            }
+
+            std::cout << fitness.get(i);
+        }
+
+        std::cout << ']';
     }
 
     void printGenerationResult(
@@ -146,18 +174,18 @@ namespace
     {
         std::cout
             << "Generation " << generation
-            << " | Best fitness = "
-            << best.getFitness().value()
-            << '\n';
+            << " | Best fitness = ";
+        printFitnessResult(best.getFitness().value());
+        std::cout << '\n';
     }
 
     void printFinalResult(
         const Specimen& best)
     {
         std::cout
-            << "\nFinal best fitness: "
-            << best.getFitness().value()
-            << '\n';
+            << "\nFinal best fitness: ";
+        printFitnessResult(best.getFitness().value());
+        std::cout << '\n';
     }
 
     void copyElite(
@@ -256,6 +284,10 @@ namespace
         Mutation mutation =
             createMutation();
 
+        NormalRandomSearch localSearch =
+            createLocalSearch(
+                state.probe);
+
         FitnessEvaluator fitnessEvaluator(
             state.gravitationalConstant,
             state.timeStep,
@@ -278,6 +310,10 @@ namespace
 
             sortPopulationByFitness(
                 population);
+
+            localSearch.improve(
+                population.front(),
+                fitnessEvaluator);
 
             printGenerationResult(
                 generation,
@@ -324,7 +360,7 @@ namespace
     auto run() -> int
     {
         SimulationConfig config =
-            loadConfig(
+            SimulationConfig::loadFromFile(
                 "config.yaml");
 
         SimulationState state =

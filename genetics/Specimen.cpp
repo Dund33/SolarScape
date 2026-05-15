@@ -9,6 +9,73 @@
 
 #include "math/Probe.h"
 
+namespace
+{
+    constexpr std::size_t kMinimumDistanceFuelMassIndex = 2;
+
+    float comparableFitnessValue(
+        const FitnessResult& fitness,
+        std::size_t index)
+    {
+        const float value = fitness.get(index);
+
+        if (index == kMinimumDistanceFuelMassIndex)
+        {
+            return -value;
+        }
+
+        return value;
+    }
+
+    bool dominates(
+        const FitnessResult& lhs,
+        const FitnessResult& rhs)
+    {
+        bool strictlyBetter = false;
+
+        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
+        {
+            const float lhsValue = comparableFitnessValue(lhs, i);
+            const float rhsValue = comparableFitnessValue(rhs, i);
+
+            if (lhsValue > rhsValue)
+            {
+                return false;
+            }
+
+            if (lhsValue < rhsValue)
+            {
+                strictlyBetter = true;
+            }
+        }
+
+        return strictlyBetter;
+    }
+
+    bool lexicographicallyBetter(
+        const FitnessResult& lhs,
+        const FitnessResult& rhs)
+    {
+        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
+        {
+            const float lhsValue = comparableFitnessValue(lhs, i);
+            const float rhsValue = comparableFitnessValue(rhs, i);
+
+            if (lhsValue < rhsValue)
+            {
+                return true;
+            }
+
+            if (rhsValue < lhsValue)
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+}
+
 Specimen::Specimen()
 {
 }
@@ -83,12 +150,12 @@ Maneuver& Specimen::operator[](std::size_t index)
     return maneuvers[index];
 }
 
-std::optional<double> Specimen::getFitness() const
+const std::optional<FitnessResult>& Specimen::getFitness() const
 {
     return fitness;
 }
 
-void Specimen::setFitness(double fitness)
+void Specimen::setFitness(const FitnessResult& fitness)
 {
     this->fitness = fitness;
 }
@@ -96,4 +163,22 @@ void Specimen::setFitness(double fitness)
 void Specimen::clearFitness()
 {
     fitness.reset();
+}
+
+bool operator<(const Specimen& lhs, const Specimen& rhs)
+{
+    const FitnessResult& lhsFitness = lhs.getFitness().value();
+    const FitnessResult& rhsFitness = rhs.getFitness().value();
+
+    if (dominates(lhsFitness, rhsFitness))
+    {
+        return true;
+    }
+
+    if (dominates(rhsFitness, lhsFitness))
+    {
+        return false;
+    }
+
+    return lexicographicallyBetter(lhsFitness, rhsFitness);
 }

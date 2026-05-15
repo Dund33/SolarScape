@@ -11,6 +11,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # =====================================
+# Flags for release mode
+# =====================================
+
+set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+
+# =====================================
 # Dependencies
 # =====================================
 
@@ -25,8 +32,6 @@ add_library(SolarScapeMath STATIC
         math/Vector3.h
         math/Body.cpp
         math/Body.h
-        math/Verlet.cpp
-        math/Verlet.h
         math/Probe.cpp
         math/Probe.h
 )
@@ -43,8 +48,9 @@ target_include_directories(SolarScapeMath
 # =====================================
 
 add_library(SolarScapeSimulation STATIC
-        simulation/DistanceAnalysis.cpp
-        simulation/DistanceAnalysis.h
+        simulation/Maneuver.h
+        simulation/Verlet.cpp
+        simulation/Verlet.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -97,6 +103,11 @@ target_include_directories(SolarScapeVisual
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_link_libraries(SolarScapeVisual
+        PUBLIC
+        SolarScape::Simulation
+)
+
 # =====================================
 # Genetics Library
 # =====================================
@@ -112,8 +123,12 @@ add_library(SolarScapeGenetic STATIC
         genetics/init/RandomInitializer.h
         genetics/crossing/Crossover.cpp
         genetics/crossing/Crossover.h
+        genetics/fitness/FitnessResult.cpp
+        genetics/fitness/FitnessResult.h
         genetics/fitness/FitnessEvaluator.cpp
         genetics/fitness/FitnessEvaluator.h
+        genetics/search/NormalRandomSearch.cpp
+        genetics/search/NormalRandomSearch.h
 )
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
@@ -139,6 +154,14 @@ configure_file(
         COPYONLY
 )
 
+
+# =====================================
+# Include TBB for Linux scenarios
+# =====================================
+if(LINUX)
+    find_package(TBB REQUIRED)
+endif()
+
 # =====================================
 # Executable
 # =====================================
@@ -149,8 +172,9 @@ add_executable(SolarScape
 
 target_link_libraries(SolarScape
         PRIVATE
-        SolarScape::Simulation
         SolarScape::Config
         SolarScape::Visual
         SolarScape::Genetic
+        SolarScape::Simulation
+        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
