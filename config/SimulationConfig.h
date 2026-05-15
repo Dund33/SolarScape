@@ -33,4 +33,4 @@ private:
     static Probe loadProbe(const YAML::Node& node);
 };
 
-#endif // SOLARSCAPE_SIMULATIONCONFIG_H
+#endif

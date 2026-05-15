@@ -1,35 +1,31 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #ifndef SOLARSCAPE_VERLET_H
 #define SOLARSCAPE_VERLET_H
 
 #include <cstddef>
-#include <optional>
 #include <vector>
 
-#include "simulation/Maneuver.h"
-#include "math/Body.h"
-#include "math/Probe.h"
+#include "simulation/Simulation.h"
 
-namespace Verlet
+class Verlet final : public Simulation
 {
-    Vector3 calculateAccelerationForBody(
-        const std::vector<Body*>& bodies,
-        std::size_t bodyIndex,
-        Real gravitationalConstant);
-
-    std::vector<Vector3> calculateAccelerations(
-        const std::vector<Body*>& bodies,
-        Real gravitationalConstant);
-
+public:
     void step(
         std::vector<Body*>& bodies,
         Probe& probe,
         const std::optional<Maneuver>& maneuver,
         Real timeStep,
-        Real gravitationalConstant);
-}
+        Real gravitationalConstant
+    ) const override;
 
-#endif // SOLARSCAPE_VERLET_H
+private:
+    static Vector3 calculateAccelerationForBody(
+        const std::vector<Body*>& bodies,
+        std::size_t bodyIndex,
+        Real gravitationalConstant);
+
+    static std::vector<Vector3> calculateAccelerations(
+        const std::vector<Body*>& bodies,
+        Real gravitationalConstant);
+};
+
+#endif

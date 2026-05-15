@@ -31,4 +31,4 @@ private:
     Real throttleStdDev;
 };
 
-#endif // SOLARSCAPE_NORMALRANDOMSEARCH_H
+#endif

@@ -1,11 +1,11 @@
-#include "Crossover.h"
+#include "RandomCutCrossover.h"
 
 #include <algorithm>
 #include <random>
 #include <ranges>
 #include <utility>
 
-std::pair<Specimen, Specimen> Crossover::cross(
+std::pair<Specimen, Specimen> RandomCutCrossover::cross(
     const Specimen& parent1,
     const Specimen& parent2
 ) const

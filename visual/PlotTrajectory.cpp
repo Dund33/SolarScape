@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #include "PlotTrajectory.h"
 
 #include <algorithm>
@@ -12,8 +8,6 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
-
-#include "simulation/Verlet.h"
 
 namespace
 {
@@ -26,6 +20,7 @@ namespace
 }
 
 void plotTrajectory(
+    const Simulation& simulation,
     Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
@@ -166,7 +161,7 @@ void plotTrajectory(
 
         if (step < steps)
         {
-            Verlet::step(
+            simulation.step(
                 simulationBodies,
                 probeCopy,
                 maneuver,

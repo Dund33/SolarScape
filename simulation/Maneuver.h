@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #ifndef SOLARSCAPE_MANEUVER_H
 #define SOLARSCAPE_MANEUVER_H
 
@@ -46,4 +42,4 @@ private:
 };
 
 
-#endif //SOLARSCAPE_MANEUVER_H
+#endif

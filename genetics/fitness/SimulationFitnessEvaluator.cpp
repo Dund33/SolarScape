@@ -1,11 +1,9 @@
-#include "FitnessEvaluator.h"
+#include "SimulationFitnessEvaluator.h"
 
 #include <algorithm>
 #include <functional>
 #include <optional>
 #include <stdexcept>
-
-#include "simulation/Verlet.h"
 
 namespace
 {
@@ -24,14 +22,15 @@ namespace
     }
 }
 
-FitnessEvaluator::FitnessEvaluator(
+SimulationFitnessEvaluator::SimulationFitnessEvaluator(
     Real gravitationalConstant,
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
     const std::vector<Body>& initialBodies,
     const Probe& probe,
-    const Body& targetBody
+    const Body& targetBody,
+    const Simulation& simulation
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
@@ -39,11 +38,12 @@ FitnessEvaluator::FitnessEvaluator(
       targetPointFromTargetBody(targetPointFromTargetBody),
       initialBodies(initialBodies),
       probe(probe),
-      targetBody(targetBody)
+      targetBody(targetBody),
+      simulation(simulation)
 {
 }
 
-void FitnessEvaluator::evaluate(Specimen& specimen) const
+void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
 {
     if (specimen.getFitness().has_value())
     {
@@ -61,7 +61,7 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
     specimen.setFitness(fitnessResult);
 }
 
-FitnessResult FitnessEvaluator::calculateFitnessResult(
+FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
     const std::vector<Maneuver>& maneuvers) const
 {
     if (simulationTime < 0.0L)
@@ -144,7 +144,7 @@ FitnessResult FitnessEvaluator::calculateFitnessResult(
             }
         }
 
-        Verlet::step(
+        simulation.step(
             bodyPointers,
             probeCopy,
             maneuver,

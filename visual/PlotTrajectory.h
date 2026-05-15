@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #ifndef SOLARSCAPE_PLOT_TRAJECTORY_H
 #define SOLARSCAPE_PLOT_TRAJECTORY_H
 
@@ -9,11 +5,13 @@
 #include <vector>
 
 #include "simulation/Maneuver.h"
+#include "simulation/Simulation.h"
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "math/Real.h"
 
 void plotTrajectory(
+    const Simulation& simulation,
     Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
@@ -23,4 +21,4 @@ void plotTrajectory(
     const std::vector<Body*>& bodies,
     const std::vector<Maneuver>& maneuvers);
 
-#endif //SOLARSCAPE_PLOT_TRAJECTORY_H
+#endif

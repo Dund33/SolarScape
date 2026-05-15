@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #ifndef SOLARSCAPE_VECTOR3_H
 #define SOLARSCAPE_VECTOR3_H
 
@@ -34,4 +30,4 @@ struct Vector3
 
 Vector3 operator*(Real scalar, const Vector3& vector);
 
-#endif //SOLARSCAPE_VECTOR3_H
+#endif

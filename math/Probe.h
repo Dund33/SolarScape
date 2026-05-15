@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/10/2026.
-//
-
 #ifndef SOLARSCAPE_PROBE_H
 #define SOLARSCAPE_PROBE_H
 
@@ -48,4 +44,4 @@ private:
 };
 
 
-#endif //SOLARSCAPE_PROBE_H
+#endif
