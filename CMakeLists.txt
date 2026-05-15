@@ -80,9 +80,27 @@ target_link_libraries(SolarScapeVisual
         SolarScape::Simulation
 )
 
-add_library(SolarScapeGenetic STATIC
+add_library(SolarScapeGeneticCore STATIC
         genetics/Specimen.cpp
         genetics/Specimen.h
+        genetics/fitness/FitnessResult.cpp
+        genetics/fitness/FitnessResult.h
+)
+
+add_library(SolarScape::GeneticCore ALIAS SolarScapeGeneticCore)
+
+target_include_directories(SolarScapeGeneticCore
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticCore
+        PUBLIC
+        SolarScape::Math
+        SolarScape::Simulation
+)
+
+add_library(SolarScapeGeneticOperators STATIC
         genetics/selection/Selection.h
         genetics/selection/TournamentSelection.cpp
         genetics/selection/TournamentSelection.h
@@ -95,26 +113,66 @@ add_library(SolarScapeGenetic STATIC
         genetics/crossing/Crossover.h
         genetics/crossing/RandomCutCrossover.cpp
         genetics/crossing/RandomCutCrossover.h
-        genetics/fitness/FitnessResult.cpp
-        genetics/fitness/FitnessResult.h
-        genetics/fitness/FitnessEvaluator.h
-        genetics/fitness/SimulationFitnessEvaluator.cpp
-        genetics/fitness/SimulationFitnessEvaluator.h
-        genetics/search/NormalRandomSearch.cpp
-        genetics/search/NormalRandomSearch.h
 )
 
-add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
+add_library(SolarScape::GeneticOperators ALIAS SolarScapeGeneticOperators)
 
-target_include_directories(SolarScapeGenetic
+target_include_directories(SolarScapeGeneticOperators
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(SolarScapeGenetic
+target_link_libraries(SolarScapeGeneticOperators
         PUBLIC
-        SolarScape::Math
-        SolarScape::Simulation
+        SolarScape::GeneticCore
+)
+
+add_library(SolarScapeGeneticFitness STATIC
+        genetics/fitness/FitnessEvaluator.h
+        genetics/fitness/SimulationFitnessEvaluator.cpp
+        genetics/fitness/SimulationFitnessEvaluator.h
+)
+
+add_library(SolarScape::GeneticFitness ALIAS SolarScapeGeneticFitness)
+
+target_include_directories(SolarScapeGeneticFitness
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticFitness
+        PUBLIC
+        SolarScape::GeneticCore
+)
+
+add_library(SolarScapeGeneticSearch STATIC
+        genetics/search/NormalRandomSearch.cpp
+        genetics/search/NormalRandomSearch.h
+)
+
+add_library(SolarScape::GeneticSearch ALIAS SolarScapeGeneticSearch)
+
+target_include_directories(SolarScapeGeneticSearch
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticSearch
+        PUBLIC
+        SolarScape::GeneticCore
+        SolarScape::GeneticFitness
+)
+
+add_library(SolarScapeGenetic INTERFACE)
+
+add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
+
+target_link_libraries(SolarScapeGenetic
+        INTERFACE
+        SolarScape::GeneticCore
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticSearch
 )
 
 configure_file(
