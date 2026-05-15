@@ -18,9 +18,11 @@
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/crossing/Crossover.h"
+#include "genetics/crossing/RandomCutCrossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/init/RandomInitializer.h"
 #include "genetics/mutation/Mutation.h"
+#include "genetics/mutation/RandomUniformMutation.h"
 #include "genetics/search/NormalRandomSearch.h"
 #include "genetics/selection/TournamentSelection.h"
 #include "genetics/Specimen.h"
@@ -103,9 +105,9 @@ namespace
         };
     }
 
-    auto createMutation() -> Mutation
+    auto createMutation() -> RandomUniformMutation
     {
-        return Mutation(
+        return RandomUniformMutation(
             MUTATION_PROBABILITY,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
@@ -279,9 +281,9 @@ namespace
         TournamentSelection selection(
             TOURNAMENT_SIZE);
 
-        Crossover crossover;
+        RandomCutCrossover crossover;
 
-        Mutation mutation =
+        RandomUniformMutation mutation =
             createMutation();
 
         NormalRandomSearch localSearch =
