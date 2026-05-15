@@ -117,12 +117,14 @@ add_library(SolarScapeGenetic STATIC
         genetics/Specimen.h
         genetics/selection/TournamentSelection.cpp
         genetics/selection/TournamentSelection.h
-        genetics/mutation/Mutation.cpp
         genetics/mutation/Mutation.h
+        genetics/mutation/RandomUniformMutation.cpp
+        genetics/mutation/RandomUniformMutation.h
         genetics/init/RandomInitializer.cpp
         genetics/init/RandomInitializer.h
-        genetics/crossing/Crossover.cpp
         genetics/crossing/Crossover.h
+        genetics/crossing/RandomCutCrossover.cpp
+        genetics/crossing/RandomCutCrossover.h
         genetics/fitness/FitnessResult.cpp
         genetics/fitness/FitnessResult.h
         genetics/fitness/FitnessEvaluator.cpp
