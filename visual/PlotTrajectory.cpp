@@ -9,8 +9,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include "simulation/Verlet.h"
-
 namespace
 {
     Vector3 absolutePointForBody(
@@ -22,6 +20,7 @@ namespace
 }
 
 void plotTrajectory(
+    const Simulation& simulation,
     Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
@@ -162,7 +161,7 @@ void plotTrajectory(
 
         if (step < steps)
         {
-            Verlet::step(
+            simulation.step(
                 simulationBodies,
                 probeCopy,
                 maneuver,

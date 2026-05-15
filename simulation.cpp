@@ -27,6 +27,8 @@
 #include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/Probe.h"
+#include "simulation/Simulation.h"
+#include "simulation/Verlet.h"
 #include "visual/PlotTrajectory.h"
 
 namespace
@@ -270,7 +272,8 @@ namespace
     }
 
     auto runGeneticAlgorithm(
-        SimulationState& state) -> Specimen
+        SimulationState& state,
+        const Simulation& simulation) -> Specimen
     {
         RandomInitializer initializer =
             createInitializer(
@@ -296,7 +299,8 @@ namespace
             state.targetPointFromTargetBody,
             state.initialBodies,
             state.probe,
-            state.targetBody
+            state.targetBody,
+            simulation
         );
 
         std::vector<Specimen> population =
@@ -340,6 +344,7 @@ namespace
     }
 
     void plotBestTrajectory(
+        const Simulation& simulation,
         const SimulationState& state,
         const Specimen& best)
     {
@@ -347,6 +352,7 @@ namespace
             best.getManeuvers();
 
         plotTrajectory(
+            simulation,
             state.gravitationalConstant,
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
@@ -368,14 +374,18 @@ namespace
             createSimulationState(
                 std::move(config));
 
+        Verlet simulation;
+
         const Specimen best =
             runGeneticAlgorithm(
-                state);
+                state,
+                simulation);
 
         printFinalResult(
             best);
 
         plotBestTrajectory(
+            simulation,
             state,
             best);
 

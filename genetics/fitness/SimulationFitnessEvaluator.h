@@ -9,6 +9,7 @@
 #include "math/Probe.h"
 #include "math/Vector3.h"
 #include "simulation/Maneuver.h"
+#include "simulation/Simulation.h"
 
 class SimulationFitnessEvaluator final : public FitnessEvaluator
 {
@@ -20,7 +21,8 @@ public:
         Vector3 targetPointFromTargetBody,
         const std::vector<Body>& initialBodies,
         const Probe& probe,
-        const Body& targetBody
+        const Body& targetBody,
+        const Simulation& simulation
     );
 
     void evaluate(Specimen& specimen) const override;
@@ -36,6 +38,7 @@ private:
     const std::vector<Body>& initialBodies;
     const Probe& probe;
     const Body& targetBody;
+    const Simulation& simulation;
 };
 
 #endif

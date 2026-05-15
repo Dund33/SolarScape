@@ -29,6 +29,7 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
+        simulation/Simulation.h
         simulation/Verlet.cpp
         simulation/Verlet.h
 )
@@ -143,6 +144,7 @@ target_include_directories(SolarScapeGeneticFitness
 target_link_libraries(SolarScapeGeneticFitness
         PUBLIC
         SolarScape::GeneticCore
+        SolarScape::Simulation
 )
 
 add_library(SolarScapeGeneticSearch STATIC

@@ -5,8 +5,6 @@
 #include <optional>
 #include <stdexcept>
 
-#include "simulation/Verlet.h"
-
 namespace
 {
     Real distance(
@@ -31,7 +29,8 @@ SimulationFitnessEvaluator::SimulationFitnessEvaluator(
     Vector3 targetPointFromTargetBody,
     const std::vector<Body>& initialBodies,
     const Probe& probe,
-    const Body& targetBody
+    const Body& targetBody,
+    const Simulation& simulation
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
@@ -39,7 +38,8 @@ SimulationFitnessEvaluator::SimulationFitnessEvaluator(
       targetPointFromTargetBody(targetPointFromTargetBody),
       initialBodies(initialBodies),
       probe(probe),
-      targetBody(targetBody)
+      targetBody(targetBody),
+      simulation(simulation)
 {
 }
 
@@ -144,7 +144,7 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
             }
         }
 
-        Verlet::step(
+        simulation.step(
             bodyPointers,
             probeCopy,
             maneuver,
