@@ -1,11 +1,6 @@
 #include <algorithm>
 #include <exception>
-#include <execution>
-#include <functional>
 #include <iostream>
-#include <iterator>
-#include <ranges>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -13,22 +8,20 @@
 
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
-#include "genetics/crossing/Crossover.h"
-#include "genetics/crossing/RandomCutCrossover.h"
-#include "genetics/fitness/FitnessEvaluator.h"
-#include "genetics/fitness/SimulationFitnessEvaluator.h"
-#include "genetics/init/Initializer.h"
-#include "genetics/init/RandomInitializer.h"
-#include "genetics/mutation/Mutation.h"
-#include "genetics/mutation/RandomUniformMutation.h"
+#include "genetics/crossing/RandomCutCrossoverFactory.h"
+#include "genetics/GeneticAlgorithm.h"
+#include "genetics/fitness/FitnessResult.h"
+#include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
+#include "genetics/init/RandomInitializerFactory.h"
+#include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "genetics/search/NormalRandomSearch.h"
-#include "genetics/selection/Selection.h"
-#include "genetics/selection/TournamentSelection.h"
+#include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "simulation/Simulation.h"
-#include "simulation/Verlet.h"
+#include "simulation/SimulationFactory.h"
+#include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
 
 namespace
@@ -91,31 +84,6 @@ namespace
         return state;
     }
 
-    auto createInitializer(
-        Real simulationTime,
-        Probe& probe) -> RandomInitializer
-    {
-        return {
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            &probe
-        };
-    }
-
-    auto createMutation() -> RandomUniformMutation
-    {
-        return RandomUniformMutation(
-            MUTATION_PROBABILITY,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE
-        );
-    }
-
     auto createLocalSearch(
         const Probe& probe) -> NormalRandomSearch
     {
@@ -129,28 +97,6 @@ namespace
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE / maxPhysicalThrust);
-    }
-
-    void evaluatePopulationUnsequenced(
-        std::vector<Specimen>& population,
-        const FitnessEvaluator& fitnessEvaluator)
-    {
-        std::for_each(
-            std::execution::par_unseq,
-            population.begin(),
-            population.end(),
-            [&](Specimen& specimen)
-            {
-                fitnessEvaluator.evaluate(specimen);
-            });
-    }
-
-    void sortPopulationByFitness(
-        std::vector<Specimen>& population)
-    {
-        std::ranges::sort(
-            population,
-            std::less<Specimen>{});
     }
 
     void printFitnessResult(
@@ -171,17 +117,6 @@ namespace
         std::cout << ']';
     }
 
-    void printGenerationResult(
-        std::size_t generation,
-        const Specimen& best)
-    {
-        std::cout
-            << "Generation " << generation
-            << " | Best fitness = ";
-        printFitnessResult(best.getFitness().value());
-        std::cout << '\n';
-    }
-
     void printFinalResult(
         const Specimen& best)
     {
@@ -191,156 +126,19 @@ namespace
         std::cout << '\n';
     }
 
-    void copyElite(
-        const std::vector<Specimen>& population,
-        std::vector<Specimen>& newPopulation)
-    {
-        std::ranges::copy(
-            population |
-            std::views::take(std::min(ELITE_COUNT, population.size())),
-            std::back_inserter(newPopulation));
-    }
-
-    void fillPopulationWithChildren(
-        const std::vector<Specimen>& population,
-        std::vector<Specimen>& newPopulation,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation)
-    {
-        while (newPopulation.size() < POPULATION_SIZE)
-        {
-            const Specimen& parent1 = selection.select(population);
-            const Specimen& parent2 = selection.select(population);
-
-            auto [child1, child2] = crossover.cross(parent1, parent2);
-
-            mutation.mutate(child1);
-            mutation.mutate(child2);
-
-            newPopulation.push_back(std::move(child1));
-
-            if (newPopulation.size() < POPULATION_SIZE)
-            {
-                newPopulation.push_back(std::move(child2));
-            }
-        }
-    }
-
-    void addImmigrants(
-        std::vector<Specimen>& population,
-        Initializer& initializer)
-    {
-        constexpr std::size_t immigrants = POPULATION_SIZE / 25;
-
-        std::ranges::generate(
-            population |
-            std::views::reverse |
-            std::views::take(immigrants),
-            [&initializer]
-            {
-                return initializer.create();
-            });
-    }
-
-    auto createNextGeneration(
-        const std::vector<Specimen>& population,
-        Initializer& initializer,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) -> std::vector<Specimen>
-    {
-        std::vector<Specimen> newPopulation;
-        newPopulation.reserve(POPULATION_SIZE);
-
-        copyElite(
-            population,
-            newPopulation);
-
-        fillPopulationWithChildren(
-            population,
-            newPopulation,
-            selection,
-            crossover,
-            mutation);
-
-        addImmigrants(
-            newPopulation,
-            initializer);
-
-        return newPopulation;
-    }
-
     auto runGeneticAlgorithm(
-        SimulationState& state,
-        const Simulation& simulation) -> Specimen
+        const SimulationState& state,
+        GeneticAlgorithm::Factories factories) -> Specimen
     {
-        RandomInitializer initializer =
-            createInitializer(
-                state.simulationTime,
-                state.probe);
+        GeneticAlgorithm algorithm(
+            POPULATION_SIZE,
+            GENERATIONS,
+            ELITE_COUNT,
+            POPULATION_SIZE / 25,
+            createLocalSearch(state.probe),
+            factories);
 
-        TournamentSelection selection(
-            TOURNAMENT_SIZE);
-
-        RandomCutCrossover crossover;
-
-        RandomUniformMutation mutation =
-            createMutation();
-
-        NormalRandomSearch localSearch =
-            createLocalSearch(
-                state.probe);
-
-        SimulationFitnessEvaluator fitnessEvaluator(
-            state.gravitationalConstant,
-            state.timeStep,
-            state.simulationTime,
-            state.targetPointFromTargetBody,
-            state.initialBodies,
-            state.probe,
-            state.targetBody,
-            simulation
-        );
-
-        std::vector<Specimen> population =
-            initializer.createPopulation(
-                POPULATION_SIZE);
-
-        for (std::size_t generation = 0; generation < GENERATIONS; ++generation)
-        {
-            evaluatePopulationUnsequenced(
-                population,
-                fitnessEvaluator);
-
-            sortPopulationByFitness(
-                population);
-
-            localSearch.improve(
-                population.front(),
-                fitnessEvaluator);
-
-            printGenerationResult(
-                generation,
-                population.front());
-
-            population =
-                createNextGeneration(
-                    population,
-                    initializer,
-                    selection,
-                    crossover,
-                    mutation);
-        }
-
-        evaluatePopulationUnsequenced(
-            population,
-            fitnessEvaluator);
-
-        sortPopulationByFitness(
-            population);
-
-        return population.front();
+        return algorithm.run();
     }
 
     void plotBestTrajectory(
@@ -374,18 +172,58 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        Verlet simulation;
+        VerletFactory verletFactory;
+        const SimulationFactory& simulationFactory = verletFactory;
+        auto simulation =
+            simulationFactory.create();
+
+        RandomInitializerFactory initializerFactory(
+            MIN_MANEUVERS,
+            MAX_MANEUVERS,
+            MIN_MANEUVER_TIME,
+            state.simulationTime,
+            MIN_MANEUVER_DURATION,
+            MAX_MANEUVER_DURATION,
+            state.probe);
+
+        TournamentSelectionFactory selectionFactory(
+            TOURNAMENT_SIZE);
+
+        RandomCutCrossoverFactory crossoverFactory;
+
+        RandomUniformMutationFactory mutationFactory(
+            MUTATION_PROBABILITY,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE);
+
+        SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
+            state.gravitationalConstant,
+            state.timeStep,
+            state.simulationTime,
+            state.targetPointFromTargetBody,
+            state.initialBodies,
+            state.probe,
+            state.targetBody,
+            *simulation);
+
+        GeneticAlgorithm::Factories factories{
+            initializerFactory,
+            selectionFactory,
+            crossoverFactory,
+            mutationFactory,
+            fitnessEvaluatorFactory};
 
         const Specimen best =
             runGeneticAlgorithm(
                 state,
-                simulation);
+                factories);
 
         printFinalResult(
             best);
 
         plotBestTrajectory(
-            simulation,
+            *simulation,
             state,
             best);
 

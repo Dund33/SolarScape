@@ -30,8 +30,11 @@ target_include_directories(SolarScapeMath
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
         simulation/Simulation.h
+        simulation/SimulationFactory.h
         simulation/Verlet.cpp
         simulation/Verlet.h
+        simulation/VerletFactory.cpp
+        simulation/VerletFactory.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -102,18 +105,30 @@ target_link_libraries(SolarScapeGeneticCore
 )
 
 add_library(SolarScapeGeneticOperators STATIC
+        genetics/selection/SelectionFactory.h
         genetics/selection/Selection.h
         genetics/selection/TournamentSelection.cpp
         genetics/selection/TournamentSelection.h
+        genetics/selection/TournamentSelectionFactory.cpp
+        genetics/selection/TournamentSelectionFactory.h
+        genetics/mutation/MutationFactory.h
         genetics/mutation/Mutation.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
+        genetics/mutation/RandomUniformMutationFactory.cpp
+        genetics/mutation/RandomUniformMutationFactory.h
+        genetics/init/InitializerFactory.h
         genetics/init/Initializer.h
         genetics/init/RandomInitializer.cpp
         genetics/init/RandomInitializer.h
+        genetics/init/RandomInitializerFactory.cpp
+        genetics/init/RandomInitializerFactory.h
+        genetics/crossing/CrossoverFactory.h
         genetics/crossing/Crossover.h
         genetics/crossing/RandomCutCrossover.cpp
         genetics/crossing/RandomCutCrossover.h
+        genetics/crossing/RandomCutCrossoverFactory.cpp
+        genetics/crossing/RandomCutCrossoverFactory.h
 )
 
 add_library(SolarScape::GeneticOperators ALIAS SolarScapeGeneticOperators)
@@ -129,9 +144,12 @@ target_link_libraries(SolarScapeGeneticOperators
 )
 
 add_library(SolarScapeGeneticFitness STATIC
+        genetics/fitness/FitnessEvaluatorFactory.h
         genetics/fitness/FitnessEvaluator.h
         genetics/fitness/SimulationFitnessEvaluator.cpp
         genetics/fitness/SimulationFitnessEvaluator.h
+        genetics/fitness/SimulationFitnessEvaluatorFactory.cpp
+        genetics/fitness/SimulationFitnessEvaluatorFactory.h
 )
 
 add_library(SolarScape::GeneticFitness ALIAS SolarScapeGeneticFitness)
@@ -165,6 +183,25 @@ target_link_libraries(SolarScapeGeneticSearch
         SolarScape::GeneticFitness
 )
 
+add_library(SolarScapeGeneticAlgorithm STATIC
+        genetics/GeneticAlgorithm.cpp
+        genetics/GeneticAlgorithm.h
+)
+
+add_library(SolarScape::GeneticAlgorithm ALIAS SolarScapeGeneticAlgorithm)
+
+target_include_directories(SolarScapeGeneticAlgorithm
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticAlgorithm
+        PUBLIC
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticSearch
+)
+
 add_library(SolarScapeGenetic INTERFACE)
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
@@ -175,6 +212,7 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticSearch
+        SolarScape::GeneticAlgorithm
 )
 
 configure_file(
