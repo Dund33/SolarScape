@@ -15,4 +15,4 @@ public:
     ) const = 0;
 };
 
-#endif // SOLARSCAPE_SELECTION_H
+#endif

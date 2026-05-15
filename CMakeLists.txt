@@ -2,30 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 
 project(SolarScape VERSION 1.0 LANGUAGES CXX)
 
-# =====================================
-# C++ Standard
-# =====================================
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# =====================================
-# Flags for release mode
-# =====================================
-
 set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
-# =====================================
-# Dependencies
-# =====================================
-
 find_package(yaml-cpp CONFIG REQUIRED)
-
-# =====================================
-# Math Library
-# =====================================
 
 add_library(SolarScapeMath STATIC
         math/Vector3.cpp
@@ -42,10 +26,6 @@ target_include_directories(SolarScapeMath
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
-# =====================================
-# Simulation Library
-# =====================================
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
@@ -65,10 +45,6 @@ target_link_libraries(SolarScapeSimulation
         SolarScape::Math
 )
 
-# =====================================
-# Config Library
-# =====================================
-
 add_library(SolarScapeConfig STATIC
         config/SimulationConfig.cpp
         config/SimulationConfig.h
@@ -87,10 +63,6 @@ target_link_libraries(SolarScapeConfig
         yaml-cpp::yaml-cpp
 )
 
-# =====================================
-# Visual Library
-# =====================================
-
 add_library(SolarScapeVisual STATIC
         visual/PlotTrajectory.cpp
         visual/PlotTrajectory.h
@@ -107,10 +79,6 @@ target_link_libraries(SolarScapeVisual
         PUBLIC
         SolarScape::Simulation
 )
-
-# =====================================
-# Genetics Library
-# =====================================
 
 add_library(SolarScapeGenetic STATIC
         genetics/Specimen.cpp
@@ -147,10 +115,6 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::Simulation
 )
 
-# =====================================
-# Copy config.yaml
-# =====================================
-
 configure_file(
         config.yaml
         config.yaml
@@ -158,16 +122,9 @@ configure_file(
 )
 
 
-# =====================================
-# Include TBB for Linux scenarios
-# =====================================
 if(LINUX)
     find_package(TBB REQUIRED)
 endif()
-
-# =====================================
-# Executable
-# =====================================
 
 add_executable(SolarScape
         simulation.cpp

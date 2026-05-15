@@ -12,4 +12,4 @@ public:
     ) const override;
 };
 
-#endif // SOLARSCAPE_RANDOMCUTCROSSOVER_H
+#endif

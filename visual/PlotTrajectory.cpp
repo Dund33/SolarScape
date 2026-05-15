@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #include "PlotTrajectory.h"
 
 #include <algorithm>

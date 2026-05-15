@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/10/2026.
-//
-
 #include "RandomUniformMutation.h"
 
 #include <algorithm>

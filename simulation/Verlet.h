@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #ifndef SOLARSCAPE_VERLET_H
 #define SOLARSCAPE_VERLET_H
 
@@ -32,4 +28,4 @@ namespace Verlet
         Real gravitationalConstant);
 }
 
-#endif // SOLARSCAPE_VERLET_H
+#endif

@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #include "Body.h"
 
 Body::Body() : mass_(0.0L)

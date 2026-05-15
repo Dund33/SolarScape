@@ -16,4 +16,4 @@ public:
     ) const = 0;
 };
 
-#endif // SOLARSCAPE_CROSSOVER_H
+#endif

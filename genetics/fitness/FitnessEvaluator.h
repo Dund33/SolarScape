@@ -38,4 +38,4 @@ private:
     const Body& targetBody;
 };
 
-#endif // SOLARSCAPE_FITNESSEVALUATOR_H
+#endif

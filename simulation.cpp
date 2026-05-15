@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #include <algorithm>
 #include <exception>
 #include <execution>

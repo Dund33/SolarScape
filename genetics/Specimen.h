@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #ifndef SOLARSCAPE_SPECIMEN_H
 #define SOLARSCAPE_SPECIMEN_H
 
@@ -36,7 +32,6 @@ public:
     const Maneuver& operator[](std::size_t index) const;
     Maneuver& operator[](std::size_t index);
 
-    // Fitness
     const std::optional<FitnessResult>& getFitness() const;
     void setFitness(const FitnessResult& fitness);
     void clearFitness();
@@ -61,4 +56,4 @@ namespace std
     };
 }
 
-#endif // SOLARSCAPE_SPECIMEN_H
+#endif

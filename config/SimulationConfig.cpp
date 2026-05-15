@@ -24,7 +24,6 @@ auto SimulationConfig::loadFromFile(
 
     SimulationConfig result;
 
-    // ---------------- Simulation ----------------
     const YAML::Node simulation = config["simulation"];
 
     result.gravitationalConstant =
@@ -39,12 +38,10 @@ auto SimulationConfig::loadFromFile(
         readReal(
             simulation["simulationTime"]);
 
-    // ---------------- Target point ----------------
     result.targetPointFromTargetBody =
         loadVector3(
             config["targetPointFromTargetBody"]);
 
-    // ---------------- Bodies ----------------
     const YAML::Node bodiesNode = config["bodies"];
 
     if (!bodiesNode || !bodiesNode.IsSequence())
@@ -59,12 +56,10 @@ auto SimulationConfig::loadFromFile(
             loadBody(bodyNode));
     }
 
-    // ---------------- Target body ----------------
     result.targetBody =
         loadBody(
             config["targetBody"]);
 
-    // ---------------- Probe ----------------
     result.probe =
         loadProbe(
             config["probe"]);

@@ -37,4 +37,4 @@ private:
     Probe* probe;
 };
 
-#endif // SOLARSCAPE_RANDOMINITIALIZER_H
+#endif

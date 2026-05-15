@@ -23,4 +23,4 @@ private:
     long double maxThrustOffset;
 };
 
-#endif // SOLARSCAPE_RANDOMUNIFORMMUTATION_H
+#endif

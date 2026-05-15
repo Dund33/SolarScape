@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/10/2026.
-//
-
 #include "TournamentSelection.h"
 
 #include <functional>
@@ -31,7 +27,6 @@ const Specimen& TournamentSelection::select(
 
     std::size_t bestIndex = dist(rng);
 
-    // Operator < porównuje osobniki według dominacji FitnessResult.
     const std::less<Specimen> isBetter;
     for (std::size_t i = 1; i < tournamentSize; ++i)
     {

@@ -30,4 +30,4 @@ private:
     std::array<float, kSize> values_;
 };
 
-#endif // FITNESSRESULT_H
+#endif

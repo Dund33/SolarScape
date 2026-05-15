@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/9/2026.
-//
-
 #ifndef SOLARSCAPE_PLOT_TRAJECTORY_H
 #define SOLARSCAPE_PLOT_TRAJECTORY_H
 
@@ -23,4 +19,4 @@ void plotTrajectory(
     const std::vector<Body*>& bodies,
     const std::vector<Maneuver>& maneuvers);
 
-#endif //SOLARSCAPE_PLOT_TRAJECTORY_H
+#endif

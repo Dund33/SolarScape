@@ -1,7 +1,3 @@
-//
-// Created by Luke on 5/7/2026.
-//
-
 #ifndef SOLARSCAPE_BODY_H
 #define SOLARSCAPE_BODY_H
 
@@ -29,4 +25,4 @@ private:
 };
 
 
-#endif //SOLARSCAPE_BODY_H
+#endif
