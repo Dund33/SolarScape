@@ -8,10 +8,12 @@
 class Crossover
 {
 public:
-    std::pair<Specimen, Specimen> cross(
+    virtual ~Crossover() = default;
+
+    virtual std::pair<Specimen, Specimen> cross(
         const Specimen& parent1,
         const Specimen& parent2
-    ) const;
+    ) const = 0;
 };
 
 #endif // SOLARSCAPE_CROSSOVER_H
