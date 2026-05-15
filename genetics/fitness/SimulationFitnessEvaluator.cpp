@@ -1,4 +1,4 @@
-#include "FitnessEvaluator.h"
+#include "SimulationFitnessEvaluator.h"
 
 #include <algorithm>
 #include <functional>
@@ -24,7 +24,7 @@ namespace
     }
 }
 
-FitnessEvaluator::FitnessEvaluator(
+SimulationFitnessEvaluator::SimulationFitnessEvaluator(
     Real gravitationalConstant,
     Real timeStep,
     Real simulationTime,
@@ -43,7 +43,7 @@ FitnessEvaluator::FitnessEvaluator(
 {
 }
 
-void FitnessEvaluator::evaluate(Specimen& specimen) const
+void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
 {
     if (specimen.getFitness().has_value())
     {
@@ -61,7 +61,7 @@ void FitnessEvaluator::evaluate(Specimen& specimen) const
     specimen.setFitness(fitnessResult);
 }
 
-FitnessResult FitnessEvaluator::calculateFitnessResult(
+FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
     const std::vector<Maneuver>& maneuvers) const
 {
     if (simulationTime < 0.0L)

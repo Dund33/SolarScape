@@ -97,8 +97,9 @@ add_library(SolarScapeGenetic STATIC
         genetics/crossing/RandomCutCrossover.h
         genetics/fitness/FitnessResult.cpp
         genetics/fitness/FitnessResult.h
-        genetics/fitness/FitnessEvaluator.cpp
         genetics/fitness/FitnessEvaluator.h
+        genetics/fitness/SimulationFitnessEvaluator.cpp
+        genetics/fitness/SimulationFitnessEvaluator.h
         genetics/search/NormalRandomSearch.cpp
         genetics/search/NormalRandomSearch.h
 )

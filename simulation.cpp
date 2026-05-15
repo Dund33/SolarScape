@@ -16,6 +16,7 @@
 #include "genetics/crossing/Crossover.h"
 #include "genetics/crossing/RandomCutCrossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
+#include "genetics/fitness/SimulationFitnessEvaluator.h"
 #include "genetics/init/Initializer.h"
 #include "genetics/init/RandomInitializer.h"
 #include "genetics/mutation/Mutation.h"
@@ -288,7 +289,7 @@ namespace
             createLocalSearch(
                 state.probe);
 
-        FitnessEvaluator fitnessEvaluator(
+        SimulationFitnessEvaluator fitnessEvaluator(
             state.gravitationalConstant,
             state.timeStep,
             state.simulationTime,
