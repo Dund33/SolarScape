@@ -47,11 +47,6 @@ namespace
         std::vector<Body*> bodyPointers;
     };
 
-    auto loadConfig(const std::string& filePath) -> SimulationConfig
-    {
-        return SimulationConfig::loadFromFile(filePath);
-    }
-
     auto createBodyPointers(
         std::vector<Body>& bodies,
         Body& targetBody,
@@ -365,7 +360,7 @@ namespace
     auto run() -> int
     {
         SimulationConfig config =
-            loadConfig(
+            SimulationConfig::loadFromFile(
                 "config.yaml");
 
         SimulationState state =

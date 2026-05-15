@@ -25,10 +25,6 @@ private:
     Maneuver perturbManeuver(
         const Maneuver& maneuver) const;
 
-    bool isBetter(
-        const Specimen& candidate,
-        const Specimen& currentBest) const;
-
     std::size_t iterations;
     Real initTimeStdDev;
     Real durationStdDev;

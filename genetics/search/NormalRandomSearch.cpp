@@ -70,7 +70,7 @@ void NormalRandomSearch::improve(
 
         fitnessEvaluator.evaluate(candidate);
 
-        if (isBetter(candidate, best))
+        if (candidate < best)
         {
             best = std::move(candidate);
         }
@@ -128,11 +128,4 @@ Maneuver NormalRandomSearch::perturbManeuver(
         throttleNorm,
         initTime,
         duration);
-}
-
-bool NormalRandomSearch::isBetter(
-    const Specimen& candidate,
-    const Specimen& currentBest) const
-{
-    return candidate < currentBest;
 }
