@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <execution>
-#include <functional>
 #include <iostream>
 #include <iterator>
 #include <ranges>
@@ -15,27 +14,17 @@ namespace
     void sortPopulationByFitness(
         std::vector<Specimen>& population)
     {
-        std::ranges::sort(
-            population,
-            std::less<Specimen>{});
+        std::ranges::sort(population);
     }
 
     void printFitnessResult(
         const FitnessResult& fitness)
     {
-        std::cout << '[';
-
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
-        {
-            if (i > 0)
-            {
-                std::cout << ", ";
-            }
-
-            std::cout << fitness.get(i);
-        }
-
-        std::cout << ']';
+        std::cout
+            << "[minimumDistance=" << fitness.minimumDistance()
+            << ", minimumDistanceTime=" << fitness.minimumDistanceTime()
+            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass()
+            << ']';
     }
 
     void printGenerationResult(
@@ -55,14 +44,12 @@ GeneticAlgorithm::GeneticAlgorithm(
     std::size_t generations,
     std::size_t eliteCount,
     std::size_t immigrantCount,
-    NormalRandomSearch localSearch,
     Factories factories
 )
     : populationSize(populationSize),
       generations(generations),
       eliteCount(eliteCount),
       immigrantCount(immigrantCount),
-      localSearch(localSearch),
       factories(factories)
 {
 }
@@ -77,6 +64,8 @@ Specimen GeneticAlgorithm::run() const
         factories.crossoverFactory.create();
     auto mutation =
         factories.mutationFactory.create();
+    auto localImprovement =
+        factories.localImprovementFactory.create();
     auto fitnessEvaluator =
         factories.fitnessEvaluatorFactory.create();
 
@@ -93,7 +82,7 @@ Specimen GeneticAlgorithm::run() const
         sortPopulationByFitness(
             population);
 
-        localSearch.improve(
+        localImprovement->improve(
             population.front(),
             *fitnessEvaluator);
 

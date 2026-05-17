@@ -14,12 +14,11 @@
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
-#include "genetics/search/NormalRandomSearch.h"
+#include "genetics/search/NormalRandomSearchFactory.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/Probe.h"
-#include "simulation/Simulation.h"
 #include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
@@ -39,82 +38,28 @@ namespace
         std::vector<Body> initialBodies;
         Body targetBody;
         Probe probe;
-
-        std::vector<Body*> bodyPointers;
     };
-
-    auto createBodyPointers(
-        std::vector<Body>& bodies,
-        Body& targetBody,
-        Probe& probe) -> std::vector<Body*>
-    {
-        std::vector<Body*> bodyPointers;
-        bodyPointers.reserve(bodies.size() + 2);
-
-        for (Body& body : bodies)
-        {
-            bodyPointers.push_back(&body);
-        }
-
-        bodyPointers.push_back(&targetBody);
-        bodyPointers.push_back(&probe);
-
-        return bodyPointers;
-    }
 
     auto createSimulationState(SimulationConfig&& config) -> SimulationState
     {
-        SimulationState state;
-
-        state.gravitationalConstant = config.gravitationalConstant;
-        state.timeStep = config.timeStep;
-        state.simulationTime = config.simulationTime;
-        state.targetPointFromTargetBody = config.targetPointFromTargetBody;
-
-        state.initialBodies = std::move(config.bodies);
-        state.targetBody = std::move(config.targetBody);
-        state.probe = std::move(config.probe);
-
-        state.bodyPointers =
-            createBodyPointers(
-                state.initialBodies,
-                state.targetBody,
-                state.probe);
-
-        return state;
-    }
-
-    auto createLocalSearch(
-        const Probe& probe) -> NormalRandomSearch
-    {
-        const Real maxPhysicalThrust =
-            std::max(
-                probe.fuelFlow() * probe.specificImpulse(),
-                1.0L);
-
-        return NormalRandomSearch(
-            LOCAL_SEARCH_ITERATIONS,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE / maxPhysicalThrust);
+        return {
+            config.gravitationalConstant,
+            config.timeStep,
+            config.simulationTime,
+            config.targetPointFromTargetBody,
+            std::move(config.bodies),
+            std::move(config.targetBody),
+            std::move(config.probe)};
     }
 
     void printFitnessResult(
         const FitnessResult& fitness)
     {
-        std::cout << '[';
-
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
-        {
-            if (i > 0)
-            {
-                std::cout << ", ";
-            }
-
-            std::cout << fitness.get(i);
-        }
-
-        std::cout << ']';
+        std::cout
+            << "[minimumDistance=" << fitness.minimumDistance()
+            << ", minimumDistanceTime=" << fitness.minimumDistanceTime()
+            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass()
+            << ']';
     }
 
     void printFinalResult(
@@ -126,39 +71,18 @@ namespace
         std::cout << '\n';
     }
 
-    auto runGeneticAlgorithm(
-        const SimulationState& state,
-        GeneticAlgorithm::Factories factories) -> Specimen
-    {
-        GeneticAlgorithm algorithm(
-            POPULATION_SIZE,
-            GENERATIONS,
-            ELITE_COUNT,
-            POPULATION_SIZE / 25,
-            createLocalSearch(state.probe),
-            factories);
-
-        return algorithm.run();
-    }
-
     void plotBestTrajectory(
-        const Simulation& simulation,
+        const SimulationFactory& simulationFactory,
         const SimulationState& state,
         const Specimen& best)
     {
-        std::vector<Maneuver> maneuvers =
-            best.getManeuvers();
-
         plotTrajectory(
-            simulation,
+            simulationFactory,
             state.gravitationalConstant,
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
             state.targetPointFromTargetBody,
-            state.targetBody,
-            state.probe,
-            state.bodyPointers,
-            maneuvers
+            best.getManeuvers()
         );
     }
 
@@ -172,10 +96,10 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        VerletFactory verletFactory;
-        const SimulationFactory& simulationFactory = verletFactory;
-        auto simulation =
-            simulationFactory.create();
+        VerletFactory verletFactory(
+            state.initialBodies,
+            state.targetBody,
+            state.probe);
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
@@ -197,33 +121,46 @@ namespace
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE);
 
+        const Real maxPhysicalThrust =
+            std::max(
+                state.probe.fuelFlow() * state.probe.specificImpulse(),
+                1.0L);
+
+        NormalRandomSearchFactory localImprovementFactory(
+            LOCAL_SEARCH_ITERATIONS,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE / maxPhysicalThrust);
+
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.gravitationalConstant,
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,
-            state.initialBodies,
-            state.probe,
-            state.targetBody,
-            *simulation);
+            verletFactory);
 
         GeneticAlgorithm::Factories factories{
             initializerFactory,
             selectionFactory,
             crossoverFactory,
             mutationFactory,
+            localImprovementFactory,
             fitnessEvaluatorFactory};
 
-        const Specimen best =
-            runGeneticAlgorithm(
-                state,
-                factories);
+        GeneticAlgorithm algorithm(
+            POPULATION_SIZE,
+            GENERATIONS,
+            ELITE_COUNT,
+            POPULATION_SIZE / 25,
+            factories);
+
+        const Specimen best = algorithm.run();
 
         printFinalResult(
             best);
 
         plotBestTrajectory(
-            *simulation,
+            verletFactory,
             state,
             best);
 

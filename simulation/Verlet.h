@@ -9,13 +9,16 @@
 class Verlet final : public Simulation
 {
 public:
+    Verlet(
+        std::vector<Body> bodies,
+        Body targetBody,
+        Probe probe);
+
     void step(
-        std::vector<Body*>& bodies,
-        Probe& probe,
         const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant
-    ) const override;
+    ) override;
 
 private:
     static Vector3 calculateAccelerationForBody(

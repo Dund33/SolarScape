@@ -29,6 +29,8 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
+        simulation/ManeuverSchedule.h
+        simulation/Simulation.cpp
         simulation/Simulation.h
         simulation/SimulationFactory.h
         simulation/Verlet.cpp
@@ -166,8 +168,12 @@ target_link_libraries(SolarScapeGeneticFitness
 )
 
 add_library(SolarScapeGeneticSearch STATIC
+        genetics/search/LocalImprovement.h
+        genetics/search/LocalImprovementFactory.h
         genetics/search/NormalRandomSearch.cpp
         genetics/search/NormalRandomSearch.h
+        genetics/search/NormalRandomSearchFactory.cpp
+        genetics/search/NormalRandomSearchFactory.h
 )
 
 add_library(SolarScape::GeneticSearch ALIAS SolarScapeGeneticSearch)

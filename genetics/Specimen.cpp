@@ -9,6 +9,14 @@ namespace
 {
     constexpr std::size_t kMinimumDistanceFuelMassIndex = 2;
 
+    enum class DominanceRelation
+    {
+        lhsDominates,
+        rhsDominates,
+        equivalent,
+        unordered
+    };
+
     float comparableFitnessValue(
         const FitnessResult& fitness,
         std::size_t index)
@@ -23,29 +31,45 @@ namespace
         return value;
     }
 
-    bool dominates(
+    DominanceRelation compareByDominance(
         const FitnessResult& lhs,
         const FitnessResult& rhs)
     {
-        bool strictlyBetter = false;
+        bool lhsStrictlyBetter = false;
+        bool rhsStrictlyBetter = false;
 
         for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
         {
             const float lhsValue = comparableFitnessValue(lhs, i);
             const float rhsValue = comparableFitnessValue(rhs, i);
 
-            if (lhsValue > rhsValue)
-            {
-                return false;
-            }
-
             if (lhsValue < rhsValue)
             {
-                strictlyBetter = true;
+                lhsStrictlyBetter = true;
+            }
+
+            if (rhsValue < lhsValue)
+            {
+                rhsStrictlyBetter = true;
             }
         }
 
-        return strictlyBetter;
+        if (lhsStrictlyBetter && !rhsStrictlyBetter)
+        {
+            return DominanceRelation::lhsDominates;
+        }
+
+        if (rhsStrictlyBetter && !lhsStrictlyBetter)
+        {
+            return DominanceRelation::rhsDominates;
+        }
+
+        if (!lhsStrictlyBetter && !rhsStrictlyBetter)
+        {
+            return DominanceRelation::equivalent;
+        }
+
+        return DominanceRelation::unordered;
     }
 
     bool lexicographicallyBetter(
@@ -161,20 +185,46 @@ void Specimen::clearFitness()
     fitness.reset();
 }
 
+std::partial_ordering operator<=>(const Specimen& lhs, const Specimen& rhs)
+{
+    const FitnessResult& lhsFitness = lhs.getFitness().value();
+    const FitnessResult& rhsFitness = rhs.getFitness().value();
+
+    switch (compareByDominance(lhsFitness, rhsFitness))
+    {
+    case DominanceRelation::lhsDominates:
+        return std::partial_ordering::less;
+    case DominanceRelation::rhsDominates:
+        return std::partial_ordering::greater;
+    case DominanceRelation::equivalent:
+        return std::partial_ordering::equivalent;
+    case DominanceRelation::unordered:
+        return std::partial_ordering::unordered;
+    }
+
+    return std::partial_ordering::unordered;
+}
+
+bool operator==(const Specimen& lhs, const Specimen& rhs)
+{
+    return (lhs <=> rhs) == std::partial_ordering::equivalent;
+}
+
 bool operator<(const Specimen& lhs, const Specimen& rhs)
 {
     const FitnessResult& lhsFitness = lhs.getFitness().value();
     const FitnessResult& rhsFitness = rhs.getFitness().value();
 
-    if (dominates(lhsFitness, rhsFitness))
+    switch (compareByDominance(lhsFitness, rhsFitness))
     {
+    case DominanceRelation::lhsDominates:
         return true;
-    }
-
-    if (dominates(rhsFitness, lhsFitness))
-    {
+    case DominanceRelation::rhsDominates:
         return false;
+    case DominanceRelation::equivalent:
+    case DominanceRelation::unordered:
+        return lexicographicallyBetter(lhsFitness, rhsFitness);
     }
 
-    return lexicographicallyBetter(lhsFitness, rhsFitness);
+    return false;
 }
