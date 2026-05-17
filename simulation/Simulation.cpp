@@ -18,17 +18,7 @@ const std::vector<Body>& Simulation::bodies() const
     return bodies_;
 }
 
-std::vector<Body>& Simulation::bodies()
-{
-    return bodies_;
-}
-
 const Probe& Simulation::probe() const
-{
-    return probe_;
-}
-
-Probe& Simulation::probe()
 {
     return probe_;
 }
@@ -38,7 +28,12 @@ const Body& Simulation::targetBody() const
     return *targetBody_;
 }
 
-Body& Simulation::targetBody()
+std::vector<Body>& Simulation::mutableBodies()
 {
-    return *targetBody_;
+    return bodies_;
+}
+
+Probe& Simulation::mutableProbe()
+{
+    return probe_;
 }

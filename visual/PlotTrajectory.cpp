@@ -1,12 +1,12 @@
 #include "PlotTrajectory.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <optional>
 #include <vector>
+
+#include "simulation/ManeuverSchedule.h"
 
 namespace
 {
@@ -29,6 +29,13 @@ void plotTrajectory(
     auto simulation =
         simulationFactory.create();
 
+    const std::vector<Body>& simulationBodies =
+        simulation->bodies();
+    const Body& simulatedTargetBody =
+        simulation->targetBody();
+    const Probe& simulationProbe =
+        simulation->probe();
+
     std::ofstream output("simulation.csv");
     if (!output)
     {
@@ -39,61 +46,26 @@ void plotTrajectory(
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
 
-    std::vector<Maneuver> sortedManeuvers = maneuvers;
-    std::ranges::sort(
-        sortedManeuvers,
-        {},
-        [](const Maneuver& maneuver)
-        {
-            return maneuver.getInitTime();
-        });
-
-    Real maneuverStartTime = 0.0L;
-    Real maneuverEndTime = 0.0L;
-    std::size_t maneuverIndex = 0;
-
-    if (!sortedManeuvers.empty())
-    {
-        maneuverStartTime = sortedManeuvers[0].getInitTime();
-        maneuverEndTime =
-            maneuverStartTime + sortedManeuvers[0].getDuration();
-    }
+    const std::vector<Maneuver> sortedManeuvers =
+        sortManeuversByInitTime(maneuvers);
 
     for (std::size_t step = 0; step <= steps; ++step)
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = absolutePointForBody(
-            simulation->targetBody(),
+            simulatedTargetBody,
             targetPointFromTargetBody);
 
-        while (maneuverIndex < sortedManeuvers.size() &&
-            time >= maneuverEndTime)
-        {
-            ++maneuverIndex;
-
-            if (maneuverIndex < sortedManeuvers.size())
-            {
-                maneuverStartTime =
-                    sortedManeuvers[maneuverIndex].getInitTime();
-                maneuverEndTime =
-                    maneuverStartTime +
-                    sortedManeuvers[maneuverIndex].getDuration();
-            }
-        }
-
-        std::optional<Maneuver> maneuver;
-        if (maneuverIndex < sortedManeuvers.size() &&
-            maneuverStartTime <= time &&
-            time < maneuverEndTime)
-        {
-            maneuver = sortedManeuvers[maneuverIndex];
-        }
+        const auto maneuver =
+            activeManeuverAt(
+                sortedManeuvers,
+                time);
 
         if (step % 500 == 0)
         {
-            for (std::size_t i = 0; i < simulation->bodies().size(); ++i)
+            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
             {
-                const Body& body = simulation->bodies()[i];
+                const Body& body = simulationBodies[i];
 
                 output << step << ','
                     << time << ','
@@ -110,10 +82,9 @@ void plotTrajectory(
                     << targetPoint.z << '\n';
             }
 
-            const Probe& simulationProbe = simulation->probe();
             output << step << ','
                 << time << ','
-                << simulation->bodies().size() << ','
+                << simulationBodies.size() << ','
                 << simulationProbe.position().x << ','
                 << simulationProbe.position().y << ','
                 << simulationProbe.position().z << ','

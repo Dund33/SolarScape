@@ -31,31 +31,6 @@ namespace
         return value;
     }
 
-    bool dominates(
-        const FitnessResult& lhs,
-        const FitnessResult& rhs)
-    {
-        bool strictlyBetter = false;
-
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
-        {
-            const float lhsValue = comparableFitnessValue(lhs, i);
-            const float rhsValue = comparableFitnessValue(rhs, i);
-
-            if (rhsValue < lhsValue)
-            {
-                return false;
-            }
-
-            if (lhsValue < rhsValue)
-            {
-                strictlyBetter = true;
-            }
-        }
-
-        return strictlyBetter;
-    }
-
     DominanceRelation compareByDominance(
         const FitnessResult& lhs,
         const FitnessResult& rhs)
@@ -240,15 +215,16 @@ bool operator<(const Specimen& lhs, const Specimen& rhs)
     const FitnessResult& lhsFitness = lhs.getFitness().value();
     const FitnessResult& rhsFitness = rhs.getFitness().value();
 
-    if (dominates(lhsFitness, rhsFitness))
+    switch (compareByDominance(lhsFitness, rhsFitness))
     {
+    case DominanceRelation::lhsDominates:
         return true;
-    }
-
-    if (dominates(rhsFitness, lhsFitness))
-    {
+    case DominanceRelation::rhsDominates:
         return false;
+    case DominanceRelation::equivalent:
+    case DominanceRelation::unordered:
+        return lexicographicallyBetter(lhsFitness, rhsFitness);
     }
 
-    return lexicographicallyBetter(lhsFitness, rhsFitness);
+    return false;
 }

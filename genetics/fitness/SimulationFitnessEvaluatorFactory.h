@@ -1,9 +1,8 @@
 #ifndef SOLARSCAPE_SIMULATIONFITNESSEVALUATORFACTORY_H
 #define SOLARSCAPE_SIMULATIONFITNESSEVALUATORFACTORY_H
 
-#include <vector>
-
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
+#include "math/Real.h"
 #include "math/Vector3.h"
 #include "simulation/SimulationFactory.h"
 

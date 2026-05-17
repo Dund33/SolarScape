@@ -4,9 +4,10 @@
 #include <cstddef>
 #include <vector>
 
+#include "math/Real.h"
+#include "math/Vector3.h"
 #include "simulation/Maneuver.h"
 #include "simulation/SimulationFactory.h"
-#include "math/Real.h"
 
 void plotTrajectory(
     const SimulationFactory& simulationFactory,

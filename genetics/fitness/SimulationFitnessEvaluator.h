@@ -5,6 +5,7 @@
 
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/fitness/FitnessResult.h"
+#include "math/Real.h"
 #include "math/Vector3.h"
 #include "simulation/Maneuver.h"
 #include "simulation/SimulationFactory.h"

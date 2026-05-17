@@ -42,18 +42,14 @@ namespace
 
     auto createSimulationState(SimulationConfig&& config) -> SimulationState
     {
-        SimulationState state;
-
-        state.gravitationalConstant = config.gravitationalConstant;
-        state.timeStep = config.timeStep;
-        state.simulationTime = config.simulationTime;
-        state.targetPointFromTargetBody = config.targetPointFromTargetBody;
-
-        state.initialBodies = std::move(config.bodies);
-        state.targetBody = std::move(config.targetBody);
-        state.probe = std::move(config.probe);
-
-        return state;
+        return {
+            config.gravitationalConstant,
+            config.timeStep,
+            config.simulationTime,
+            config.targetPointFromTargetBody,
+            std::move(config.bodies),
+            std::move(config.targetBody),
+            std::move(config.probe)};
     }
 
     void printFitnessResult(

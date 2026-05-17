@@ -23,20 +23,19 @@ public:
     Simulation(Simulation&&) = delete;
     Simulation& operator=(Simulation&&) = delete;
 
-    const std::vector<Body>& bodies() const;
-    std::vector<Body>& bodies();
-
-    const Probe& probe() const;
-    Probe& probe();
-
-    const Body& targetBody() const;
-    Body& targetBody();
-
     virtual void step(
         const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant
     ) = 0;
+
+    const std::vector<Body>& bodies() const;
+    const Probe& probe() const;
+    const Body& targetBody() const;
+
+protected:
+    std::vector<Body>& mutableBodies();
+    Probe& mutableProbe();
 
 private:
     std::vector<Body> bodies_;

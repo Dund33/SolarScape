@@ -1,9 +1,8 @@
 #include "SimulationFitnessEvaluator.h"
 
-#include <algorithm>
-#include <functional>
-#include <optional>
 #include <stdexcept>
+
+#include "simulation/ManeuverSchedule.h"
 
 namespace
 {
@@ -67,15 +66,11 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
         simulationFactory.create();
 
     Real currentTime = 0.0L;
-    std::vector<Maneuver> sortedManeuvers = maneuvers;
-    std::ranges::sort(
-        sortedManeuvers,
-        {},
-        [](const Maneuver& maneuver)
-        {
-            return maneuver.getInitTime();
-        });
+    const std::vector<Maneuver> sortedManeuvers =
+        sortManeuversByInitTime(maneuvers);
 
+    const Body& simulatedTargetBody =
+        simulation->targetBody();
     const Probe& simulatedProbe =
         simulation->probe();
 
@@ -83,7 +78,7 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
         distance(
             simulatedProbe.position(),
             absolutePointForBody(
-                simulation->targetBody(),
+                simulatedTargetBody,
                 targetPointFromTargetBody));
 
     Real minimumDistanceTime = currentTime;
@@ -99,30 +94,10 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
                 ? remainingTime
                 : timeStep;
 
-        std::optional<Maneuver> maneuver;
-        auto maneuverIt = std::ranges::upper_bound(
-            sortedManeuvers,
-            currentTime,
-            std::less<>{},
-            [](const Maneuver& candidate)
-            {
-                return candidate.getInitTime();
-            });
-
-        if (maneuverIt != sortedManeuvers.begin())
-        {
-            --maneuverIt;
-
-            const Real maneuverStartTime =
-                maneuverIt->getInitTime();
-            const Real maneuverEndTime =
-                maneuverStartTime + maneuverIt->getDuration();
-
-            if (currentTime < maneuverEndTime)
-            {
-                maneuver = *maneuverIt;
-            }
-        }
+        const auto maneuver =
+            activeManeuverAt(
+                sortedManeuvers,
+                currentTime);
 
         simulation->step(
             maneuver,
@@ -133,16 +108,16 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
 
         const Real currentDistance =
             distance(
-                simulation->probe().position(),
+                simulatedProbe.position(),
                 absolutePointForBody(
-                    simulation->targetBody(),
+                    simulatedTargetBody,
                     targetPointFromTargetBody));
 
         if (currentDistance < minimumDistance)
         {
             minimumDistance = currentDistance;
             minimumDistanceTime = currentTime;
-            minimumDistanceFuelMass = simulation->probe().fuelMass();
+            minimumDistanceFuelMass = simulatedProbe.fuelMass();
         }
     }
 
