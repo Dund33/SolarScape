@@ -55,19 +55,11 @@ namespace
     void printFitnessResult(
         const FitnessResult& fitness)
     {
-        std::cout << '[';
-
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
-        {
-            if (i > 0)
-            {
-                std::cout << ", ";
-            }
-
-            std::cout << fitness.get(i);
-        }
-
-        std::cout << ']';
+        std::cout
+            << "[minimumDistance=" << fitness.minimumDistance()
+            << ", minimumDistanceTime=" << fitness.minimumDistanceTime()
+            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass()
+            << ']';
     }
 
     void printFinalResult(
