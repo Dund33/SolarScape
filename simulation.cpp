@@ -20,7 +20,6 @@
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "simulation/Simulation.h"
-#include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
 
@@ -84,21 +83,6 @@ namespace
         return state;
     }
 
-    auto createLocalImprovementFactory(
-        const Probe& probe) -> NormalRandomSearchFactory
-    {
-        const Real maxPhysicalThrust =
-            std::max(
-                probe.fuelFlow() * probe.specificImpulse(),
-                1.0L);
-
-        return NormalRandomSearchFactory(
-            LOCAL_SEARCH_ITERATIONS,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE / maxPhysicalThrust);
-    }
-
     void printFitnessResult(
         const FitnessResult& fitness)
     {
@@ -126,28 +110,11 @@ namespace
         std::cout << '\n';
     }
 
-    auto runGeneticAlgorithm(
-        const SimulationState& state,
-        GeneticAlgorithm::Factories factories) -> Specimen
-    {
-        GeneticAlgorithm algorithm(
-            POPULATION_SIZE,
-            GENERATIONS,
-            ELITE_COUNT,
-            POPULATION_SIZE / 25,
-            factories);
-
-        return algorithm.run();
-    }
-
     void plotBestTrajectory(
         const Simulation& simulation,
         const SimulationState& state,
         const Specimen& best)
     {
-        std::vector<Maneuver> maneuvers =
-            best.getManeuvers();
-
         plotTrajectory(
             simulation,
             state.gravitationalConstant,
@@ -157,7 +124,7 @@ namespace
             state.targetBody,
             state.probe,
             state.bodyPointers,
-            maneuvers
+            best.getManeuvers()
         );
     }
 
@@ -172,9 +139,8 @@ namespace
                 std::move(config));
 
         VerletFactory verletFactory;
-        const SimulationFactory& simulationFactory = verletFactory;
         auto simulation =
-            simulationFactory.create();
+            verletFactory.create();
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
@@ -196,8 +162,16 @@ namespace
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE);
 
-        NormalRandomSearchFactory localImprovementFactory =
-            createLocalImprovementFactory(state.probe);
+        const Real maxPhysicalThrust =
+            std::max(
+                state.probe.fuelFlow() * state.probe.specificImpulse(),
+                1.0L);
+
+        NormalRandomSearchFactory localImprovementFactory(
+            LOCAL_SEARCH_ITERATIONS,
+            MUTATION_TIME_RANGE,
+            MUTATION_DURATION_RANGE,
+            MUTATION_THRUST_RANGE / maxPhysicalThrust);
 
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.gravitationalConstant,
@@ -217,10 +191,14 @@ namespace
             localImprovementFactory,
             fitnessEvaluatorFactory};
 
-        const Specimen best =
-            runGeneticAlgorithm(
-                state,
-                factories);
+        GeneticAlgorithm algorithm(
+            POPULATION_SIZE,
+            GENERATIONS,
+            ELITE_COUNT,
+            POPULATION_SIZE / 25,
+            factories);
+
+        const Specimen best = algorithm.run();
 
         printFinalResult(
             best);
