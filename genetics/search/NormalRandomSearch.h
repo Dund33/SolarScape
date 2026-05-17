@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "genetics/search/LocalImprovement.h"
+#include "math/ProbeProperties.h"
 #include "math/Real.h"
 #include "simulation/Maneuver.h"
 
@@ -14,7 +15,8 @@ public:
         std::size_t iterations,
         Real initTimeStdDev,
         Real durationStdDev,
-        Real throttleStdDev);
+        Real throttleStdDev,
+        const ProbeProperties& probeProperties);
 
     void improve(
         Specimen& specimen,
@@ -28,6 +30,7 @@ private:
     Real initTimeStdDev;
     Real durationStdDev;
     Real throttleStdDev;
+    ProbeProperties probeProperties;
 };
 
 #endif

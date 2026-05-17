@@ -5,8 +5,6 @@
 #include <random>
 #include <stdexcept>
 
-#include "math/Probe.h"
-
 RandomInitializer::RandomInitializer(
     std::size_t minManeuvers,
     std::size_t maxManeuvers,
@@ -14,7 +12,7 @@ RandomInitializer::RandomInitializer(
     long double maxInitTime,
     long double minDuration,
     long double maxDuration,
-    Probe* probe
+    const ProbeProperties& probeProperties
 )
     : minManeuvers(minManeuvers),
       maxManeuvers(maxManeuvers),
@@ -22,13 +20,8 @@ RandomInitializer::RandomInitializer(
       maxInitTime(maxInitTime),
       minDuration(minDuration),
       maxDuration(maxDuration),
-      probe(probe)
+      probeProperties(probeProperties)
 {
-    if (probe == nullptr)
-    {
-        throw std::invalid_argument("probe must not be null.");
-    }
-
     if (minManeuvers > maxManeuvers)
     {
         throw std::invalid_argument("minManeuvers cannot be greater than maxManeuvers.");
@@ -44,15 +37,6 @@ RandomInitializer::RandomInitializer(
         throw std::invalid_argument("minDuration cannot be greater than maxDuration.");
     }
 
-    if (probe->fuelMass() < 0.0L)
-    {
-        throw std::invalid_argument("probe fuelMass cannot be negative.");
-    }
-
-    if (probe->fuelFlow() < 0.0L)
-    {
-        throw std::invalid_argument("probe fuelFlow cannot be negative.");
-    }
 }
 
 Specimen RandomInitializer::create() const
@@ -81,7 +65,7 @@ Specimen RandomInitializer::create() const
 
     const std::size_t maneuverCount = maneuverCountDist(rng);
 
-    Specimen specimen(probe);
+    Specimen specimen;
     long double usedFuel = 0.0L;
 
     for (std::size_t i = 0; i < maneuverCount; ++i)
@@ -109,7 +93,7 @@ Specimen RandomInitializer::create() const
         }
 
         const long double remainingFuel =
-            probe->fuelMass() - usedFuel;
+            probeProperties.fuelMass() - usedFuel;
 
         if (remainingFuel <= 0.0L)
         {
@@ -117,7 +101,7 @@ Specimen RandomInitializer::create() const
         }
 
         const long double fuelUsageRate =
-            throttleValue * probe->fuelFlow();
+            throttleValue * probeProperties.fuelFlow();
 
         if (fuelUsageRate <= 0.0L)
         {

@@ -4,9 +4,8 @@
 #include <cstddef>
 
 #include "genetics/init/InitializerFactory.h"
+#include "math/ProbeProperties.h"
 #include "math/Real.h"
-
-class Probe;
 
 class RandomInitializerFactory final : public InitializerFactory
 {
@@ -18,7 +17,7 @@ public:
         Real maxInitTime,
         Real minDuration,
         Real maxDuration,
-        Probe& probe
+        const ProbeProperties& probeProperties
     );
 
     std::unique_ptr<Initializer> create() const override;
@@ -33,7 +32,7 @@ private:
     Real minDuration;
     Real maxDuration;
 
-    Probe& probe;
+    ProbeProperties probeProperties;
 };
 
 #endif

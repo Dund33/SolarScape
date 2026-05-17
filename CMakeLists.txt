@@ -18,6 +18,10 @@ add_library(SolarScapeMath STATIC
         math/Body.h
         math/Probe.cpp
         math/Probe.h
+        math/ProbeFactory.cpp
+        math/ProbeFactory.h
+        math/ProbeProperties.cpp
+        math/ProbeProperties.h
 )
 
 add_library(SolarScape::Math ALIAS SolarScapeMath)

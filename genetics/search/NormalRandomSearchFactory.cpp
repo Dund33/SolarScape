@@ -8,11 +8,13 @@ NormalRandomSearchFactory::NormalRandomSearchFactory(
     std::size_t iterations,
     Real initTimeStdDev,
     Real durationStdDev,
-    Real throttleStdDev)
+    Real throttleStdDev,
+    const ProbeProperties& probeProperties)
     : iterations(iterations),
       initTimeStdDev(initTimeStdDev),
       durationStdDev(durationStdDev),
-      throttleStdDev(throttleStdDev)
+      throttleStdDev(throttleStdDev),
+      probeProperties(probeProperties)
 {
 }
 
@@ -22,5 +24,6 @@ std::unique_ptr<LocalImprovement> NormalRandomSearchFactory::create() const
         iterations,
         initTimeStdDev,
         durationStdDev,
-        throttleStdDev);
+        throttleStdDev,
+        probeProperties);
 }

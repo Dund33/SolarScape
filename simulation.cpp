@@ -18,7 +18,8 @@
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
-#include "math/Probe.h"
+#include "math/ProbeFactory.h"
+#include "math/ProbeProperties.h"
 #include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
@@ -37,7 +38,9 @@ namespace
 
         std::vector<Body> initialBodies;
         Body targetBody;
-        Probe probe;
+        Vector3 probePosition;
+        Vector3 probeVelocity;
+        ProbeProperties probeProperties;
     };
 
     auto createSimulationState(SimulationConfig&& config) -> SimulationState
@@ -49,7 +52,9 @@ namespace
             config.targetPointFromTargetBody,
             std::move(config.bodies),
             std::move(config.targetBody),
-            std::move(config.probe)};
+            config.probePosition,
+            config.probeVelocity,
+            config.probeProperties};
     }
 
     void printFitnessResult(
@@ -99,7 +104,9 @@ namespace
         VerletFactory verletFactory(
             state.initialBodies,
             state.targetBody,
-            state.probe);
+            state.probePosition,
+            state.probeVelocity,
+            ProbeFactory(state.probeProperties));
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
@@ -108,7 +115,7 @@ namespace
             state.simulationTime,
             MIN_MANEUVER_DURATION,
             MAX_MANEUVER_DURATION,
-            state.probe);
+            state.probeProperties);
 
         TournamentSelectionFactory selectionFactory(
             TOURNAMENT_SIZE);
@@ -119,18 +126,21 @@ namespace
             MUTATION_PROBABILITY,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE);
+            MUTATION_THRUST_RANGE,
+            state.probeProperties);
 
         const Real maxPhysicalThrust =
             std::max(
-                state.probe.fuelFlow() * state.probe.specificImpulse(),
+                state.probeProperties.fuelFlow() *
+                    state.probeProperties.specificImpulse(),
                 1.0L);
 
         NormalRandomSearchFactory localImprovementFactory(
             LOCAL_SEARCH_ITERATIONS,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE / maxPhysicalThrust);
+            MUTATION_THRUST_RANGE / maxPhysicalThrust,
+            state.probeProperties);
 
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.gravitationalConstant,

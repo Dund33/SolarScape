@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "math/Body.h"
-#include "math/Probe.h"
+#include "math/ProbeFactory.h"
 #include "simulation/SimulationFactory.h"
 
 class VerletFactory final : public SimulationFactory
@@ -13,14 +13,18 @@ public:
     VerletFactory(
         std::vector<Body> bodies,
         Body targetBody,
-        Probe probe);
+        Vector3 probePosition,
+        Vector3 probeVelocity,
+        ProbeFactory probeFactory);
 
     std::unique_ptr<Simulation> create() const override;
 
 private:
     std::vector<Body> bodies;
     Body targetBody;
-    Probe probe;
+    Vector3 probePosition;
+    Vector3 probeVelocity;
+    ProbeFactory probeFactory;
 };
 
 #endif
