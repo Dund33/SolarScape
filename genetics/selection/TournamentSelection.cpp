@@ -1,6 +1,5 @@
 #include "TournamentSelection.h"
 
-#include <functional>
 #include <random>
 #include <stdexcept>
 
@@ -27,12 +26,11 @@ const Specimen& TournamentSelection::select(
 
     std::size_t bestIndex = dist(rng);
 
-    const std::less<Specimen> isBetter;
     for (std::size_t i = 1; i < tournamentSize; ++i)
     {
         std::size_t candidateIndex = dist(rng);
 
-        if (isBetter(population[candidateIndex], population[bestIndex]))
+        if (population[candidateIndex] < population[bestIndex])
         {
             bestIndex = candidateIndex;
         }

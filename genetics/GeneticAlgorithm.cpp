@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <execution>
-#include <functional>
 #include <iostream>
 #include <iterator>
 #include <ranges>
@@ -15,9 +14,7 @@ namespace
     void sortPopulationByFitness(
         std::vector<Specimen>& population)
     {
-        std::ranges::sort(
-            population,
-            std::less<Specimen>{});
+        std::ranges::sort(population);
     }
 
     void printFitnessResult(

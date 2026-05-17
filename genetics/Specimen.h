@@ -1,8 +1,8 @@
 #ifndef SOLARSCAPE_SPECIMEN_H
 #define SOLARSCAPE_SPECIMEN_H
 
+#include <compare>
 #include <cstddef>
-#include <functional>
 #include <optional>
 #include <vector>
 
@@ -42,18 +42,8 @@ private:
     std::optional<FitnessResult> fitness;
 };
 
+std::partial_ordering operator<=>(const Specimen& lhs, const Specimen& rhs);
+bool operator==(const Specimen& lhs, const Specimen& rhs);
 bool operator<(const Specimen& lhs, const Specimen& rhs);
-
-namespace std
-{
-    template<>
-    struct less<Specimen>
-    {
-        bool operator()(const Specimen& lhs, const Specimen& rhs) const
-        {
-            return lhs < rhs;
-        }
-    };
-}
 
 #endif
