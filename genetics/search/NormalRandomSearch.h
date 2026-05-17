@@ -3,12 +3,11 @@
 
 #include <cstddef>
 
-#include "genetics/Specimen.h"
-#include "genetics/fitness/FitnessEvaluator.h"
+#include "genetics/search/LocalImprovement.h"
 #include "math/Real.h"
 #include "simulation/Maneuver.h"
 
-class NormalRandomSearch
+class NormalRandomSearch final : public LocalImprovement
 {
 public:
     NormalRandomSearch(
@@ -19,7 +18,7 @@ public:
 
     void improve(
         Specimen& specimen,
-        const FitnessEvaluator& fitnessEvaluator) const;
+        const FitnessEvaluator& fitnessEvaluator) const override;
 
 private:
     Maneuver perturbManeuver(

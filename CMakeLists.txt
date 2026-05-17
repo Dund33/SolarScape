@@ -166,8 +166,12 @@ target_link_libraries(SolarScapeGeneticFitness
 )
 
 add_library(SolarScapeGeneticSearch STATIC
+        genetics/search/LocalImprovement.h
+        genetics/search/LocalImprovementFactory.h
         genetics/search/NormalRandomSearch.cpp
         genetics/search/NormalRandomSearch.h
+        genetics/search/NormalRandomSearchFactory.cpp
+        genetics/search/NormalRandomSearchFactory.h
 )
 
 add_library(SolarScape::GeneticSearch ALIAS SolarScapeGeneticSearch)

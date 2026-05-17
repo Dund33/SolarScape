@@ -14,7 +14,7 @@
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
-#include "genetics/search/NormalRandomSearch.h"
+#include "genetics/search/NormalRandomSearchFactory.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
@@ -84,15 +84,15 @@ namespace
         return state;
     }
 
-    auto createLocalSearch(
-        const Probe& probe) -> NormalRandomSearch
+    auto createLocalImprovementFactory(
+        const Probe& probe) -> NormalRandomSearchFactory
     {
         const Real maxPhysicalThrust =
             std::max(
                 probe.fuelFlow() * probe.specificImpulse(),
                 1.0L);
 
-        return NormalRandomSearch(
+        return NormalRandomSearchFactory(
             LOCAL_SEARCH_ITERATIONS,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
@@ -135,7 +135,6 @@ namespace
             GENERATIONS,
             ELITE_COUNT,
             POPULATION_SIZE / 25,
-            createLocalSearch(state.probe),
             factories);
 
         return algorithm.run();
@@ -197,6 +196,9 @@ namespace
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE);
 
+        NormalRandomSearchFactory localImprovementFactory =
+            createLocalImprovementFactory(state.probe);
+
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.gravitationalConstant,
             state.timeStep,
@@ -212,6 +214,7 @@ namespace
             selectionFactory,
             crossoverFactory,
             mutationFactory,
+            localImprovementFactory,
             fitnessEvaluatorFactory};
 
         const Specimen best =

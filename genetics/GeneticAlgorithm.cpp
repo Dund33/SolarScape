@@ -52,14 +52,12 @@ GeneticAlgorithm::GeneticAlgorithm(
     std::size_t generations,
     std::size_t eliteCount,
     std::size_t immigrantCount,
-    NormalRandomSearch localSearch,
     Factories factories
 )
     : populationSize(populationSize),
       generations(generations),
       eliteCount(eliteCount),
       immigrantCount(immigrantCount),
-      localSearch(localSearch),
       factories(factories)
 {
 }
@@ -74,6 +72,8 @@ Specimen GeneticAlgorithm::run() const
         factories.crossoverFactory.create();
     auto mutation =
         factories.mutationFactory.create();
+    auto localImprovement =
+        factories.localImprovementFactory.create();
     auto fitnessEvaluator =
         factories.fitnessEvaluatorFactory.create();
 
@@ -90,7 +90,7 @@ Specimen GeneticAlgorithm::run() const
         sortPopulationByFitness(
             population);
 
-        localSearch.improve(
+        localImprovement->improve(
             population.front(),
             *fitnessEvaluator);
 
