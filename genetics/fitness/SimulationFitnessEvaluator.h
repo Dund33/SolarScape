@@ -5,11 +5,9 @@
 
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/fitness/FitnessResult.h"
-#include "math/Body.h"
-#include "math/Probe.h"
 #include "math/Vector3.h"
 #include "simulation/Maneuver.h"
-#include "simulation/Simulation.h"
+#include "simulation/SimulationFactory.h"
 
 class SimulationFitnessEvaluator final : public FitnessEvaluator
 {
@@ -19,10 +17,7 @@ public:
         Real timeStep,
         Real simulationTime,
         Vector3 targetPointFromTargetBody,
-        const std::vector<Body>& initialBodies,
-        const Probe& probe,
-        const Body& targetBody,
-        const Simulation& simulation
+        const SimulationFactory& simulationFactory
     );
 
     void evaluate(Specimen& specimen) const override;
@@ -35,10 +30,7 @@ private:
     Real timeStep;
     Real simulationTime;
     Vector3 targetPointFromTargetBody;
-    const std::vector<Body>& initialBodies;
-    const Probe& probe;
-    const Body& targetBody;
-    const Simulation& simulation;
+    const SimulationFactory& simulationFactory;
 };
 
 #endif

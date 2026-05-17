@@ -27,19 +27,13 @@ SimulationFitnessEvaluator::SimulationFitnessEvaluator(
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
-    const std::vector<Body>& initialBodies,
-    const Probe& probe,
-    const Body& targetBody,
-    const Simulation& simulation
+    const SimulationFactory& simulationFactory
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
       simulationTime(simulationTime),
       targetPointFromTargetBody(targetPointFromTargetBody),
-      initialBodies(initialBodies),
-      probe(probe),
-      targetBody(targetBody),
-      simulation(simulation)
+      simulationFactory(simulationFactory)
 {
 }
 
@@ -48,11 +42,6 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
     if (specimen.getFitness().has_value())
     {
         return;
-    }
-
-    if (&targetBody == static_cast<const Body*>(&probe))
-    {
-        throw std::invalid_argument("target body cannot point to the probe");
     }
 
     const FitnessResult fitnessResult =
@@ -74,20 +63,8 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
         throw std::invalid_argument("timeStep must be greater than zero");
     }
 
-    std::vector<Body> bodyCopies = initialBodies;
-    Body targetBodyCopy = targetBody;
-    Probe probeCopy = probe;
-
-    std::vector<Body*> bodyPointers;
-    bodyPointers.reserve(bodyCopies.size() + 2);
-
-    for (Body& bodyCopy : bodyCopies)
-    {
-        bodyPointers.push_back(&bodyCopy);
-    }
-
-    bodyPointers.push_back(&targetBodyCopy);
-    bodyPointers.push_back(&probeCopy);
+    auto simulation =
+        simulationFactory.create();
 
     Real currentTime = 0.0L;
     std::vector<Maneuver> sortedManeuvers = maneuvers;
@@ -99,15 +76,18 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
             return maneuver.getInitTime();
         });
 
+    const Probe& simulatedProbe =
+        simulation->probe();
+
     Real minimumDistance =
         distance(
-            probeCopy.position(),
+            simulatedProbe.position(),
             absolutePointForBody(
-                targetBodyCopy,
+                simulation->targetBody(),
                 targetPointFromTargetBody));
 
     Real minimumDistanceTime = currentTime;
-    Real minimumDistanceFuelMass = probeCopy.fuelMass();
+    Real minimumDistanceFuelMass = simulatedProbe.fuelMass();
 
     while (currentTime < simulationTime)
     {
@@ -144,9 +124,7 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
             }
         }
 
-        simulation.step(
-            bodyPointers,
-            probeCopy,
+        simulation->step(
             maneuver,
             stepTime,
             gravitationalConstant);
@@ -155,16 +133,16 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
 
         const Real currentDistance =
             distance(
-                probeCopy.position(),
+                simulation->probe().position(),
                 absolutePointForBody(
-                    targetBodyCopy,
+                    simulation->targetBody(),
                     targetPointFromTargetBody));
 
         if (currentDistance < minimumDistance)
         {
             minimumDistance = currentDistance;
             minimumDistanceTime = currentTime;
-            minimumDistanceFuelMass = probeCopy.fuelMass();
+            minimumDistanceFuelMass = simulation->probe().fuelMass();
         }
     }
 

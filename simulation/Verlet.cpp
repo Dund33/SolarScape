@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 
 namespace
 {
@@ -41,6 +42,17 @@ namespace
 
         return force / probe.mass();
     }
+}
+
+Verlet::Verlet(
+    std::vector<Body> bodies,
+    Body targetBody,
+    Probe probe)
+    : Simulation(
+        std::move(bodies),
+        std::move(targetBody),
+        std::move(probe))
+{
 }
 
 auto Verlet::calculateAccelerationForBody(
@@ -112,14 +124,22 @@ auto Verlet::calculateAccelerations(
 }
 
 void Verlet::step(
-    std::vector<Body*>& bodies,
-    Probe& probe,
     const std::optional<Maneuver>& maneuver,
     Real timeStep,
-    Real gravitationalConstant) const
+    Real gravitationalConstant)
 {
+    std::vector<Body*> bodyPointers;
+    bodyPointers.reserve(bodies().size() + 1);
+
+    for (Body& body : bodies())
+    {
+        bodyPointers.push_back(&body);
+    }
+
+    bodyPointers.push_back(&probe());
+
     if (std::ranges::any_of(
-        bodies,
+        bodyPointers,
         [](const Body* body)
         {
             return body == nullptr;
@@ -130,50 +150,47 @@ void Verlet::step(
 
     const std::vector<Vector3> previousAccelerations =
         calculateAccelerations(
-            bodies,
+            bodyPointers,
             gravitationalConstant);
 
     const Real timeStepSquared =
         timeStep * timeStep;
 
-    for (std::size_t i = 0; i < bodies.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
     {
         const Vector3 velocityPart =
-            bodies[i]->velocity() * timeStep;
+            bodyPointers[i]->velocity() * timeStep;
 
         const Vector3 accelerationPart =
             previousAccelerations[i] *
             (0.5L * timeStepSquared);
 
-        bodies[i]->position() +=
+        bodyPointers[i]->position() +=
             velocityPart + accelerationPart;
     }
 
     const std::vector<Vector3> nextAccelerations =
         calculateAccelerations(
-            bodies,
+            bodyPointers,
             gravitationalConstant);
 
     const Vector3 maneuverAcceleration =
         calculateManeuverAcceleration(
-            probe,
+            probe(),
             maneuver,
             timeStep);
 
-    for (std::size_t i = 0; i < bodies.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
     {
         Vector3 averageAcceleration =
             (previousAccelerations[i] +
                 nextAccelerations[i]) * 0.5L;
 
-        bodies[i]->velocity() +=
+        bodyPointers[i]->velocity() +=
             averageAcceleration * timeStep;
     }
 
-    if (std::ranges::find(bodies, static_cast<Body*>(&probe)) != bodies.end())
-    {
-        probe.velocity() += maneuverAcceleration * timeStep;
-    }
+    probe().velocity() += maneuverAcceleration * timeStep;
 
     if (maneuver.has_value())
     {
@@ -183,10 +200,10 @@ void Verlet::step(
                 0.0L,
                 1.0L);
 
-        probe.setFuelMass(
+        probe().setFuelMass(
             std::max(
                 0.0L,
-                probe.fuelMass() -
-                probe.fuelFlow() * throttleValue * timeStep));
+                probe().fuelMass() -
+                probe().fuelFlow() * throttleValue * timeStep));
     }
 }

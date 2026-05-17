@@ -19,7 +19,7 @@
 #include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/Probe.h"
-#include "simulation/Simulation.h"
+#include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
 
@@ -38,28 +38,7 @@ namespace
         std::vector<Body> initialBodies;
         Body targetBody;
         Probe probe;
-
-        std::vector<Body*> bodyPointers;
     };
-
-    auto createBodyPointers(
-        std::vector<Body>& bodies,
-        Body& targetBody,
-        Probe& probe) -> std::vector<Body*>
-    {
-        std::vector<Body*> bodyPointers;
-        bodyPointers.reserve(bodies.size() + 2);
-
-        for (Body& body : bodies)
-        {
-            bodyPointers.push_back(&body);
-        }
-
-        bodyPointers.push_back(&targetBody);
-        bodyPointers.push_back(&probe);
-
-        return bodyPointers;
-    }
 
     auto createSimulationState(SimulationConfig&& config) -> SimulationState
     {
@@ -73,12 +52,6 @@ namespace
         state.initialBodies = std::move(config.bodies);
         state.targetBody = std::move(config.targetBody);
         state.probe = std::move(config.probe);
-
-        state.bodyPointers =
-            createBodyPointers(
-                state.initialBodies,
-                state.targetBody,
-                state.probe);
 
         return state;
     }
@@ -111,19 +84,16 @@ namespace
     }
 
     void plotBestTrajectory(
-        const Simulation& simulation,
+        const SimulationFactory& simulationFactory,
         const SimulationState& state,
         const Specimen& best)
     {
         plotTrajectory(
-            simulation,
+            simulationFactory,
             state.gravitationalConstant,
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
             state.targetPointFromTargetBody,
-            state.targetBody,
-            state.probe,
-            state.bodyPointers,
             best.getManeuvers()
         );
     }
@@ -138,9 +108,10 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        VerletFactory verletFactory;
-        auto simulation =
-            verletFactory.create();
+        VerletFactory verletFactory(
+            state.initialBodies,
+            state.targetBody,
+            state.probe);
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
@@ -178,10 +149,7 @@ namespace
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,
-            state.initialBodies,
-            state.probe,
-            state.targetBody,
-            *simulation);
+            verletFactory);
 
         GeneticAlgorithm::Factories factories{
             initializerFactory,
@@ -204,7 +172,7 @@ namespace
             best);
 
         plotBestTrajectory(
-            *simulation,
+            verletFactory,
             state,
             best);
 

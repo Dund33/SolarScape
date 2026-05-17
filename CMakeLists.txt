@@ -29,6 +29,7 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
+        simulation/Simulation.cpp
         simulation/Simulation.h
         simulation/SimulationFactory.h
         simulation/Verlet.cpp

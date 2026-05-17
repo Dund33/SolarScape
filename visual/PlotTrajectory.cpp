@@ -6,7 +6,6 @@
 #include <iostream>
 #include <limits>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 namespace
@@ -20,64 +19,15 @@ namespace
 }
 
 void plotTrajectory(
-    const Simulation& simulation,
+    const SimulationFactory& simulationFactory,
     Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
     const Vector3& targetPointFromTargetBody,
-    const Body& targetBody,
-    const Probe& probe,
-    const std::vector<Body*>& bodies,
     const std::vector<Maneuver>& maneuvers)
 {
-    if (std::ranges::any_of(
-        bodies,
-        [](const Body* body)
-        {
-            return body == nullptr;
-        }))
-    {
-        throw std::invalid_argument("body pointer must not be null");
-    }
-
-    const Body* targetBodyPointer = &targetBody;
-    const Body* probePointer = static_cast<const Body*>(&probe);
-
-    if (std::ranges::find(bodies, targetBodyPointer) == bodies.end())
-    {
-        throw std::invalid_argument("target body is not available in bodies");
-    }
-
-    if (std::ranges::find(bodies, probePointer) == bodies.end())
-    {
-        throw std::invalid_argument("probe is not available in bodies");
-    }
-
-    std::vector<Body> bodyCopies;
-    bodyCopies.reserve(bodies.size());
-
-    Body targetBodyCopy = targetBody;
-    Probe probeCopy = probe;
-
-    std::vector<Body*> simulationBodies;
-    simulationBodies.reserve(bodies.size());
-
-    for (const Body* body : bodies)
-    {
-        if (body == targetBodyPointer)
-        {
-            simulationBodies.push_back(&targetBodyCopy);
-        }
-        else if (body == probePointer)
-        {
-            simulationBodies.push_back(&probeCopy);
-        }
-        else
-        {
-            bodyCopies.push_back(*body);
-            simulationBodies.push_back(&bodyCopies.back());
-        }
-    }
+    auto simulation =
+        simulationFactory.create();
 
     std::ofstream output("simulation.csv");
     if (!output)
@@ -113,7 +63,7 @@ void plotTrajectory(
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = absolutePointForBody(
-            targetBodyCopy,
+            simulation->targetBody(),
             targetPointFromTargetBody);
 
         while (maneuverIndex < sortedManeuvers.size() &&
@@ -141,29 +91,44 @@ void plotTrajectory(
 
         if (step % 500 == 0)
         {
-            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
+            for (std::size_t i = 0; i < simulation->bodies().size(); ++i)
             {
+                const Body& body = simulation->bodies()[i];
+
                 output << step << ','
                     << time << ','
                     << i << ','
-                    << simulationBodies[i]->position().x << ','
-                    << simulationBodies[i]->position().y << ','
-                    << simulationBodies[i]->position().z << ','
-                    << simulationBodies[i]->velocity().x << ','
-                    << simulationBodies[i]->velocity().y << ','
-                    << simulationBodies[i]->velocity().z << ','
-                    << simulationBodies[i]->mass() << ','
+                    << body.position().x << ','
+                    << body.position().y << ','
+                    << body.position().z << ','
+                    << body.velocity().x << ','
+                    << body.velocity().y << ','
+                    << body.velocity().z << ','
+                    << body.mass() << ','
                     << targetPoint.x << ','
                     << targetPoint.y << ','
                     << targetPoint.z << '\n';
             }
+
+            const Probe& simulationProbe = simulation->probe();
+            output << step << ','
+                << time << ','
+                << simulation->bodies().size() << ','
+                << simulationProbe.position().x << ','
+                << simulationProbe.position().y << ','
+                << simulationProbe.position().z << ','
+                << simulationProbe.velocity().x << ','
+                << simulationProbe.velocity().y << ','
+                << simulationProbe.velocity().z << ','
+                << simulationProbe.mass() << ','
+                << targetPoint.x << ','
+                << targetPoint.y << ','
+                << targetPoint.z << '\n';
         }
 
         if (step < steps)
         {
-            simulation.step(
-                simulationBodies,
-                probeCopy,
+            simulation->step(
                 maneuver,
                 timeStep,
                 gravitationalConstant);

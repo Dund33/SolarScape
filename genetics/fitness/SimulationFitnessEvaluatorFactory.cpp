@@ -9,19 +9,13 @@ SimulationFitnessEvaluatorFactory::SimulationFitnessEvaluatorFactory(
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
-    const std::vector<Body>& initialBodies,
-    const Probe& probe,
-    const Body& targetBody,
-    const Simulation& simulation
+    const SimulationFactory& simulationFactory
 )
     : gravitationalConstant(gravitationalConstant),
       timeStep(timeStep),
       simulationTime(simulationTime),
       targetPointFromTargetBody(targetPointFromTargetBody),
-      initialBodies(initialBodies),
-      probe(probe),
-      targetBody(targetBody),
-      simulation(simulation)
+      simulationFactory(simulationFactory)
 {
 }
 
@@ -32,8 +26,5 @@ std::unique_ptr<FitnessEvaluator> SimulationFitnessEvaluatorFactory::create() co
         timeStep,
         simulationTime,
         targetPointFromTargetBody,
-        initialBodies,
-        probe,
-        targetBody,
-        simulation);
+        simulationFactory);
 }
