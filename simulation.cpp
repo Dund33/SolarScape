@@ -10,7 +10,7 @@
 #include "config/consts.h"
 #include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/GeneticAlgorithm.h"
-#include "genetics/fitness/FitnessResult.h"
+#include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
@@ -57,13 +57,13 @@ namespace
             config.probeProperties};
     }
 
-    void printFitnessResult(
-        const FitnessResult& fitness)
+    void printFitnessValue(
+        const FitnessValue& fitness)
     {
         std::cout
-            << "[minimumDistance=" << fitness.minimumDistance()
-            << ", minimumDistanceTime=" << fitness.minimumDistanceTime()
-            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass()
+            << "[minimumDistance=" << fitness.minimumDistance
+            << ", minimumDistanceTime=" << fitness.minimumDistanceTime
+            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
             << ']';
     }
 
@@ -72,7 +72,7 @@ namespace
     {
         std::cout
             << "\nFinal best fitness: ";
-        printFitnessResult(best.getFitness().value());
+        printFitnessValue(best.getFitness().value());
         std::cout << '\n';
     }
 

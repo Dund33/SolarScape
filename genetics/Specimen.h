@@ -6,7 +6,7 @@
 #include <optional>
 #include <vector>
 
-#include "genetics/fitness/FitnessResult.h"
+#include "genetics/fitness/FitnessValue.h"
 #include "simulation/Maneuver.h"
 
 class ProbeProperties;
@@ -31,13 +31,13 @@ public:
     const Maneuver& operator[](std::size_t index) const;
     Maneuver& operator[](std::size_t index);
 
-    const std::optional<FitnessResult>& getFitness() const;
-    void setFitness(const FitnessResult& fitness);
+    const std::optional<FitnessValue>& getFitness() const;
+    void setFitness(const FitnessValue& fitness);
     void clearFitness();
 
 private:
     std::vector<Maneuver> maneuvers;
-    std::optional<FitnessResult> fitness;
+    std::optional<FitnessValue> fitness;
 };
 
 std::partial_ordering operator<=>(const Specimen& lhs, const Specimen& rhs);

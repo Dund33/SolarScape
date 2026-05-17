@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "genetics/fitness/FitnessEvaluator.h"
-#include "genetics/fitness/FitnessResult.h"
+#include "genetics/fitness/FitnessValue.h"
 #include "math/Real.h"
 #include "math/Vector3.h"
 #include "simulation/Maneuver.h"
@@ -24,7 +24,7 @@ public:
     void evaluate(Specimen& specimen) const override;
 
 private:
-    FitnessResult calculateFitnessResult(
+    FitnessValue calculateFitnessValue(
         const std::vector<Maneuver>& maneuvers) const;
 
     Real gravitationalConstant;

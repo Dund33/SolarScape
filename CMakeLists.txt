@@ -93,8 +93,7 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGeneticCore STATIC
         genetics/Specimen.cpp
         genetics/Specimen.h
-        genetics/fitness/FitnessResult.cpp
-        genetics/fitness/FitnessResult.h
+        genetics/fitness/FitnessValue.h
 )
 
 add_library(SolarScape::GeneticCore ALIAS SolarScapeGeneticCore)

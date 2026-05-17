@@ -43,13 +43,13 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
         return;
     }
 
-    const FitnessResult fitnessResult =
-        calculateFitnessResult(specimen.getManeuvers());
+    const FitnessValue fitnessValue =
+        calculateFitnessValue(specimen.getManeuvers());
 
-    specimen.setFitness(fitnessResult);
+    specimen.setFitness(fitnessValue);
 }
 
-FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
+FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     const std::vector<Maneuver>& maneuvers) const
 {
     if (simulationTime < 0.0L)
@@ -121,8 +121,8 @@ FitnessResult SimulationFitnessEvaluator::calculateFitnessResult(
         }
     }
 
-    return FitnessResult(
+    return {
         minimumDistance,
         minimumDistanceTime,
-        minimumDistanceFuelMass);
+        minimumDistanceFuelMass};
 }

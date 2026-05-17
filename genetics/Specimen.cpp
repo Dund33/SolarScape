@@ -1,13 +1,12 @@
 #include "Specimen.h"
 
+#include <array>
 #include <numeric>
 
 #include "math/ProbeProperties.h"
 
 namespace
 {
-    constexpr std::size_t kMinimumDistanceFuelMassIndex = 2;
-
     enum class DominanceRelation
     {
         lhsDominates,
@@ -16,38 +15,34 @@ namespace
         unordered
     };
 
-    float comparableFitnessValue(
-        const FitnessResult& fitness,
-        std::size_t index)
+    std::array<Real, 3> comparableFitnessValues(
+        const FitnessValue& fitness)
     {
-        const float value = fitness.get(index);
-
-        if (index == kMinimumDistanceFuelMassIndex)
-        {
-            return -value;
-        }
-
-        return value;
+        return {
+            fitness.minimumDistance,
+            fitness.minimumDistanceTime,
+            -fitness.minimumDistanceFuelMass};
     }
 
     DominanceRelation compareByDominance(
-        const FitnessResult& lhs,
-        const FitnessResult& rhs)
+        const FitnessValue& lhs,
+        const FitnessValue& rhs)
     {
         bool lhsStrictlyBetter = false;
         bool rhsStrictlyBetter = false;
+        const std::array<Real, 3> lhsValues =
+            comparableFitnessValues(lhs);
+        const std::array<Real, 3> rhsValues =
+            comparableFitnessValues(rhs);
 
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
+        for (std::size_t i = 0; i < lhsValues.size(); ++i)
         {
-            const float lhsValue = comparableFitnessValue(lhs, i);
-            const float rhsValue = comparableFitnessValue(rhs, i);
-
-            if (lhsValue < rhsValue)
+            if (lhsValues[i] < rhsValues[i])
             {
                 lhsStrictlyBetter = true;
             }
 
-            if (rhsValue < lhsValue)
+            if (rhsValues[i] < lhsValues[i])
             {
                 rhsStrictlyBetter = true;
             }
@@ -72,20 +67,22 @@ namespace
     }
 
     bool lexicographicallyBetter(
-        const FitnessResult& lhs,
-        const FitnessResult& rhs)
+        const FitnessValue& lhs,
+        const FitnessValue& rhs)
     {
-        for (std::size_t i = 0; i < FitnessResult::kSize; ++i)
-        {
-            const float lhsValue = comparableFitnessValue(lhs, i);
-            const float rhsValue = comparableFitnessValue(rhs, i);
+        const std::array<Real, 3> lhsValues =
+            comparableFitnessValues(lhs);
+        const std::array<Real, 3> rhsValues =
+            comparableFitnessValues(rhs);
 
-            if (lhsValue < rhsValue)
+        for (std::size_t i = 0; i < lhsValues.size(); ++i)
+        {
+            if (lhsValues[i] < rhsValues[i])
             {
                 return true;
             }
 
-            if (rhsValue < lhsValue)
+            if (rhsValues[i] < lhsValues[i])
             {
                 return false;
             }
@@ -151,12 +148,12 @@ Maneuver& Specimen::operator[](std::size_t index)
     return maneuvers[index];
 }
 
-const std::optional<FitnessResult>& Specimen::getFitness() const
+const std::optional<FitnessValue>& Specimen::getFitness() const
 {
     return fitness;
 }
 
-void Specimen::setFitness(const FitnessResult& fitness)
+void Specimen::setFitness(const FitnessValue& fitness)
 {
     this->fitness = fitness;
 }
@@ -168,8 +165,8 @@ void Specimen::clearFitness()
 
 std::partial_ordering operator<=>(const Specimen& lhs, const Specimen& rhs)
 {
-    const FitnessResult& lhsFitness = lhs.getFitness().value();
-    const FitnessResult& rhsFitness = rhs.getFitness().value();
+    const FitnessValue& lhsFitness = lhs.getFitness().value();
+    const FitnessValue& rhsFitness = rhs.getFitness().value();
 
     switch (compareByDominance(lhsFitness, rhsFitness))
     {
@@ -193,8 +190,8 @@ bool operator==(const Specimen& lhs, const Specimen& rhs)
 
 bool operator<(const Specimen& lhs, const Specimen& rhs)
 {
-    const FitnessResult& lhsFitness = lhs.getFitness().value();
-    const FitnessResult& rhsFitness = rhs.getFitness().value();
+    const FitnessValue& lhsFitness = lhs.getFitness().value();
+    const FitnessValue& rhsFitness = rhs.getFitness().value();
 
     switch (compareByDominance(lhsFitness, rhsFitness))
     {
