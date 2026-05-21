@@ -5,18 +5,19 @@
 #include <stdexcept>
 
 #include "genetics/Specimen.h"
-#include "math/Probe.h"
 
 RandomUniformMutation::RandomUniformMutation(
     double mutationProbability,
     long double maxTimeOffset,
     long double maxDurationOffset,
-    long double maxThrustOffset
+    long double maxThrustOffset,
+    const ProbeProperties& probeProperties
 )
     : mutationProbability(mutationProbability),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
-      maxThrustOffset(maxThrustOffset)
+      maxThrustOffset(maxThrustOffset),
+      probeProperties(probeProperties)
 {
     if (mutationProbability < 0.0 || mutationProbability > 1.0)
     {
@@ -52,17 +53,12 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
          maxThrustOffset
     );
 
+    const long double maxPhysicalThrust =
+        probeProperties.fuelFlow() * probeProperties.specificImpulse();
+
     for (std::size_t i = 0; i < specimen.size(); ++i)
     {
         Maneuver& maneuver = specimen[i];
-        const Probe* probe = specimen.getProbe();
-        if (probe == nullptr)
-        {
-            throw std::invalid_argument("probe must not be null.");
-        }
-
-        const long double maxPhysicalThrust =
-            probe->fuelFlow() * probe->specificImpulse();
         Vector3 throttleVector =
             maneuver.getThrustDirection() *
             maneuver.getThrottleValue();

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "genetics/search/LocalImprovementFactory.h"
+#include "math/ProbeProperties.h"
 #include "math/Real.h"
 
 class NormalRandomSearchFactory final : public LocalImprovementFactory
@@ -14,7 +15,8 @@ public:
         std::size_t iterations,
         Real initTimeStdDev,
         Real durationStdDev,
-        Real throttleStdDev);
+        Real throttleStdDev,
+        const ProbeProperties& probeProperties);
 
     std::unique_ptr<LocalImprovement> create() const override;
 
@@ -23,6 +25,7 @@ private:
     Real initTimeStdDev;
     Real durationStdDev;
     Real throttleStdDev;
+    ProbeProperties probeProperties;
 };
 
 #endif

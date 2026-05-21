@@ -3,8 +3,7 @@
 
 #include <cstddef>
 #include "genetics/init/Initializer.h"
-
-class Probe;
+#include "math/ProbeProperties.h"
 
 class RandomInitializer final : public Initializer
 {
@@ -16,7 +15,7 @@ public:
         long double maxInitTime,
         long double minDuration,
         long double maxDuration,
-        Probe* probe
+        const ProbeProperties& probeProperties
     );
 
     Specimen create() const override;
@@ -34,7 +33,7 @@ private:
     long double minDuration;
     long double maxDuration;
 
-    Probe* probe;
+    ProbeProperties probeProperties;
 };
 
 #endif

@@ -11,7 +11,7 @@ RandomInitializerFactory::RandomInitializerFactory(
     Real maxInitTime,
     Real minDuration,
     Real maxDuration,
-    Probe& probe
+    const ProbeProperties& probeProperties
 )
     : minManeuvers(minManeuvers),
       maxManeuvers(maxManeuvers),
@@ -19,7 +19,7 @@ RandomInitializerFactory::RandomInitializerFactory(
       maxInitTime(maxInitTime),
       minDuration(minDuration),
       maxDuration(maxDuration),
-      probe(probe)
+      probeProperties(probeProperties)
 {
 }
 
@@ -32,5 +32,5 @@ std::unique_ptr<Initializer> RandomInitializerFactory::create() const
         maxInitTime,
         minDuration,
         maxDuration,
-        &probe);
+        probeProperties);
 }

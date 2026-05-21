@@ -13,8 +13,8 @@ std::pair<Specimen, Specimen> RandomCutCrossover::cross(
     if (parent1.empty() || parent2.empty())
     {
         return {
-            Specimen(parent1.getManeuvers(), parent1.getProbe()),
-            Specimen(parent2.getManeuvers(), parent2.getProbe())
+            Specimen(parent1.getManeuvers()),
+            Specimen(parent2.getManeuvers())
         };
     }
 
@@ -29,8 +29,8 @@ std::pair<Specimen, Specimen> RandomCutCrossover::cross(
     const std::size_t cut1 = dist1(rng);
     const std::size_t cut2 = dist2(rng);
 
-    Specimen child1(parent1.getProbe());
-    Specimen child2(parent1.getProbe());
+    Specimen child1;
+    Specimen child2;
 
     auto appendTo = [](Specimen& child)
     {

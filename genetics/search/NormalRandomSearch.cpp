@@ -4,18 +4,19 @@
 #include <random>
 #include <stdexcept>
 
-#include "math/Probe.h"
 #include "math/Vector3.h"
 
 NormalRandomSearch::NormalRandomSearch(
     std::size_t iterations,
     Real initTimeStdDev,
     Real durationStdDev,
-    Real throttleStdDev)
+    Real throttleStdDev,
+    const ProbeProperties& probeProperties)
     : iterations(iterations),
       initTimeStdDev(initTimeStdDev),
       durationStdDev(durationStdDev),
-      throttleStdDev(throttleStdDev)
+      throttleStdDev(throttleStdDev),
+      probeProperties(probeProperties)
 {
     if (initTimeStdDev < 0.0L)
     {
@@ -42,11 +43,6 @@ void NormalRandomSearch::improve(
         return;
     }
 
-    if (specimen.getProbe() == nullptr)
-    {
-        throw std::invalid_argument("probe must not be null.");
-    }
-
     fitnessEvaluator.evaluate(specimen);
 
     thread_local std::mt19937 rng(std::random_device{}());
@@ -63,7 +59,9 @@ void NormalRandomSearch::improve(
         maneuver = perturbManeuver(maneuver);
         candidate.clearFitness();
 
-        if (candidate.getTotalFuelUse() > candidate.getProbe()->fuelMass())
+        if (
+            candidate.getTotalFuelUse(probeProperties) >
+            probeProperties.fuelMass())
         {
             continue;
         }

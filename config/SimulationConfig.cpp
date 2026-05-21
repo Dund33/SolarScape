@@ -60,9 +60,20 @@ auto SimulationConfig::loadFromFile(
         loadBody(
             config["targetBody"]);
 
-    result.probe =
-        loadProbe(
-            config["probe"]);
+    const YAML::Node probe =
+        config["probe"];
+
+    result.probePosition =
+        loadVector3(
+            probe["position"]);
+
+    result.probeVelocity =
+        loadVector3(
+            probe["velocity"]);
+
+    result.probeProperties =
+        loadProbeProperties(
+            probe);
 
     return result;
 }
@@ -100,20 +111,16 @@ auto SimulationConfig::loadBody(
             node["mass"]));
 }
 
-auto SimulationConfig::loadProbe(
-    const YAML::Node& node) -> Probe
+auto SimulationConfig::loadProbeProperties(
+    const YAML::Node& node) -> ProbeProperties
 {
     if (!node)
     {
         throw std::runtime_error(
-            "Missing Probe node.");
+            "Missing ProbeProperties node.");
     }
 
-    return Probe(
-        loadVector3(
-            node["position"]),
-        loadVector3(
-            node["velocity"]),
+    return ProbeProperties(
         readReal(
             node["emptyMass"]),
         readReal(

@@ -2,6 +2,7 @@
 #define SOLARSCAPE_RANDOMUNIFORMMUTATIONFACTORY_H
 
 #include "genetics/mutation/MutationFactory.h"
+#include "math/ProbeProperties.h"
 #include "math/Real.h"
 
 class RandomUniformMutationFactory final : public MutationFactory
@@ -11,7 +12,8 @@ public:
         double mutationProbability,
         Real maxTimeOffset,
         Real maxDurationOffset,
-        Real maxThrustOffset
+        Real maxThrustOffset,
+        const ProbeProperties& probeProperties
     );
 
     std::unique_ptr<Mutation> create() const override;
@@ -21,6 +23,7 @@ private:
     Real maxTimeOffset;
     Real maxDurationOffset;
     Real maxThrustOffset;
+    ProbeProperties probeProperties;
 };
 
 #endif

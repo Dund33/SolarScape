@@ -7,7 +7,8 @@
 #include <yaml-cpp/yaml.h>
 
 #include "math/Body.h"
-#include "math/Probe.h"
+#include "math/ProbeProperties.h"
+#include "math/Vector3.h"
 
 class SimulationConfig
 {
@@ -20,7 +21,9 @@ public:
 
     std::vector<Body> bodies;
     Body targetBody;
-    Probe probe;
+    Vector3 probePosition;
+    Vector3 probeVelocity;
+    ProbeProperties probeProperties;
 
     static SimulationConfig loadFromFile(
         const std::string& filePath);
@@ -30,7 +33,7 @@ private:
 
     static Body loadBody(const YAML::Node& node);
 
-    static Probe loadProbe(const YAML::Node& node);
+    static ProbeProperties loadProbeProperties(const YAML::Node& node);
 };
 
 #endif

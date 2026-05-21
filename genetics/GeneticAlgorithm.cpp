@@ -7,7 +7,7 @@
 #include <ranges>
 #include <utility>
 
-#include "genetics/fitness/FitnessResult.h"
+#include "genetics/fitness/FitnessValue.h"
 
 namespace
 {
@@ -17,13 +17,13 @@ namespace
         std::ranges::sort(population);
     }
 
-    void printFitnessResult(
-        const FitnessResult& fitness)
+    void printFitnessValue(
+        const FitnessValue& fitness)
     {
         std::cout
-            << "[minimumDistance=" << fitness.minimumDistance()
-            << ", minimumDistanceTime=" << fitness.minimumDistanceTime()
-            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass()
+            << "[minimumDistance=" << fitness.minimumDistance
+            << ", minimumDistanceTime=" << fitness.minimumDistanceTime
+            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
             << ']';
     }
 
@@ -34,7 +34,7 @@ namespace
         std::cout
             << "Generation " << generation
             << " | Best fitness = ";
-        printFitnessResult(best.getFitness().value());
+        printFitnessValue(best.getFitness().value());
         std::cout << '\n';
     }
 }

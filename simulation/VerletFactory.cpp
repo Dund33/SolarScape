@@ -8,10 +8,14 @@
 VerletFactory::VerletFactory(
     std::vector<Body> bodies,
     Body targetBody,
-    Probe probe)
+    Vector3 probePosition,
+    Vector3 probeVelocity,
+    ProbeFactory probeFactory)
     : bodies(std::move(bodies)),
       targetBody(std::move(targetBody)),
-      probe(std::move(probe))
+      probePosition(probePosition),
+      probeVelocity(probeVelocity),
+      probeFactory(std::move(probeFactory))
 {
 }
 
@@ -20,5 +24,7 @@ std::unique_ptr<Simulation> VerletFactory::create() const
     return std::make_unique<Verlet>(
         bodies,
         targetBody,
-        probe);
+        probeFactory.create(
+            probePosition,
+            probeVelocity));
 }

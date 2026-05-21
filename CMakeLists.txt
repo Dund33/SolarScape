@@ -18,6 +18,10 @@ add_library(SolarScapeMath STATIC
         math/Body.h
         math/Probe.cpp
         math/Probe.h
+        math/ProbeFactory.cpp
+        math/ProbeFactory.h
+        math/ProbeProperties.cpp
+        math/ProbeProperties.h
 )
 
 add_library(SolarScape::Math ALIAS SolarScapeMath)
@@ -89,8 +93,7 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGeneticCore STATIC
         genetics/Specimen.cpp
         genetics/Specimen.h
-        genetics/fitness/FitnessResult.cpp
-        genetics/fitness/FitnessResult.h
+        genetics/fitness/FitnessValue.h
 )
 
 add_library(SolarScape::GeneticCore ALIAS SolarScapeGeneticCore)
