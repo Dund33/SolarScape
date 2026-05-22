@@ -9,9 +9,11 @@ RandomUniformMutationFactory::RandomUniformMutationFactory(
     Real maxTimeOffset,
     Real maxDurationOffset,
     Real maxThrustOffset,
-    const ProbeProperties& probeProperties
+    const ProbeProperties& probeProperties,
+    const RepairFactory& repairFactory
 )
-    : mutationProbability(mutationProbability),
+    : MutationFactory(repairFactory),
+      mutationProbability(mutationProbability),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
       maxThrustOffset(maxThrustOffset),
