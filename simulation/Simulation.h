@@ -8,6 +8,7 @@
 #include "math/Probe.h"
 #include "math/Real.h"
 #include "simulation/Maneuver.h"
+#include "simulation/SimulationContext.h"
 
 class Simulation
 {
@@ -15,7 +16,8 @@ public:
     Simulation(
         std::vector<Body> bodies,
         Body targetBody,
-        Probe probe);
+        Probe probe,
+        SimulationContext context);
     virtual ~Simulation() = default;
 
     Simulation(const Simulation&) = delete;
@@ -24,7 +26,6 @@ public:
     Simulation& operator=(Simulation&&) = delete;
 
     virtual void step(
-        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant
     ) = 0;
@@ -32,15 +33,20 @@ public:
     const std::vector<Body>& bodies() const;
     const Probe& probe() const;
     const Body& targetBody() const;
+    Real time() const;
 
 protected:
     std::vector<Body>& mutableBodies();
     Probe& mutableProbe();
+    std::optional<Maneuver> activeManeuver() const;
+    void advanceTime(Real timeStep);
 
 private:
     std::vector<Body> bodies_;
     Probe probe_;
     Body* targetBody_{};
+    SimulationContext context_;
+    Real time_{};
 };
 
 #endif

@@ -12,10 +12,10 @@ public:
     Verlet(
         std::vector<Body> bodies,
         Body targetBody,
-        Probe probe);
+        Probe probe,
+        SimulationContext context);
 
     void step(
-        const std::optional<Maneuver>& maneuver,
         Real timeStep,
         Real gravitationalConstant
     ) override;

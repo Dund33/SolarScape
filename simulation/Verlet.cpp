@@ -46,11 +46,13 @@ namespace
 Verlet::Verlet(
     std::vector<Body> bodies,
     Body targetBody,
-    Probe probe)
+    Probe probe,
+    SimulationContext context)
     : Simulation(
         std::move(bodies),
         std::move(targetBody),
-        std::move(probe))
+        std::move(probe),
+        std::move(context))
 {
 }
 
@@ -114,10 +116,12 @@ auto Verlet::calculateAccelerations(
 }
 
 void Verlet::step(
-    const std::optional<Maneuver>& maneuver,
     Real timeStep,
     Real gravitationalConstant)
 {
+    const auto maneuver =
+        activeManeuver();
+
     std::vector<Body*> bodyPointers;
     bodyPointers.reserve(mutableBodies().size() + 1);
 
@@ -187,4 +191,6 @@ void Verlet::step(
                 simulationProbe.fuelMass() -
                 simulationProbe.fuelFlow() * throttleValue * timeStep));
     }
+
+    advanceTime(timeStep);
 }

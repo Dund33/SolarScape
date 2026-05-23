@@ -1,33 +1,30 @@
-#ifndef SOLARSCAPE_MANEUVERSCHEDULE_H
-#define SOLARSCAPE_MANEUVERSCHEDULE_H
+#include "SimulationContext.h"
 
 #include <algorithm>
-#include <optional>
-#include <vector>
+#include <ranges>
+#include <utility>
 
-#include "simulation/Maneuver.h"
-
-inline std::vector<Maneuver> sortManeuversByInitTime(
-    const std::vector<Maneuver>& maneuvers)
+SimulationContext::SimulationContext(std::vector<Maneuver> maneuvers)
+    : maneuvers_(std::move(maneuvers))
 {
-    std::vector<Maneuver> sortedManeuvers = maneuvers;
     std::ranges::sort(
-        sortedManeuvers,
+        maneuvers_,
         {},
         [](const Maneuver& maneuver)
         {
             return maneuver.getInitTime();
         });
-
-    return sortedManeuvers;
 }
 
-inline std::optional<Maneuver> activeManeuverAt(
-    const std::vector<Maneuver>& sortedManeuvers,
-    Real time)
+const std::vector<Maneuver>& SimulationContext::maneuvers() const
+{
+    return maneuvers_;
+}
+
+std::optional<Maneuver> SimulationContext::activeManeuverAt(Real time) const
 {
     auto maneuverIt = std::ranges::upper_bound(
-        sortedManeuvers,
+        maneuvers_,
         time,
         {},
         [](const Maneuver& maneuver)
@@ -35,7 +32,7 @@ inline std::optional<Maneuver> activeManeuverAt(
             return maneuver.getInitTime();
         });
 
-    if (maneuverIt == sortedManeuvers.begin())
+    if (maneuverIt == maneuvers_.begin())
     {
         return std::nullopt;
     }
@@ -54,5 +51,3 @@ inline std::optional<Maneuver> activeManeuverAt(
 
     return std::nullopt;
 }
-
-#endif

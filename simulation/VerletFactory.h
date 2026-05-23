@@ -17,7 +17,8 @@ public:
         Vector3 probeVelocity,
         ProbeFactory probeFactory);
 
-    std::unique_ptr<Simulation> create() const override;
+    std::unique_ptr<Simulation> create(
+        SimulationContext context) const override;
 
 private:
     std::vector<Body> bodies;

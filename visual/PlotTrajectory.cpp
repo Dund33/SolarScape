@@ -6,7 +6,7 @@
 #include <limits>
 #include <vector>
 
-#include "simulation/ManeuverSchedule.h"
+#include "simulation/SimulationContext.h"
 
 namespace
 {
@@ -27,7 +27,8 @@ void plotTrajectory(
     const std::vector<Maneuver>& maneuvers)
 {
     auto simulation =
-        simulationFactory.create();
+        simulationFactory.create(
+            SimulationContext(maneuvers));
 
     const std::vector<Body>& simulationBodies =
         simulation->bodies();
@@ -46,20 +47,12 @@ void plotTrajectory(
     output << std::setprecision(std::numeric_limits<Real>::max_digits10);
     output << "step,time,body,x,y,z,vx,vy,vz,mass,target_x,target_y,target_z\n";
 
-    const std::vector<Maneuver> sortedManeuvers =
-        sortManeuversByInitTime(maneuvers);
-
     for (std::size_t step = 0; step <= steps; ++step)
     {
         const Real time = step * timeStep;
         const Vector3 targetPoint = absolutePointForBody(
             simulatedTargetBody,
             targetPointFromTargetBody);
-
-        const auto maneuver =
-            activeManeuverAt(
-                sortedManeuvers,
-                time);
 
         if (step % 500 == 0)
         {
@@ -100,7 +93,6 @@ void plotTrajectory(
         if (step < steps)
         {
             simulation->step(
-                maneuver,
                 timeStep,
                 gravitationalConstant);
         }

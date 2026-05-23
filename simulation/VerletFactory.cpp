@@ -19,12 +19,14 @@ VerletFactory::VerletFactory(
 {
 }
 
-std::unique_ptr<Simulation> VerletFactory::create() const
+std::unique_ptr<Simulation> VerletFactory::create(
+    SimulationContext context) const
 {
     return std::make_unique<Verlet>(
         bodies,
         targetBody,
         probeFactory.create(
             probePosition,
-            probeVelocity));
+            probeVelocity),
+        std::move(context));
 }
