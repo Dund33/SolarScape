@@ -84,7 +84,6 @@ namespace
     {
         plotTrajectory(
             simulationFactory,
-            state.gravitationalConstant,
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
             state.targetPointFromTargetBody,
@@ -103,11 +102,13 @@ namespace
                 std::move(config));
 
         VerletFactory verletFactory(
+            state.gravitationalConstant,
             state.initialBodies,
             state.targetBody,
-            state.probePosition,
-            state.probeVelocity,
-            ProbeFactory(state.probeProperties));
+            ProbeFactory(
+                state.probeProperties,
+                state.probePosition,
+                state.probeVelocity));
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
@@ -147,7 +148,6 @@ namespace
             state.probeProperties);
 
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
-            state.gravitationalConstant,
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,

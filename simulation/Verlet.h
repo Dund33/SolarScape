@@ -13,11 +13,11 @@ public:
         std::vector<Body> bodies,
         Body targetBody,
         Probe probe,
-        SimulationContext context);
+        SimulationContext context,
+        Real gravitationalConstant);
 
     void step(
-        Real timeStep,
-        Real gravitationalConstant
+        Real timeStep
     ) override;
 
 private:

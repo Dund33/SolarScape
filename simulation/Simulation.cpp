@@ -6,10 +6,12 @@ Simulation::Simulation(
     std::vector<Body> bodies,
     Body targetBody,
     Probe probe,
-    SimulationContext context)
+    SimulationContext context,
+    Real gravitationalConstant)
     : bodies_(std::move(bodies)),
       probe_(std::move(probe)),
-      context_(std::move(context))
+      context_(std::move(context)),
+      gravitationalConstant_(gravitationalConstant)
 {
     bodies_.push_back(std::move(targetBody));
     targetBody_ = &bodies_.back();
@@ -45,9 +47,14 @@ Probe& Simulation::mutableProbe()
     return probe_;
 }
 
-std::optional<Maneuver> Simulation::activeManeuver() const
+const SimulationContext& Simulation::context() const
 {
-    return context_.activeManeuverAt(time_);
+    return context_;
+}
+
+Real Simulation::gravitationalConstant() const
+{
+    return gravitationalConstant_;
 }
 
 void Simulation::advanceTime(Real timeStep)

@@ -1,13 +1,11 @@
 #ifndef SOLARSCAPE_SIMULATION_H
 #define SOLARSCAPE_SIMULATION_H
 
-#include <optional>
 #include <vector>
 
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "math/Real.h"
-#include "simulation/Maneuver.h"
 #include "simulation/SimulationContext.h"
 
 class Simulation
@@ -17,7 +15,8 @@ public:
         std::vector<Body> bodies,
         Body targetBody,
         Probe probe,
-        SimulationContext context);
+        SimulationContext context,
+        Real gravitationalConstant);
     virtual ~Simulation() = default;
 
     Simulation(const Simulation&) = delete;
@@ -26,8 +25,7 @@ public:
     Simulation& operator=(Simulation&&) = delete;
 
     virtual void step(
-        Real timeStep,
-        Real gravitationalConstant
+        Real timeStep
     ) = 0;
 
     const std::vector<Body>& bodies() const;
@@ -38,7 +36,8 @@ public:
 protected:
     std::vector<Body>& mutableBodies();
     Probe& mutableProbe();
-    std::optional<Maneuver> activeManeuver() const;
+    const SimulationContext& context() const;
+    Real gravitationalConstant() const;
     void advanceTime(Real timeStep);
 
 private:
@@ -46,6 +45,7 @@ private:
     Probe probe_;
     Body* targetBody_{};
     SimulationContext context_;
+    Real gravitationalConstant_{};
     Real time_{};
 };
 

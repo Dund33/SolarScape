@@ -21,14 +21,12 @@ namespace
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
-    Real gravitationalConstant,
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
     const SimulationFactory& simulationFactory
 )
-    : gravitationalConstant(gravitationalConstant),
-      timeStep(timeStep),
+    : timeStep(timeStep),
       simulationTime(simulationTime),
       targetPointFromTargetBody(targetPointFromTargetBody),
       simulationFactory(simulationFactory)
@@ -44,7 +42,7 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
 
     const FitnessValue fitnessValue =
         calculateFitnessValue(
-            SimulationContext(specimen.getManeuvers()));
+            SimulationContext{specimen.getManeuvers()});
 
     specimen.setFitness(fitnessValue);
 }
@@ -94,8 +92,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
                 : timeStep;
 
         simulation->step(
-            stepTime,
-            gravitationalConstant);
+            stepTime);
 
         currentTime += stepTime;
 

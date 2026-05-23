@@ -11,7 +11,6 @@
 
 void plotTrajectory(
     const SimulationFactory& simulationFactory,
-    Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
     const Vector3& targetPointFromTargetBody,

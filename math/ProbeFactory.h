@@ -8,16 +8,19 @@
 class ProbeFactory
 {
 public:
-    explicit ProbeFactory(ProbeProperties properties);
+    ProbeFactory(
+        ProbeProperties properties,
+        Vector3 position,
+        Vector3 velocity);
 
-    auto create(
-        const Vector3& position,
-        const Vector3& velocity) const -> Probe;
+    auto create() const -> Probe;
 
     auto properties() const -> const ProbeProperties&;
 
 private:
     ProbeProperties properties_;
+    Vector3 position_;
+    Vector3 velocity_;
 };
 
 #endif

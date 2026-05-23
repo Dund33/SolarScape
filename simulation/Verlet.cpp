@@ -3,10 +3,41 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <utility>
 
 namespace
 {
+    std::optional<Maneuver> activeManeuverAt(
+        const std::vector<Maneuver>& maneuvers,
+        Real time)
+    {
+        const Maneuver* activeManeuver = nullptr;
+
+        for (const Maneuver& maneuver : maneuvers)
+        {
+            const Real maneuverStartTime =
+                maneuver.getInitTime();
+            const Real maneuverEndTime =
+                maneuverStartTime + maneuver.getDuration();
+
+            if (maneuverStartTime <= time &&
+                time < maneuverEndTime &&
+                (activeManeuver == nullptr ||
+                    activeManeuver->getInitTime() < maneuverStartTime))
+            {
+                activeManeuver = &maneuver;
+            }
+        }
+
+        if (activeManeuver == nullptr)
+        {
+            return std::nullopt;
+        }
+
+        return *activeManeuver;
+    }
+
     Vector3 calculateManeuverAcceleration(
         const Probe& probe,
         const std::optional<Maneuver>& maneuver,
@@ -47,12 +78,14 @@ Verlet::Verlet(
     std::vector<Body> bodies,
     Body targetBody,
     Probe probe,
-    SimulationContext context)
+    SimulationContext context,
+    Real gravitationalConstant)
     : Simulation(
         std::move(bodies),
         std::move(targetBody),
         std::move(probe),
-        std::move(context))
+        std::move(context),
+        gravitationalConstant)
 {
 }
 
@@ -116,11 +149,12 @@ auto Verlet::calculateAccelerations(
 }
 
 void Verlet::step(
-    Real timeStep,
-    Real gravitationalConstant)
+    Real timeStep)
 {
     const auto maneuver =
-        activeManeuver();
+        activeManeuverAt(
+            context().maneuvers,
+            time());
 
     std::vector<Body*> bodyPointers;
     bodyPointers.reserve(mutableBodies().size() + 1);
@@ -136,7 +170,7 @@ void Verlet::step(
     const std::vector<Vector3> previousAccelerations =
         calculateAccelerations(
             bodyPointers,
-            gravitationalConstant);
+            gravitationalConstant());
 
     const Real timeStepSquared =
         timeStep * timeStep;
@@ -157,7 +191,7 @@ void Verlet::step(
     const std::vector<Vector3> nextAccelerations =
         calculateAccelerations(
             bodyPointers,
-            gravitationalConstant);
+            gravitationalConstant());
 
     const Vector3 maneuverAcceleration =
         calculateManeuverAcceleration(

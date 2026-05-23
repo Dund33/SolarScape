@@ -6,15 +6,13 @@
 #include "simulation/Verlet.h"
 
 VerletFactory::VerletFactory(
+    Real gravitationalConstant,
     std::vector<Body> bodies,
     Body targetBody,
-    Vector3 probePosition,
-    Vector3 probeVelocity,
     ProbeFactory probeFactory)
-    : bodies(std::move(bodies)),
+    : gravitationalConstant(gravitationalConstant),
+      bodies(std::move(bodies)),
       targetBody(std::move(targetBody)),
-      probePosition(probePosition),
-      probeVelocity(probeVelocity),
       probeFactory(std::move(probeFactory))
 {
 }
@@ -25,8 +23,7 @@ std::unique_ptr<Simulation> VerletFactory::create(
     return std::make_unique<Verlet>(
         bodies,
         targetBody,
-        probeFactory.create(
-            probePosition,
-            probeVelocity),
-        std::move(context));
+        probeFactory.create(),
+        std::move(context),
+        gravitationalConstant);
 }

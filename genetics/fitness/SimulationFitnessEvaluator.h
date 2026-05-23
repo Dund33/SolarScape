@@ -12,7 +12,6 @@ class SimulationFitnessEvaluator final : public FitnessEvaluator
 {
 public:
     SimulationFitnessEvaluator(
-        Real gravitationalConstant,
         Real timeStep,
         Real simulationTime,
         Vector3 targetPointFromTargetBody,
@@ -25,7 +24,6 @@ private:
     FitnessValue calculateFitnessValue(
         SimulationContext context) const;
 
-    Real gravitationalConstant;
     Real timeStep;
     Real simulationTime;
     Vector3 targetPointFromTargetBody;

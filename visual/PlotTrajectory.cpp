@@ -20,7 +20,6 @@ namespace
 
 void plotTrajectory(
     const SimulationFactory& simulationFactory,
-    Real gravitationalConstant,
     Real timeStep,
     std::size_t steps,
     const Vector3& targetPointFromTargetBody,
@@ -28,7 +27,7 @@ void plotTrajectory(
 {
     auto simulation =
         simulationFactory.create(
-            SimulationContext(maneuvers));
+            SimulationContext{maneuvers});
 
     const std::vector<Body>& simulationBodies =
         simulation->bodies();
@@ -93,8 +92,7 @@ void plotTrajectory(
         if (step < steps)
         {
             simulation->step(
-                timeStep,
-                gravitationalConstant);
+                timeStep);
         }
     }
 }
