@@ -122,12 +122,6 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/mutation/RandomUniformMutation.h
         genetics/mutation/RandomUniformMutationFactory.cpp
         genetics/mutation/RandomUniformMutationFactory.h
-        genetics/repair/RepairFactory.h
-        genetics/repair/Repair.h
-        genetics/repair/SimpleLinearRepair.cpp
-        genetics/repair/SimpleLinearRepair.h
-        genetics/repair/SimpleLinearRepairFactory.cpp
-        genetics/repair/SimpleLinearRepairFactory.h
         genetics/init/InitializerFactory.h
         genetics/init/Initializer.h
         genetics/init/RandomInitializer.cpp

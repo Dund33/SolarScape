@@ -64,8 +64,6 @@ Specimen GeneticAlgorithm::run() const
         factories.crossoverFactory.create();
     auto mutation =
         factories.mutationFactory.create();
-    auto repair =
-        factories.mutationFactory.createRepair();
     auto localImprovement =
         factories.localImprovementFactory.create();
     auto fitnessEvaluator =
@@ -98,8 +96,7 @@ Specimen GeneticAlgorithm::run() const
                 *initializer,
                 *selection,
                 *crossover,
-                *mutation,
-                *repair);
+                *mutation);
     }
 
     evaluatePopulationUnsequenced(
@@ -141,8 +138,7 @@ void GeneticAlgorithm::fillPopulationWithChildren(
     std::vector<Specimen>& newPopulation,
     Selection& selection,
     Crossover& crossover,
-    Mutation& mutation,
-    Repair& repair) const
+    Mutation& mutation) const
 {
     while (newPopulation.size() < populationSize)
     {
@@ -153,9 +149,6 @@ void GeneticAlgorithm::fillPopulationWithChildren(
 
         mutation.mutate(child1);
         mutation.mutate(child2);
-
-        repair.repair(child1);
-        repair.repair(child2);
 
         newPopulation.push_back(std::move(child1));
 
@@ -185,8 +178,7 @@ auto GeneticAlgorithm::createNextGeneration(
     Initializer& initializer,
     Selection& selection,
     Crossover& crossover,
-    Mutation& mutation,
-    Repair& repair) const -> std::vector<Specimen>
+    Mutation& mutation) const -> std::vector<Specimen>
 {
     std::vector<Specimen> newPopulation;
     newPopulation.reserve(populationSize);
@@ -200,8 +192,7 @@ auto GeneticAlgorithm::createNextGeneration(
         newPopulation,
         selection,
         crossover,
-        mutation,
-        repair);
+        mutation);
 
     addImmigrants(
         newPopulation,

@@ -12,30 +12,23 @@ namespace
         const std::vector<Maneuver>& maneuvers,
         Real time)
     {
-        const Maneuver* activeManeuver = nullptr;
+        Real previousManeuverEndTime = 0.0L;
 
         for (const Maneuver& maneuver : maneuvers)
         {
             const Real maneuverStartTime =
-                maneuver.getInitTime();
-            const Real maneuverEndTime =
-                maneuverStartTime + maneuver.getDuration();
+                previousManeuverEndTime + maneuver.getInitDelay();
+            const Real maneuverEndTime = maneuverStartTime + maneuver.getDuration();
 
-            if (maneuverStartTime <= time &&
-                time < maneuverEndTime &&
-                (activeManeuver == nullptr ||
-                    activeManeuver->getInitTime() < maneuverStartTime))
+            if (maneuverStartTime <= time && time < maneuverEndTime)
             {
-                activeManeuver = &maneuver;
+                return maneuver;
             }
+
+            previousManeuverEndTime = maneuverEndTime;
         }
 
-        if (activeManeuver == nullptr)
-        {
-            return std::nullopt;
-        }
-
-        return *activeManeuver;
+        return std::nullopt;
     }
 
     Vector3 calculateManeuverAcceleration(

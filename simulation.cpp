@@ -14,7 +14,6 @@
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
-#include "genetics/repair/SimpleLinearRepairFactory.h"
 #include "genetics/search/NormalRandomSearchFactory.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
@@ -124,15 +123,12 @@ namespace
 
         RandomCutCrossoverFactory crossoverFactory;
 
-        SimpleLinearRepairFactory repairFactory;
-
         RandomUniformMutationFactory mutationFactory(
             MUTATION_PROBABILITY,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE,
-            state.probeProperties,
-            repairFactory);
+            state.probeProperties);
 
         const Real maxPhysicalThrust =
             std::max(

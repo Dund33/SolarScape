@@ -49,8 +49,7 @@ private:
         std::vector<Specimen>& newPopulation,
         Selection& selection,
         Crossover& crossover,
-        Mutation& mutation,
-        Repair& repair) const;
+        Mutation& mutation) const;
 
     void addImmigrants(
         std::vector<Specimen>& population,
@@ -61,8 +60,7 @@ private:
         Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
-        Mutation& mutation,
-        Repair& repair) const -> std::vector<Specimen>;
+        Mutation& mutation) const -> std::vector<Specimen>;
 
     std::size_t populationSize;
     std::size_t generations;

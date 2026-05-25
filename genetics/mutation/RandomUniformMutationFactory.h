@@ -13,8 +13,7 @@ public:
         Real maxTimeOffset,
         Real maxDurationOffset,
         Real maxThrustOffset,
-        const ProbeProperties& probeProperties,
-        const RepairFactory& repairFactory
+        const ProbeProperties& probeProperties
     );
 
     std::unique_ptr<Mutation> create() const override;
