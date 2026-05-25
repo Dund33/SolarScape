@@ -9,17 +9,17 @@ public:
     Maneuver(
         const Vector3& thrustDirection,
         Real thrustValue,
-        long double initTime,
+        long double initDelay,
         long double duration)
         : thrustDirection(normalized(thrustDirection)),
           throttleValue(thrustValue),
-          initTime(initTime),
+          initDelay(initDelay),
           duration(duration)
     {}
 
     const Vector3& getThrustDirection() const { return thrustDirection; }
     Real getThrottleValue() const { return throttleValue; }
-    long double getInitTime() const { return initTime; }
+    long double getInitDelay() const { return initDelay; }
     long double getDuration() const { return duration; }
 
 private:
@@ -37,7 +37,7 @@ private:
 
     Vector3 thrustDirection;
     Real throttleValue;
-    long double initTime;
+    long double initDelay;
     long double duration;
 };
 

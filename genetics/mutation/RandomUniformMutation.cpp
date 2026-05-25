@@ -63,13 +63,13 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
             maneuver.getThrustDirection() *
             maneuver.getThrottleValue();
 
-        long double initTime = maneuver.getInitTime();
+        long double initDelay = maneuver.getInitDelay();
         long double duration = maneuver.getDuration();
 
         if (shouldMutate(rng))
         {
-            initTime += timeDelta(rng);
-            initTime = std::max(static_cast<long double>(0.0), initTime);
+            initDelay += timeDelta(rng);
+            initDelay = std::max(static_cast<long double>(0.0), initDelay);
         }
 
         if (shouldMutate(rng))
@@ -98,14 +98,14 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
 
         if (throttleNorm <= 0.0L)
         {
-            maneuver = Maneuver(Vector3{}, 0.0L, initTime, duration);
+            maneuver = Maneuver(Vector3{}, 0.0L, initDelay, duration);
             continue;
         }
 
         maneuver = Maneuver(
             throttleVector / throttleVector.norm(),
             throttleNorm,
-            initTime,
+            initDelay,
             duration);
     }
 

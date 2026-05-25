@@ -2,18 +2,21 @@
 
 #include <utility>
 
-ProbeFactory::ProbeFactory(ProbeProperties properties)
-    : properties_(std::move(properties))
+ProbeFactory::ProbeFactory(
+    ProbeProperties properties,
+    Vector3 position,
+    Vector3 velocity)
+    : properties_(std::move(properties)),
+      position_(position),
+      velocity_(velocity)
 {
 }
 
-auto ProbeFactory::create(
-    const Vector3& position,
-    const Vector3& velocity) const -> Probe
+auto ProbeFactory::create() const -> Probe
 {
     return Probe(
-        position,
-        velocity,
+        position_,
+        velocity_,
         properties_.emptyMass(),
         properties_.fuelMass(),
         properties_.fuelFlow(),

@@ -122,10 +122,10 @@ Specimen RandomInitializer::create() const
         );
 
         const long double duration = durationDist(rng);
-        const long double initTime = initTimeDist(rng);
+        const long double initDelay = initTimeDist(rng);
 
         specimen.addManeuver(
-            Maneuver(direction, throttleValue, initTime, duration)
+            Maneuver(direction, throttleValue, initDelay, duration)
         );
 
         usedFuel += fuelUsageRate * duration;

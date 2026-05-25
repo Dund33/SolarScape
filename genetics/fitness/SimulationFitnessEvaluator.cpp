@@ -1,8 +1,7 @@
 #include "SimulationFitnessEvaluator.h"
 
 #include <stdexcept>
-
-#include "simulation/ManeuverSchedule.h"
+#include <utility>
 
 namespace
 {
@@ -22,14 +21,12 @@ namespace
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
-    Real gravitationalConstant,
     Real timeStep,
     Real simulationTime,
     Vector3 targetPointFromTargetBody,
     const SimulationFactory& simulationFactory
 )
-    : gravitationalConstant(gravitationalConstant),
-      timeStep(timeStep),
+    : timeStep(timeStep),
       simulationTime(simulationTime),
       targetPointFromTargetBody(targetPointFromTargetBody),
       simulationFactory(simulationFactory)
@@ -44,13 +41,14 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
     }
 
     const FitnessValue fitnessValue =
-        calculateFitnessValue(specimen.getManeuvers());
+        calculateFitnessValue(
+            SimulationContext{specimen.getManeuvers()});
 
     specimen.setFitness(fitnessValue);
 }
 
 FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
-    const std::vector<Maneuver>& maneuvers) const
+    SimulationContext context) const
 {
     if (simulationTime < 0.0L)
     {
@@ -63,11 +61,10 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     }
 
     auto simulation =
-        simulationFactory.create();
+        simulationFactory.create(
+            std::move(context));
 
     Real currentTime = 0.0L;
-    const std::vector<Maneuver> sortedManeuvers =
-        sortManeuversByInitTime(maneuvers);
 
     const Body& simulatedTargetBody =
         simulation->targetBody();
@@ -94,15 +91,8 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
                 ? remainingTime
                 : timeStep;
 
-        const auto maneuver =
-            activeManeuverAt(
-                sortedManeuvers,
-                currentTime);
-
         simulation->step(
-            maneuver,
-            stepTime,
-            gravitationalConstant);
+            stepTime);
 
         currentTime += stepTime;
 

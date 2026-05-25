@@ -33,7 +33,7 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
-        simulation/ManeuverSchedule.h
+        simulation/SimulationContext.h
         simulation/Simulation.cpp
         simulation/Simulation.h
         simulation/SimulationFactory.h

@@ -106,10 +106,10 @@ Maneuver NormalRandomSearch::perturbManeuver(
             0.0L,
             1.0L);
 
-    const Real initTime =
+    const Real initDelay =
         std::max(
             0.0L,
-            maneuver.getInitTime() + initTimeDelta(rng));
+            maneuver.getInitDelay() + initTimeDelta(rng));
 
     const Real duration =
         std::max(
@@ -118,12 +118,12 @@ Maneuver NormalRandomSearch::perturbManeuver(
 
     if (throttleNorm <= 0.0L)
     {
-        return Maneuver(Vector3{}, 0.0L, initTime, duration);
+        return Maneuver(Vector3{}, 0.0L, initDelay, duration);
     }
 
     return Maneuver(
         throttleVector / throttleVector.norm(),
         throttleNorm,
-        initTime,
+        initDelay,
         duration);
 }

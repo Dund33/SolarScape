@@ -4,13 +4,15 @@
 #include <memory>
 
 #include "simulation/Simulation.h"
+#include "simulation/SimulationContext.h"
 
 class SimulationFactory
 {
 public:
     virtual ~SimulationFactory() = default;
 
-    virtual std::unique_ptr<Simulation> create() const = 0;
+    virtual std::unique_ptr<Simulation> create(
+        SimulationContext context) const = 0;
 };
 
 #endif
