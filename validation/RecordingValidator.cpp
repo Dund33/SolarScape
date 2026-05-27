@@ -1,7 +1,6 @@
 #include "RecordingValidator.h"
 
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 #include "simulation/Maneuver.h"
@@ -16,7 +15,7 @@ RecordingValidator::RecordingValidator(
 {
 }
 
-std::vector<std::pair<Real, Vector3>> RecordingValidator::record() const
+std::vector<Status> RecordingValidator::record() const
 {
     if (timeStep <= 0.0L)
     {
@@ -27,20 +26,24 @@ std::vector<std::pair<Real, Vector3>> RecordingValidator::record() const
         simulationFactory.create(
             std::vector<Maneuver>{});
 
-    std::vector<std::pair<Real, Vector3>> recording;
+    std::vector<Status> recording;
     recording.reserve(steps + 1);
-    recording.emplace_back(
-        0.0L,
-        simulation->probe().position());
+    recording.push_back(
+        Status{
+            simulation->time(),
+            simulation->probe().position(),
+            simulation->probe().velocity()});
 
     for (std::size_t step = 0; step < steps; ++step)
     {
         simulation->step(
             timeStep);
 
-        recording.emplace_back(
-            static_cast<Real>(step + 1) * timeStep,
-            simulation->probe().position());
+        recording.push_back(
+            Status{
+                simulation->time(),
+                simulation->probe().position(),
+                simulation->probe().velocity()});
     }
 
     return recording;

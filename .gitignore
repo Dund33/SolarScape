@@ -5,3 +5,16 @@ cmake-build-release
 .codex
 .agents
 build
+validation_data
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+.venv
+.idea
+*.pdf

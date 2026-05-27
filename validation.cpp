@@ -3,7 +3,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <utility>
 #include <vector>
 
 #include "math/Body.h"
@@ -14,13 +13,13 @@
 namespace
 {
     constexpr Real GRAVITATIONAL_CONSTANT = 0.000000000066743L;
-    constexpr Real TIME_STEP = 10.0L;
+    constexpr Real TIME_STEP = 150.0L;
     constexpr Real SIMULATION_TIME = 63072000.0L;
 
-    constexpr Real PROBE_EMPTY_MASS = 1000.0L;
-    constexpr Real PROBE_FUEL_MASS = 1000.0L;
+    constexpr Real PROBE_EMPTY_MASS = 1.0L;
+    constexpr Real PROBE_FUEL_MASS = 0.0L;
     constexpr Real PROBE_FUEL_FLOW = 1.0L;
-    constexpr Real PROBE_SPECIFIC_IMPULSE = 3600.0L;
+    constexpr Real PROBE_SPECIFIC_IMPULSE = 0.0L;
 
     auto run() -> int
     {
@@ -34,7 +33,7 @@ namespace
             Body(),
             Probe(
                 Vector3{1.0e6L, 0.0L, 0.0L},
-                Vector3{0.0L, 10.3339L, 0.0L},
+                Vector3{0.0L, 10.33386665L, 0.0L},
                 PROBE_EMPTY_MASS,
                 PROBE_FUEL_MASS,
                 PROBE_FUEL_FLOW,
@@ -49,25 +48,28 @@ namespace
             TIME_STEP,
             steps);
 
-        const std::vector<std::pair<Real, Vector3>> recording =
+        const std::vector<Status> recording =
             validator.record();
 
-        std::ofstream output("period_validation.csv");
+        std::ofstream output("validation.csv");
         if (!output)
         {
-            std::cerr << "Nie mozna utworzyc pliku period_validation.csv\n";
+            std::cerr << "Nie mozna utworzyc pliku validation.csv\n";
             return 1;
         }
 
         output << std::setprecision(std::numeric_limits<Real>::max_digits10);
-        output << "time,x,y,z\n";
-        for (const auto& [time, position] : recording)
+        output << "time,x,y,z,vx,vy,vz\n";
+        for (const Status& status : recording)
         {
             output
-                << time << ','
-                << position.x << ','
-                << position.y << ','
-                << position.z << '\n';
+                << status.time << ','
+                << status.position.x << ','
+                << status.position.y << ','
+                << status.position.z << ','
+                << status.velocity.x << ','
+                << status.velocity.y << ','
+                << status.velocity.z << '\n';
         }
 
         return 0;

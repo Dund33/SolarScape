@@ -247,13 +247,13 @@ target_link_libraries(SolarScape
         $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
-add_executable(period_validation
-        period_validation.cpp
+add_executable(validation
+        validation.cpp
         validation/RecordingValidator.cpp
         validation/RecordingValidator.h
 )
 
-target_link_libraries(period_validation
+target_link_libraries(validation
         PRIVATE
         SolarScape::Simulation
 )

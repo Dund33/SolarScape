@@ -2,12 +2,18 @@
 #define SOLARSCAPE_RECORDINGVALIDATOR_H
 
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 #include "math/Real.h"
 #include "math/Vector3.h"
 #include "simulation/SimulationFactory.h"
+
+struct Status
+{
+    Real time{};
+    Vector3 position;
+    Vector3 velocity;
+};
 
 class RecordingValidator
 {
@@ -17,7 +23,7 @@ public:
         Real timeStep,
         std::size_t steps);
 
-    std::vector<std::pair<Real, Vector3>> record() const;
+    std::vector<Status> record() const;
 
 private:
     const SimulationFactory& simulationFactory;
