@@ -42,13 +42,13 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
 
     const FitnessValue fitnessValue =
         calculateFitnessValue(
-            SimulationContext{specimen.getManeuvers()});
+            specimen.getManeuvers());
 
     specimen.setFitness(fitnessValue);
 }
 
 FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
-    SimulationContext context) const
+    std::vector<Maneuver> maneuvers) const
 {
     if (simulationTime < 0.0L)
     {
@@ -62,7 +62,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
 
     auto simulation =
         simulationFactory.create(
-            std::move(context));
+            std::move(maneuvers));
 
     Real currentTime = 0.0L;
 

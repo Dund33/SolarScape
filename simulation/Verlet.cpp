@@ -71,13 +71,13 @@ Verlet::Verlet(
     std::vector<Body> bodies,
     Body targetBody,
     Probe probe,
-    SimulationContext context,
+    std::vector<Maneuver> maneuvers,
     Real gravitationalConstant)
     : Simulation(
         std::move(bodies),
         std::move(targetBody),
         std::move(probe),
-        std::move(context),
+        std::move(maneuvers),
         gravitationalConstant)
 {
 }
@@ -146,7 +146,7 @@ void Verlet::step(
 {
     const auto maneuver =
         activeManeuverAt(
-            context().maneuvers,
+            maneuvers(),
             time());
 
     std::vector<Body*> bodyPointers;

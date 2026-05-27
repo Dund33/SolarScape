@@ -18,12 +18,12 @@ VerletFactory::VerletFactory(
 }
 
 std::unique_ptr<Simulation> VerletFactory::create(
-    SimulationContext context) const
+    std::vector<Maneuver> maneuvers) const
 {
     return std::make_unique<Verlet>(
         bodies,
         targetBody,
         probe,
-        std::move(context),
+        std::move(maneuvers),
         gravitationalConstant);
 }
