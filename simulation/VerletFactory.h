@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "math/Body.h"
-#include "math/ProbeFactory.h"
+#include "math/Probe.h"
 #include "simulation/SimulationFactory.h"
 
 class VerletFactory final : public SimulationFactory
@@ -14,7 +14,7 @@ public:
         Real gravitationalConstant,
         std::vector<Body> bodies,
         Body targetBody,
-        ProbeFactory probeFactory);
+        Probe probe);
 
     std::unique_ptr<Simulation> create(
         SimulationContext context) const override;
@@ -23,7 +23,7 @@ private:
     Real gravitationalConstant;
     std::vector<Body> bodies;
     Body targetBody;
-    ProbeFactory probeFactory;
+    Probe probe;
 };
 
 #endif
