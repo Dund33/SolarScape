@@ -1,9 +1,9 @@
 #include "SimpleSpecimenComparator.h"
 
-#include <array>
 #include <cstddef>
 
 #include "genetics/Specimen.h"
+#include "genetics/comparison/FitnessObjectives.h"
 
 namespace
 {
@@ -15,25 +15,16 @@ namespace
         unordered
     };
 
-    std::array<Real, 3> comparableFitnessValues(
-        const FitnessValue& fitness)
-    {
-        return {
-            fitness.minimumDistance,
-            fitness.minimumDistanceTime,
-            -fitness.minimumDistanceFuelMass};
-    }
-
     DominanceRelation compareByDominance(
         const FitnessValue& lhs,
         const FitnessValue& rhs)
     {
         bool lhsStrictlyBetter = false;
         bool rhsStrictlyBetter = false;
-        const std::array<Real, 3> lhsValues =
-            comparableFitnessValues(lhs);
-        const std::array<Real, 3> rhsValues =
-            comparableFitnessValues(rhs);
+        const auto lhsValues =
+            fitnessObjectives::comparableValues(lhs);
+        const auto rhsValues =
+            fitnessObjectives::comparableValues(rhs);
 
         for (std::size_t i = 0; i < lhsValues.size(); ++i)
         {
@@ -70,10 +61,10 @@ namespace
         const FitnessValue& lhs,
         const FitnessValue& rhs)
     {
-        const std::array<Real, 3> lhsValues =
-            comparableFitnessValues(lhs);
-        const std::array<Real, 3> rhsValues =
-            comparableFitnessValues(rhs);
+        const auto lhsValues =
+            fitnessObjectives::comparableValues(lhs);
+        const auto rhsValues =
+            fitnessObjectives::comparableValues(rhs);
 
         for (std::size_t i = 0; i < lhsValues.size(); ++i)
         {

@@ -8,27 +8,21 @@
 
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
-#include "genetics/algo/Algo.h"
-#include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/comparison/SimpleSpecimenComparator.h"
+#include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
-#include "genetics/search/NormalRandomSearchFactory.h"
+#include "genetics/nsga/NSGAIIAlgorithm.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
-#include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
-#include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
-#include "visual/PlotTrajectory.h"
 
 namespace
 {
-    constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
-
     struct SimulationState
     {
         Real gravitationalConstant{};
@@ -68,27 +62,23 @@ namespace
             << ']';
     }
 
-    void printFinalResult(
-        const Specimen& best)
+    void printParetoFront(
+        const std::vector<Specimen>& paretoFront)
     {
         std::cout
-            << "\nFinal best fitness: ";
-        printFitnessValue(best.getFitness().value());
-        std::cout << '\n';
-    }
+            << "\nFinal Pareto front size: "
+            << paretoFront.size()
+            << '\n';
 
-    void plotBestTrajectory(
-        const SimulationFactory& simulationFactory,
-        const SimulationState& state,
-        const Specimen& best)
-    {
-        plotTrajectory(
-            simulationFactory,
-            state.timeStep,
-            static_cast<std::size_t>(state.simulationTime / state.timeStep),
-            state.targetPointFromTargetBody,
-            best.getManeuvers()
-        );
+        for (std::size_t i = 0; i < paretoFront.size(); ++i)
+        {
+            std::cout
+                << "Pareto front specimen " << i
+                << " fitness = ";
+            printFitnessValue(
+                paretoFront[i].getFitness().value());
+            std::cout << '\n';
+        }
     }
 
     auto run() -> int
@@ -131,19 +121,6 @@ namespace
             MUTATION_THRUST_RANGE,
             state.probeProperties);
 
-        const Real maxPhysicalThrust =
-            std::max(
-                state.probeProperties.fuelFlow() *
-                    state.probeProperties.specificImpulse(),
-                1.0L);
-
-        NormalRandomSearchFactory localImprovementFactory(
-            LOCAL_SEARCH_ITERATIONS,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE / maxPhysicalThrust,
-            state.probeProperties);
-
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.timeStep,
             state.simulationTime,
@@ -152,31 +129,25 @@ namespace
 
         SimpleSpecimenComparator specimenComparator;
 
-        Algo::Factories factories{
+        NSGAIIAlgorithm::Factories factories{
             initializerFactory,
             selectionFactory,
             crossoverFactory,
             mutationFactory,
-            localImprovementFactory,
             fitnessEvaluatorFactory};
 
-        Algo algorithm(
+        NSGAIIAlgorithm algorithm(
             POPULATION_SIZE,
             GENERATIONS,
-            ELITE_COUNT,
             POPULATION_SIZE / 25,
             specimenComparator,
             factories);
 
-        const Specimen best = algorithm.run();
+        const std::vector<Specimen> paretoFront =
+            algorithm.run();
 
-        printFinalResult(
-            best);
-
-        plotBestTrajectory(
-            verletFactory,
-            state,
-            best);
+        printParetoFront(
+            paretoFront);
 
         return 0;
     }
