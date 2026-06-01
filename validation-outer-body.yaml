@@ -1,0 +1,59 @@
+validation:
+  outputFilename: validation-outer-body.csv
+
+simulation:
+  gravitationalConstant: 0.000000000066743
+  timeStep: 150.0
+  simulationTime: 6307200.0
+
+targetPointFromTargetBody:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+
+bodies:
+  - position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    mass: 1000000000000000000.0
+
+  - position:
+      x: 2000000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 5.777846830797447
+      z: 0.0
+    mass: 10000.0
+
+targetBody:
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  mass: 0.0
+
+probe:
+  position:
+    x: 1000000.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 10.33386665
+    z: 0.0
+
+  emptyMass: 5000.0
+  fuelMass: 0.0
+  fuelFlow: 1.0
+  specificImpulse: 0.0

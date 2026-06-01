@@ -223,10 +223,14 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticAlgorithm
 )
 
-configure_file(
-        config.yaml
-        config.yaml
-        COPYONLY
+add_custom_target(copy_yaml_files
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${CMAKE_CURRENT_SOURCE_DIR}/config.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/validation-basic.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/validation-outer-body.yaml"
+                "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Copying YAML configuration files"
+        VERBATIM
 )
 
 
@@ -236,6 +240,10 @@ endif()
 
 add_executable(SolarScape
         simulation.cpp
+)
+
+add_dependencies(SolarScape
+        copy_yaml_files
 )
 
 target_link_libraries(SolarScape
@@ -253,7 +261,12 @@ add_executable(validation
         validation/RecordingValidator.h
 )
 
+add_dependencies(validation
+        copy_yaml_files
+)
+
 target_link_libraries(validation
         PRIVATE
+        SolarScape::Config
         SolarScape::Simulation
 )

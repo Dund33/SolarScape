@@ -10,6 +10,7 @@
 
 struct Status
 {
+    std::size_t bodyId{};
     Real time{};
     Vector3 position;
     Vector3 velocity;

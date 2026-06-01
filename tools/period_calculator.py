@@ -35,13 +35,40 @@ def find_periapsis_times(time, radius):
     return np.array(periapsis_times)
 
 
-def compute_orbital_period(csv_path, time_col="time", x_col="x", y_col="y", z_col="z"):
+def select_body(df, body_id, body_id_col):
+    if body_id_col not in df.columns:
+        return df
+
+    if body_id is None:
+        body_id = int(df[body_id_col].max())
+
+    body_df = df[df[body_id_col] == body_id]
+    if body_df.empty:
+        available_ids = sorted(df[body_id_col].unique())
+        raise ValueError(
+            f"bodyId={body_id} was not found. Available bodyId values: {available_ids}"
+        )
+
+    return body_df
+
+
+def compute_orbital_period(
+    csv_path,
+    body_id=None,
+    body_id_col="bodyId",
+    time_col="time",
+    x_col="x",
+    y_col="y",
+    z_col="z",
+):
     df = pd.read_csv(csv_path)
 
     required_columns = [time_col, x_col, y_col, z_col]
     for col in required_columns:
         if col not in df.columns:
             raise ValueError(f"Missing required column: {col}")
+
+    df = select_body(df, body_id, body_id_col)
 
     time = df[time_col].to_numpy(dtype=float)
     x = df[x_col].to_numpy(dtype=float)
@@ -81,6 +108,13 @@ def main():
 
     parser.add_argument("csv_path", help="Path to the CSV file.")
 
+    parser.add_argument(
+        "--body-id",
+        type=int,
+        default=None,
+        help="bodyId to analyze. Defaults to the highest bodyId in the CSV.",
+    )
+    parser.add_argument("--body-id-col", default="bodyId", help="Name of the body id column.")
     parser.add_argument("--time-col", default="time", help="Name of the time column.")
     parser.add_argument("--x-col", default="x", help="Name of the x position column.")
     parser.add_argument("--y-col", default="y", help="Name of the y position column.")
@@ -90,6 +124,8 @@ def main():
 
     result = compute_orbital_period(
         csv_path=args.csv_path,
+        body_id=args.body_id,
+        body_id_col=args.body_id_col,
         time_col=args.time_col,
         x_col=args.x_col,
         y_col=args.y_col,

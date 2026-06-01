@@ -3,66 +3,109 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
+#include <yaml-cpp/yaml.h>
+
+#include "config/SimulationConfig.h"
 #include "math/Body.h"
-#include "math/Probe.h"
+#include "math/ProbeFactory.h"
 #include "simulation/VerletFactory.h"
 #include "validation/RecordingValidator.h"
 
 namespace
 {
-    constexpr Real GRAVITATIONAL_CONSTANT = 0.000000000066743L;
-    constexpr Real TIME_STEP = 150.0L;
-    constexpr Real SIMULATION_TIME = 63072000.0L;
+    constexpr const char* DEFAULT_CONFIG_FILE = "validation-basic.yaml";
 
-    constexpr Real PROBE_EMPTY_MASS = 1.0L;
-    constexpr Real PROBE_FUEL_MASS = 0.0L;
-    constexpr Real PROBE_FUEL_FLOW = 1.0L;
-    constexpr Real PROBE_SPECIFIC_IMPULSE = 0.0L;
-
-    auto run() -> int
+    struct ValidationState
     {
+        std::string outputFilename;
+        SimulationConfig simulationConfig;
+    };
+
+    auto loadOutputFilename(const YAML::Node& config) -> std::string
+    {
+        const YAML::Node outputFilename = config["validation"]["outputFilename"];
+        if (!outputFilename)
+        {
+            throw std::runtime_error("Missing validation.outputFilename YAML node.");
+        }
+        return outputFilename.as<std::string>();
+    }
+
+    auto loadValidationState(const std::string& configFile) -> ValidationState
+    {
+        SimulationConfig simulationConfig =
+            SimulationConfig::loadFromFile(
+                configFile);
+
+        if (simulationConfig.timeStep <= 0.0L)
+        {
+            throw std::invalid_argument("simulation.timeStep musi byc dodatnia liczba");
+        }
+
+        return {
+            loadOutputFilename(
+                YAML::LoadFile(
+                    configFile)),
+            std::move(simulationConfig)};
+    }
+
+    auto configFileFromArguments(int argc, char* argv[]) -> std::string
+    {
+        if (argc > 2)
+        {
+            throw std::invalid_argument("Uzycie: validation [plik_yaml]");
+        }
+
+        if (argc == 2)
+        {
+            return argv[1];
+        }
+
+        return DEFAULT_CONFIG_FILE;
+    }
+
+    auto run(const ValidationState& state) -> int
+    {
+        const SimulationConfig& config = state.simulationConfig;
+
         VerletFactory simulationFactory(
-            GRAVITATIONAL_CONSTANT,
-            std::vector<Body>{
-                Body(
-                    Vector3{0.0L, 0.0L, 0.0L},
-                    Vector3{0.0L, 0.0L, 0.0L},
-                    1.0e18L)},
-            Body(),
-            Probe(
-                Vector3{1.0e6L, 0.0L, 0.0L},
-                Vector3{0.0L, 10.33386665L, 0.0L},
-                PROBE_EMPTY_MASS,
-                PROBE_FUEL_MASS,
-                PROBE_FUEL_FLOW,
-                PROBE_SPECIFIC_IMPULSE));
+            config.gravitationalConstant,
+            config.bodies,
+            config.targetBody,
+            ProbeFactory(
+                config.probeProperties,
+                config.probePosition,
+                config.probeVelocity).create());
 
         const std::size_t steps =
             static_cast<std::size_t>(
-                SIMULATION_TIME / TIME_STEP);
+                config.simulationTime / config.timeStep);
 
         RecordingValidator validator(
             simulationFactory,
-            TIME_STEP,
+            config.timeStep,
             steps);
 
         const std::vector<Status> recording =
             validator.record();
 
-        std::ofstream output("validation.csv");
+        std::ofstream output(state.outputFilename);
         if (!output)
         {
-            std::cerr << "Nie mozna utworzyc pliku validation.csv\n";
+            std::cerr << "Nie mozna utworzyc pliku " << state.outputFilename << '\n';
             return 1;
         }
 
         output << std::setprecision(std::numeric_limits<Real>::max_digits10);
-        output << "time,x,y,z,vx,vy,vz\n";
+        output << "bodyId,time,x,y,z,vx,vy,vz\n";
         for (const Status& status : recording)
         {
             output
+                << status.bodyId << ','
                 << status.time << ','
                 << status.position.x << ','
                 << status.position.y << ','
@@ -76,11 +119,20 @@ namespace
     }
 }
 
-auto main() -> int
+auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        return run();
+        return run(
+            loadValidationState(
+                configFileFromArguments(
+                    argc,
+                    argv)));
+    }
+    catch (const YAML::Exception& e)
+    {
+        std::cerr << "YAML error: " << e.what() << '\n';
+        return 1;
     }
     catch (const std::exception& e)
     {
