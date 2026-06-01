@@ -12,9 +12,15 @@
 namespace
 {
     void sortPopulationByFitness(
-        std::vector<Specimen>& population)
+        std::vector<Specimen>& population,
+        const SpecimenComparator& specimenComparator)
     {
-        std::ranges::sort(population);
+        std::ranges::sort(
+            population,
+            [&specimenComparator](const Specimen& lhs, const Specimen& rhs)
+            {
+                return specimenComparator.isLess(lhs, rhs);
+            });
     }
 
     void printFitnessValue(
@@ -44,12 +50,14 @@ GeneticAlgorithm::GeneticAlgorithm(
     std::size_t generations,
     std::size_t eliteCount,
     std::size_t immigrantCount,
+    const SpecimenComparator& specimenComparator,
     Factories factories
 )
     : populationSize(populationSize),
       generations(generations),
       eliteCount(eliteCount),
       immigrantCount(immigrantCount),
+      specimenComparator(specimenComparator),
       factories(factories)
 {
 }
@@ -80,11 +88,13 @@ Specimen GeneticAlgorithm::run() const
             *fitnessEvaluator);
 
         sortPopulationByFitness(
-            population);
+            population,
+            specimenComparator);
 
         localImprovement->improve(
             population.front(),
-            *fitnessEvaluator);
+            *fitnessEvaluator,
+            specimenComparator);
 
         printGenerationResult(
             generation,
@@ -104,7 +114,8 @@ Specimen GeneticAlgorithm::run() const
         *fitnessEvaluator);
 
     sortPopulationByFitness(
-        population);
+        population,
+        specimenComparator);
 
     return population.front();
 }
@@ -142,8 +153,14 @@ void GeneticAlgorithm::fillPopulationWithChildren(
 {
     while (newPopulation.size() < populationSize)
     {
-        const Specimen& parent1 = selection.select(population);
-        const Specimen& parent2 = selection.select(population);
+        const Specimen& parent1 =
+            selection.select(
+                population,
+                specimenComparator);
+        const Specimen& parent2 =
+            selection.select(
+                population,
+                specimenComparator);
 
         auto [child1, child2] = crossover.cross(parent1, parent2);
 

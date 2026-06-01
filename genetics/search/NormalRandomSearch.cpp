@@ -4,6 +4,7 @@
 #include <random>
 #include <stdexcept>
 
+#include "genetics/comparison/SpecimenComparator.h"
 #include "math/Vector3.h"
 
 NormalRandomSearch::NormalRandomSearch(
@@ -36,7 +37,8 @@ NormalRandomSearch::NormalRandomSearch(
 
 void NormalRandomSearch::improve(
     Specimen& specimen,
-    const FitnessEvaluator& fitnessEvaluator) const
+    const FitnessEvaluator& fitnessEvaluator,
+    const SpecimenComparator& specimenComparator) const
 {
     if (specimen.empty() || iterations == 0)
     {
@@ -68,7 +70,7 @@ void NormalRandomSearch::improve(
 
         fitnessEvaluator.evaluate(candidate);
 
-        if (candidate < best)
+        if (specimenComparator.isLess(candidate, best))
         {
             best = std::move(candidate);
         }

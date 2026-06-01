@@ -4,6 +4,8 @@
 #include "genetics/Specimen.h"
 #include "genetics/fitness/FitnessEvaluator.h"
 
+class SpecimenComparator;
+
 class LocalImprovement
 {
 public:
@@ -11,7 +13,8 @@ public:
 
     virtual void improve(
         Specimen& specimen,
-        const FitnessEvaluator& fitnessEvaluator) const = 0;
+        const FitnessEvaluator& fitnessEvaluator,
+        const SpecimenComparator& specimenComparator) const = 0;
 };
 
 #endif

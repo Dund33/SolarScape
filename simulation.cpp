@@ -10,6 +10,7 @@
 #include "config/consts.h"
 #include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/GeneticAlgorithm.h"
+#include "genetics/comparison/SimpleSpecimenComparator.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
@@ -149,6 +150,8 @@ namespace
             state.targetPointFromTargetBody,
             verletFactory);
 
+        SimpleSpecimenComparator specimenComparator;
+
         GeneticAlgorithm::Factories factories{
             initializerFactory,
             selectionFactory,
@@ -162,6 +165,7 @@ namespace
             GENERATIONS,
             ELITE_COUNT,
             POPULATION_SIZE / 25,
+            specimenComparator,
             factories);
 
         const Specimen best = algorithm.run();

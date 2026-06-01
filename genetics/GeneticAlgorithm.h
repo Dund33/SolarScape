@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "genetics/Specimen.h"
+#include "genetics/comparison/SpecimenComparator.h"
 #include "genetics/crossing/CrossoverFactory.h"
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
 #include "genetics/init/InitializerFactory.h"
@@ -30,6 +31,7 @@ public:
         std::size_t generations,
         std::size_t eliteCount,
         std::size_t immigrantCount,
+        const SpecimenComparator& specimenComparator,
         Factories factories
     );
 
@@ -66,6 +68,7 @@ private:
     std::size_t generations;
     std::size_t eliteCount;
     std::size_t immigrantCount;
+    const SpecimenComparator& specimenComparator;
     Factories factories;
 };
 

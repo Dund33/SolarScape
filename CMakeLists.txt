@@ -92,6 +92,9 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGeneticCore STATIC
         genetics/Specimen.cpp
         genetics/Specimen.h
+        genetics/comparison/SpecimenComparator.h
+        genetics/comparison/SimpleSpecimenComparator.cpp
+        genetics/comparison/SimpleSpecimenComparator.h
         genetics/fitness/FitnessValue.h
 )
 
