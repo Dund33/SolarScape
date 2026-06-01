@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "genetics/comparison/SimpleSpecimenComparator.h"
+#include "genetics/crossing/AlignedSimilarityCrossover.h"
 #include "genetics/crossing/CrossoverFactory.h"
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
 #include "genetics/init/InitializerFactory.h"
@@ -288,6 +289,66 @@ namespace
             foundBestDistance,
             "Expected first nondominated specimen in Pareto front.");
     }
+
+    void testAlignedSimilarityCrossoverSwapsAlignedManeuvers()
+    {
+        AlignedSimilarityCrossover crossover;
+
+        Specimen parent1({
+            Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 5.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L)});
+        Specimen parent2({
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.75L, 25.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.95L, 5.0L, 10.0L)});
+
+        auto [child1, child2] =
+            crossover.cross(
+                parent1,
+                parent2);
+
+        expect(
+            child1.size() == parent1.size(),
+            "Expected first child to keep first parent size.");
+        expect(
+            child2.size() == parent2.size(),
+            "Expected second child to keep second parent size.");
+        expect(
+            child1[1].getThrottleValue() == parent2[0].getThrottleValue(),
+            "Expected aligned maneuver to be swapped into first child.");
+        expect(
+            child2[0].getThrottleValue() == parent1[1].getThrottleValue(),
+            "Expected aligned maneuver to be swapped into second child.");
+    }
+
+    void testAlignedSimilarityCrossoverHandlesNegativeOffset()
+    {
+        AlignedSimilarityCrossover crossover;
+
+        Specimen parent1({
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 25.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L)});
+        Specimen parent2({
+            Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.75L, 5.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.95L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.4L, 5.0L, 10.0L)});
+
+        auto [child1, child2] =
+            crossover.cross(
+                parent1,
+                parent2);
+
+        expect(
+            child1.size() == parent1.size(),
+            "Expected first child to keep first parent size for negative offset.");
+        expect(
+            child2.size() == parent2.size(),
+            "Expected second child to keep second parent size for negative offset.");
+        expect(
+            child1[0].getThrottleValue() == parent2[1].getThrottleValue(),
+            "Expected negative-offset aligned maneuver to be swapped into first child.");
+    }
 }
 
 auto main() -> int
@@ -296,6 +357,8 @@ auto main() -> int
     {
         testComparatorDominance();
         testNSGAIIReturnsFirstParetoFront();
+        testAlignedSimilarityCrossoverSwapsAlignedManeuvers();
+        testAlignedSimilarityCrossoverHandlesNegativeOffset();
         std::cout << "NSGA-II smoke tests passed.\n";
         return 0;
     }

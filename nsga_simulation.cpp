@@ -7,11 +7,11 @@
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/comparison/SimpleSpecimenComparator.h"
-#include "genetics/crossing/RandomCutCrossoverFactory.h"
+#include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
-#include "genetics/mutation/RandomUniformMutationFactory.h"
+#include "genetics/mutation/ExtensiveMutationFactory.h"
 #include "genetics/nsga/NSGAIIAlgorithm.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
@@ -73,10 +73,18 @@ namespace
         TournamentSelectionFactory selectionFactory(
             TOURNAMENT_SIZE);
 
-        RandomCutCrossoverFactory crossoverFactory;
+        AlignedSimilarityCrossoverFactory crossoverFactory;
 
-        RandomUniformMutationFactory mutationFactory(
+        ExtensiveMutationFactory mutationFactory(
             MUTATION_PROBABILITY,
+            0.5,
+            0.5,
+            MIN_MANEUVERS,
+            MAX_MANEUVERS,
+            MIN_MANEUVER_TIME,
+            state.simulationTime,
+            MIN_MANEUVER_DURATION,
+            MAX_MANEUVER_DURATION,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE,

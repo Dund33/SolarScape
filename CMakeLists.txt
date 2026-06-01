@@ -126,6 +126,10 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/selection/TournamentSelectionFactory.h
         genetics/mutation/MutationFactory.h
         genetics/mutation/Mutation.h
+        genetics/mutation/ExtensiveMutation.cpp
+        genetics/mutation/ExtensiveMutation.h
+        genetics/mutation/ExtensiveMutationFactory.cpp
+        genetics/mutation/ExtensiveMutationFactory.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
         genetics/mutation/RandomUniformMutationFactory.cpp
@@ -138,6 +142,10 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/init/RandomInitializerFactory.h
         genetics/crossing/CrossoverFactory.h
         genetics/crossing/Crossover.h
+        genetics/crossing/AlignedSimilarityCrossover.cpp
+        genetics/crossing/AlignedSimilarityCrossover.h
+        genetics/crossing/AlignedSimilarityCrossoverFactory.cpp
+        genetics/crossing/AlignedSimilarityCrossoverFactory.h
         genetics/crossing/RandomCutCrossover.cpp
         genetics/crossing/RandomCutCrossover.h
         genetics/crossing/RandomCutCrossoverFactory.cpp
