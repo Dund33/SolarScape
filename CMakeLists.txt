@@ -33,7 +33,6 @@ target_include_directories(SolarScapeMath
 
 add_library(SolarScapeSimulation STATIC
         simulation/Maneuver.h
-        simulation/SimulationContext.h
         simulation/Simulation.cpp
         simulation/Simulation.h
         simulation/SimulationFactory.h
@@ -224,10 +223,14 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticAlgorithm
 )
 
-configure_file(
-        config.yaml
-        config.yaml
-        COPYONLY
+add_custom_target(copy_yaml_files
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${CMAKE_CURRENT_SOURCE_DIR}/config.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/validation-basic.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/validation-outer-body.yaml"
+                "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Copying YAML configuration files"
+        VERBATIM
 )
 
 
@@ -239,6 +242,10 @@ add_executable(SolarScape
         simulation.cpp
 )
 
+add_dependencies(SolarScape
+        copy_yaml_files
+)
+
 target_link_libraries(SolarScape
         PRIVATE
         SolarScape::Config
@@ -246,4 +253,20 @@ target_link_libraries(SolarScape
         SolarScape::Genetic
         SolarScape::Simulation
         $<$<PLATFORM_ID:Linux>:TBB::tbb>
+)
+
+add_executable(validation
+        validation.cpp
+        validation/RecordingValidator.cpp
+        validation/RecordingValidator.h
+)
+
+add_dependencies(validation
+        copy_yaml_files
+)
+
+target_link_libraries(validation
+        PRIVATE
+        SolarScape::Config
+        SolarScape::Simulation
 )

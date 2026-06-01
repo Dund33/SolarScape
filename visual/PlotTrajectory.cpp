@@ -6,8 +6,6 @@
 #include <limits>
 #include <vector>
 
-#include "simulation/SimulationContext.h"
-
 namespace
 {
     Vector3 absolutePointForBody(
@@ -27,7 +25,7 @@ void plotTrajectory(
 {
     auto simulation =
         simulationFactory.create(
-            SimulationContext{maneuvers});
+            maneuvers);
 
     const std::vector<Body>& simulationBodies =
         simulation->bodies();

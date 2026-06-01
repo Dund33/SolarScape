@@ -6,11 +6,11 @@ Simulation::Simulation(
     std::vector<Body> bodies,
     Body targetBody,
     Probe probe,
-    SimulationContext context,
+    std::vector<Maneuver> maneuvers,
     Real gravitationalConstant)
     : bodies_(std::move(bodies)),
       probe_(std::move(probe)),
-      context_(std::move(context)),
+      maneuvers_(std::move(maneuvers)),
       gravitationalConstant_(gravitationalConstant)
 {
     bodies_.push_back(std::move(targetBody));
@@ -47,9 +47,9 @@ Probe& Simulation::mutableProbe()
     return probe_;
 }
 
-const SimulationContext& Simulation::context() const
+const std::vector<Maneuver>& Simulation::maneuvers() const
 {
-    return context_;
+    return maneuvers_;
 }
 
 Real Simulation::gravitationalConstant() const

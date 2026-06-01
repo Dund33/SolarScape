@@ -9,21 +9,21 @@ VerletFactory::VerletFactory(
     Real gravitationalConstant,
     std::vector<Body> bodies,
     Body targetBody,
-    ProbeFactory probeFactory)
+    Probe probe)
     : gravitationalConstant(gravitationalConstant),
       bodies(std::move(bodies)),
       targetBody(std::move(targetBody)),
-      probeFactory(std::move(probeFactory))
+      probe(std::move(probe))
 {
 }
 
 std::unique_ptr<Simulation> VerletFactory::create(
-    SimulationContext context) const
+    std::vector<Maneuver> maneuvers) const
 {
     return std::make_unique<Verlet>(
         bodies,
         targetBody,
-        probeFactory.create(),
-        std::move(context),
+        probe,
+        std::move(maneuvers),
         gravitationalConstant);
 }

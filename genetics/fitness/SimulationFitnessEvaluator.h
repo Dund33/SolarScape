@@ -5,7 +5,7 @@
 #include "genetics/fitness/FitnessValue.h"
 #include "math/Real.h"
 #include "math/Vector3.h"
-#include "simulation/SimulationContext.h"
+#include "simulation/Maneuver.h"
 #include "simulation/SimulationFactory.h"
 
 class SimulationFitnessEvaluator final : public FitnessEvaluator
@@ -22,7 +22,7 @@ public:
 
 private:
     FitnessValue calculateFitnessValue(
-        SimulationContext context) const;
+        std::vector<Maneuver> maneuvers) const;
 
     Real timeStep;
     Real simulationTime;

@@ -13,7 +13,7 @@ public:
         std::vector<Body> bodies,
         Body targetBody,
         Probe probe,
-        SimulationContext context,
+        std::vector<Maneuver> maneuvers,
         Real gravitationalConstant);
 
     void step(

@@ -6,7 +6,7 @@
 #include "math/Body.h"
 #include "math/Probe.h"
 #include "math/Real.h"
-#include "simulation/SimulationContext.h"
+#include "simulation/Maneuver.h"
 
 class Simulation
 {
@@ -15,7 +15,7 @@ public:
         std::vector<Body> bodies,
         Body targetBody,
         Probe probe,
-        SimulationContext context,
+        std::vector<Maneuver> maneuvers,
         Real gravitationalConstant);
     virtual ~Simulation() = default;
 
@@ -36,7 +36,7 @@ public:
 protected:
     std::vector<Body>& mutableBodies();
     Probe& mutableProbe();
-    const SimulationContext& context() const;
+    const std::vector<Maneuver>& maneuvers() const;
     Real gravitationalConstant() const;
     void advanceTime(Real timeStep);
 
@@ -44,7 +44,7 @@ private:
     std::vector<Body> bodies_;
     Probe probe_;
     Body* targetBody_{};
-    SimulationContext context_;
+    std::vector<Maneuver> maneuvers_;
     Real gravitationalConstant_{};
     Real time_{};
 };

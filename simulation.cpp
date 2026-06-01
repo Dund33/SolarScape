@@ -107,7 +107,7 @@ namespace
             ProbeFactory(
                 state.probeProperties,
                 state.probePosition,
-                state.probeVelocity));
+                state.probeVelocity).create());
 
         RandomInitializerFactory initializerFactory(
             MIN_MANEUVERS,
