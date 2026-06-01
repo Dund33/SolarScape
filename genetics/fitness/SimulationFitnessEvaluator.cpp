@@ -1,5 +1,6 @@
 #include "SimulationFitnessEvaluator.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
@@ -18,6 +19,7 @@ namespace
     {
         return targetBody.position() + relativePoint;
     }
+
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
@@ -71,6 +73,12 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     const Probe& simulatedProbe =
         simulation->probe();
 
+    const Real fuelConstraintViolation =
+        std::max(
+            0.0L,
+            simulation->requestedFuelUse() -
+            simulatedProbe.fuelMass());
+
     Real minimumDistance =
         distance(
             simulatedProbe.position(),
@@ -114,5 +122,6 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     return {
         minimumDistance,
         minimumDistanceTime,
-        minimumDistanceFuelMass};
+        minimumDistanceFuelMass,
+        fuelConstraintViolation};
 }

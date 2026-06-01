@@ -1,5 +1,7 @@
 #include "Simulation.h"
 
+#include <algorithm>
+#include <numeric>
 #include <utility>
 
 Simulation::Simulation(
@@ -35,6 +37,24 @@ const Body& Simulation::targetBody() const
 Real Simulation::time() const
 {
     return time_;
+}
+
+Real Simulation::requestedFuelUse() const
+{
+    return std::accumulate(
+        maneuvers_.begin(),
+        maneuvers_.end(),
+        0.0L,
+        [this](Real totalFuelUse, const Maneuver& maneuver)
+        {
+            return totalFuelUse +
+                probe_.fuelFlow() *
+                std::clamp(
+                    maneuver.getThrottleValue(),
+                    0.0L,
+                    1.0L) *
+                maneuver.getDuration();
+        });
 }
 
 std::vector<Body>& Simulation::mutableBodies()

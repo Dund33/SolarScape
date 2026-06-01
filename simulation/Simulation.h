@@ -32,6 +32,7 @@ public:
     const Probe& probe() const;
     const Body& targetBody() const;
     Real time() const;
+    Real requestedFuelUse() const;
 
 protected:
     std::vector<Body>& mutableBodies();

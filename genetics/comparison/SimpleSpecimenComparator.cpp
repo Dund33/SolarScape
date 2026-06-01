@@ -19,6 +19,45 @@ namespace
         const FitnessValue& lhs,
         const FitnessValue& rhs)
     {
+        const bool lhsSatisfiesFuelConstraint =
+            fitnessObjectives::satisfiesFuelConstraint(lhs);
+        const bool rhsSatisfiesFuelConstraint =
+            fitnessObjectives::satisfiesFuelConstraint(rhs);
+
+        if (
+            lhsSatisfiesFuelConstraint &&
+            !rhsSatisfiesFuelConstraint)
+        {
+            return DominanceRelation::lhsDominates;
+        }
+
+        if (
+            rhsSatisfiesFuelConstraint &&
+            !lhsSatisfiesFuelConstraint)
+        {
+            return DominanceRelation::rhsDominates;
+        }
+
+        if (
+            !lhsSatisfiesFuelConstraint &&
+            !rhsSatisfiesFuelConstraint)
+        {
+            const Real lhsViolation =
+                fitnessObjectives::fuelConstraintViolation(lhs);
+            const Real rhsViolation =
+                fitnessObjectives::fuelConstraintViolation(rhs);
+
+            if (lhsViolation < rhsViolation)
+            {
+                return DominanceRelation::lhsDominates;
+            }
+
+            if (rhsViolation < lhsViolation)
+            {
+                return DominanceRelation::rhsDominates;
+            }
+        }
+
         bool lhsStrictlyBetter = false;
         bool rhsStrictlyBetter = false;
         const auto lhsValues =
@@ -62,9 +101,9 @@ namespace
         const FitnessValue& rhs)
     {
         const auto lhsValues =
-            fitnessObjectives::comparableValues(lhs);
+            fitnessObjectives::tieBreakValues(lhs);
         const auto rhsValues =
-            fitnessObjectives::comparableValues(rhs);
+            fitnessObjectives::tieBreakValues(rhs);
 
         for (std::size_t i = 0; i < lhsValues.size(); ++i)
         {

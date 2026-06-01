@@ -22,13 +22,123 @@ namespace
         std::vector<SpecimenRank> ranks;
     };
 
+    struct FrontStats
+    {
+        std::size_t size{};
+        std::size_t fuelFeasibleCount{};
+        Real minDistance{};
+        Real maxDistance{};
+        Real minTime{};
+        Real maxTime{};
+        Real minFuel{};
+        Real maxFuel{};
+        Real minFuelViolation{};
+        Real maxFuelViolation{};
+    };
+
+    FrontStats calculateFrontStats(
+        const std::vector<Specimen>& population,
+        const std::vector<std::size_t>& front)
+    {
+        FrontStats stats;
+        stats.size = front.size();
+
+        if (front.empty())
+        {
+            return stats;
+        }
+
+        const FitnessValue& firstFitness =
+            population[front.front()].getFitness().value();
+
+        stats.minDistance = firstFitness.minimumDistance;
+        stats.maxDistance = firstFitness.minimumDistance;
+        stats.minTime = firstFitness.minimumDistanceTime;
+        stats.maxTime = firstFitness.minimumDistanceTime;
+        stats.minFuel = firstFitness.minimumDistanceFuelMass;
+        stats.maxFuel = firstFitness.minimumDistanceFuelMass;
+        stats.minFuelViolation = firstFitness.fuelConstraintViolation;
+        stats.maxFuelViolation = firstFitness.fuelConstraintViolation;
+
+        for (std::size_t specimenIndex : front)
+        {
+            const FitnessValue& fitness =
+                population[specimenIndex].getFitness().value();
+
+            if (fitnessObjectives::satisfiesFuelConstraint(fitness))
+            {
+                ++stats.fuelFeasibleCount;
+            }
+
+            stats.minDistance =
+                std::min(
+                    stats.minDistance,
+                    fitness.minimumDistance);
+            stats.maxDistance =
+                std::max(
+                    stats.maxDistance,
+                    fitness.minimumDistance);
+            stats.minTime =
+                std::min(
+                    stats.minTime,
+                    fitness.minimumDistanceTime);
+            stats.maxTime =
+                std::max(
+                    stats.maxTime,
+                    fitness.minimumDistanceTime);
+            stats.minFuel =
+                std::min(
+                    stats.minFuel,
+                    fitness.minimumDistanceFuelMass);
+            stats.maxFuel =
+                std::max(
+                    stats.maxFuel,
+                    fitness.minimumDistanceFuelMass);
+            stats.minFuelViolation =
+                std::min(
+                    stats.minFuelViolation,
+                    fitness.fuelConstraintViolation);
+            stats.maxFuelViolation =
+                std::max(
+                    stats.maxFuelViolation,
+                    fitness.fuelConstraintViolation);
+        }
+
+        return stats;
+    }
+
     void printGenerationResult(
         std::size_t generation,
-        std::size_t frontSize)
+        const std::vector<Specimen>& population,
+        const RankedPopulation& rankedPopulation)
     {
+        if (rankedPopulation.fronts.empty())
+        {
+            std::cout
+                << "NSGA-II generation " << generation
+                << " | Pareto front size = 0\n";
+            return;
+        }
+
+        const FrontStats stats =
+            calculateFrontStats(
+                population,
+                rankedPopulation.fronts.front());
+
         std::cout
             << "NSGA-II generation " << generation
-            << " | Pareto front size = " << frontSize
+            << " | Pareto front size = " << stats.size
+            << " | fuel feasible = "
+            << stats.fuelFeasibleCount << '/' << stats.size
+            << " | distance = ["
+            << stats.minDistance << ", " << stats.maxDistance << ']'
+            << " | time = ["
+            << stats.minTime << ", " << stats.maxTime << ']'
+            << " | fuel = ["
+            << stats.minFuel << ", " << stats.maxFuel << ']'
+            << " | fuel violation = ["
+            << stats.minFuelViolation << ", "
+            << stats.maxFuelViolation << ']'
             << '\n';
     }
 
@@ -347,9 +457,8 @@ std::vector<Specimen> NSGAIIAlgorithm::run() const
 
         printGenerationResult(
             generation,
-            rankedParents.fronts.empty()
-                ? 0
-                : rankedParents.fronts.front().size());
+            population,
+            rankedParents);
 
         const NSGAIIRankingComparator selectionComparator(
             population,

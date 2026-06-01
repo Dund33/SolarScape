@@ -47,6 +47,7 @@ inline void printFitnessValue(
         << "[minimumDistance=" << fitness.minimumDistance
         << ", minimumDistanceTime=" << fitness.minimumDistanceTime
         << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
+        << ", fuelConstraintViolation=" << fitness.fuelConstraintViolation
         << ']';
 }
 

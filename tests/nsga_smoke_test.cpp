@@ -30,7 +30,8 @@ namespace
         return
             lhs.minimumDistance == rhs.minimumDistance &&
             lhs.minimumDistanceTime == rhs.minimumDistanceTime &&
-            lhs.minimumDistanceFuelMass == rhs.minimumDistanceFuelMass;
+            lhs.minimumDistanceFuelMass == rhs.minimumDistanceFuelMass &&
+            lhs.fuelConstraintViolation == rhs.fuelConstraintViolation;
     }
 
     class FixtureInitializer final : public Initializer
@@ -186,20 +187,66 @@ namespace
             comparator.compare(worse, better) ==
                 std::partial_ordering::greater,
             "Expected worse specimen to be dominated by better specimen.");
+
+        Specimen earlier =
+            specimenWithFitness({1.0L, 1.0L, 10.0L});
+        Specimen later =
+            specimenWithFitness({1.0L, 2.0L, 10.0L});
+
+        expect(
+            comparator.compare(earlier, later) ==
+                std::partial_ordering::equivalent,
+            "Expected time-only difference to be equivalent for dominance.");
+        expect(
+            comparator.isLess(earlier, later),
+            "Expected earlier time to be used as tie-breaker.");
+
+        Specimen moreFuel =
+            specimenWithFitness({1.0L, 2.0L, 10.0L});
+        Specimen lessFuel =
+            specimenWithFitness({1.0L, 1.0L, 5.0L});
+
+        expect(
+            comparator.compare(moreFuel, lessFuel) ==
+                std::partial_ordering::equivalent,
+            "Expected fuel-only and time-only differences to be equivalent for dominance.");
+        expect(
+            !comparator.isLess(moreFuel, lessFuel),
+            "Expected earlier time to beat higher fuel in tie-breaker order.");
+
+        Specimen feasible =
+            specimenWithFitness({2.0L, 2.0L, 1.0L});
+        Specimen infeasible =
+            specimenWithFitness({1.0L, 1.0L, 10.0L, 1.0L});
+
+        expect(
+            comparator.compare(feasible, infeasible) ==
+                std::partial_ordering::less,
+            "Expected fuel-feasible specimen to dominate fuel-infeasible specimen.");
+
+        Specimen smallerViolation =
+            specimenWithFitness({5.0L, 5.0L, 10.0L, 1.0L});
+        Specimen largerViolation =
+            specimenWithFitness({1.0L, 1.0L, 10.0L, 2.0L});
+
+        expect(
+            comparator.compare(smallerViolation, largerViolation) ==
+                std::partial_ordering::less,
+            "Expected smaller fuel constraint violation to dominate larger violation.");
     }
 
     void testNSGAIIReturnsFirstParetoFront()
     {
-        const FitnessValue bestDistanceFast{1.0L, 1.0L, 10.0L};
-        const FitnessValue bestFuel{1.0L, 3.0L, 11.0L};
-        const FitnessValue dominatedA{2.0L, 2.0L, 5.0L};
-        const FitnessValue dominatedB{4.0L, 4.0L, 1.0L};
+        const FitnessValue bestDistance{1.0L, 5.0L, 5.0L};
+        const FitnessValue bestTime{2.0L, 1.0L, 10.0L};
+        const FitnessValue dominatedA{3.0L, 2.0L, 4.0L};
+        const FitnessValue infeasible{0.5L, 0.5L, 100.0L, 1.0L};
 
         FixtureInitializerFactory initializerFactory({
-            specimenWithFitness(bestDistanceFast),
-            specimenWithFitness(bestFuel),
+            specimenWithFitness(bestDistance),
+            specimenWithFitness(bestTime),
             specimenWithFitness(dominatedA),
-            specimenWithFitness(dominatedB)});
+            specimenWithFitness(infeasible)});
         FirstSelectionFactory selectionFactory;
         CopyCrossoverFactory crossoverFactory;
         NoopMutationFactory mutationFactory;
@@ -222,31 +269,24 @@ namespace
             algorithm.run();
 
         expect(
-            paretoFront.size() == 2,
-            "Expected two specimens in the first Pareto front.");
+            paretoFront.size() == 1,
+            "Expected one feasible specimen in the first Pareto front.");
 
-        bool foundBestDistanceFast = false;
-        bool foundBestFuel = false;
+        bool foundBestDistance = false;
 
         for (const Specimen& specimen : paretoFront)
         {
             const FitnessValue& fitness =
                 specimen.getFitness().value();
 
-            foundBestDistanceFast =
-                foundBestDistanceFast ||
-                sameFitness(fitness, bestDistanceFast);
-            foundBestFuel =
-                foundBestFuel ||
-                sameFitness(fitness, bestFuel);
+            foundBestDistance =
+                foundBestDistance ||
+                sameFitness(fitness, bestDistance);
         }
 
         expect(
-            foundBestDistanceFast,
+            foundBestDistance,
             "Expected first nondominated specimen in Pareto front.");
-        expect(
-            foundBestFuel,
-            "Expected second nondominated specimen in Pareto front.");
     }
 }
 
