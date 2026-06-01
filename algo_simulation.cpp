@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <exception>
 #include <iostream>
-#include <utility>
-#include <vector>
 
 #include <yaml-cpp/yaml.h>
 
@@ -21,6 +19,7 @@
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
+#include "simulation_helper.h"
 #include "simulation/SimulationFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
@@ -28,45 +27,6 @@
 namespace
 {
     constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
-
-    struct SimulationState
-    {
-        Real gravitationalConstant{};
-        Real timeStep{};
-        Real simulationTime{};
-
-        Vector3 targetPointFromTargetBody;
-
-        std::vector<Body> initialBodies;
-        Body targetBody;
-        Vector3 probePosition;
-        Vector3 probeVelocity;
-        ProbeProperties probeProperties;
-    };
-
-    auto createSimulationState(SimulationConfig&& config) -> SimulationState
-    {
-        return {
-            config.gravitationalConstant,
-            config.timeStep,
-            config.simulationTime,
-            config.targetPointFromTargetBody,
-            std::move(config.bodies),
-            std::move(config.targetBody),
-            config.probePosition,
-            config.probeVelocity,
-            config.probeProperties};
-    }
-
-    void printFitnessValue(
-        const FitnessValue& fitness)
-    {
-        std::cout
-            << "[minimumDistance=" << fitness.minimumDistance
-            << ", minimumDistanceTime=" << fitness.minimumDistanceTime
-            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
-            << ']';
-    }
 
     void printFinalResult(
         const Specimen& best)

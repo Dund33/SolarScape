@@ -266,7 +266,7 @@ if(LINUX)
 endif()
 
 add_executable(SolarScape
-        simulation.cpp
+        algo_simulation.cpp
 )
 
 add_dependencies(SolarScape

@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <exception>
 #include <iostream>
-#include <utility>
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
@@ -16,52 +14,15 @@
 #include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "genetics/nsga/NSGAIIAlgorithm.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
+#include "genetics/Specimen.h"
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
+#include "simulation_helper.h"
 #include "simulation/VerletFactory.h"
 
 namespace
 {
-    struct SimulationState
-    {
-        Real gravitationalConstant{};
-        Real timeStep{};
-        Real simulationTime{};
-
-        Vector3 targetPointFromTargetBody;
-
-        std::vector<Body> initialBodies;
-        Body targetBody;
-        Vector3 probePosition;
-        Vector3 probeVelocity;
-        ProbeProperties probeProperties;
-    };
-
-    auto createSimulationState(SimulationConfig&& config) -> SimulationState
-    {
-        return {
-            config.gravitationalConstant,
-            config.timeStep,
-            config.simulationTime,
-            config.targetPointFromTargetBody,
-            std::move(config.bodies),
-            std::move(config.targetBody),
-            config.probePosition,
-            config.probeVelocity,
-            config.probeProperties};
-    }
-
-    void printFitnessValue(
-        const FitnessValue& fitness)
-    {
-        std::cout
-            << "[minimumDistance=" << fitness.minimumDistance
-            << ", minimumDistanceTime=" << fitness.minimumDistanceTime
-            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
-            << ']';
-    }
-
     void printParetoFront(
         const std::vector<Specimen>& paretoFront)
     {
