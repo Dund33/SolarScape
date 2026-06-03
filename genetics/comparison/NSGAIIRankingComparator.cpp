@@ -69,9 +69,18 @@ bool NSGAIIRankingComparator::isLess(
     return fallbackComparator.isLess(lhs, rhs);
 }
 
-std::span<const FitnessField> NSGAIIRankingComparator::objectiveFields() const
+std::size_t NSGAIIRankingComparator::objectiveCount() const
 {
-    return fallbackComparator.objectiveFields();
+    return fallbackComparator.objectiveCount();
+}
+
+Real NSGAIIRankingComparator::objectiveValue(
+    const FitnessValue& fitness,
+    std::size_t objective) const
+{
+    return fallbackComparator.objectiveValue(
+        fitness,
+        objective);
 }
 
 const SpecimenRank& NSGAIIRankingComparator::rankFor(

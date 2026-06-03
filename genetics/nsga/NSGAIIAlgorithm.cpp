@@ -6,7 +6,6 @@
 #include <iterator>
 #include <limits>
 #include <ranges>
-#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -169,22 +168,23 @@ namespace
             return;
         }
 
-        const std::span<const FitnessField> fields =
-            specimenComparator.objectiveFields();
+        const std::size_t objectiveCount =
+            specimenComparator.objectiveCount();
 
-        for (std::size_t objective = 0; objective < fields.size(); ++objective)
+        for (std::size_t objective = 0; objective < objectiveCount; ++objective)
         {
-            const FitnessField& field = fields[objective];
             std::vector<std::size_t> sortedFront = front;
 
             std::ranges::sort(
                 sortedFront,
                 [&](std::size_t lhs, std::size_t rhs)
                 {
-                    return field.comparableValue(
-                        population[lhs].getFitness().value()) <
-                        field.comparableValue(
-                            population[rhs].getFitness().value());
+                    return specimenComparator.objectiveValue(
+                        population[lhs].getFitness().value(),
+                        objective) <
+                        specimenComparator.objectiveValue(
+                            population[rhs].getFitness().value(),
+                            objective);
                 });
 
             ranks[sortedFront.front()].crowdingDistance =
@@ -193,11 +193,13 @@ namespace
                 std::numeric_limits<Real>::infinity();
 
             const Real minimumValue =
-                field.comparableValue(
-                    population[sortedFront.front()].getFitness().value());
+                specimenComparator.objectiveValue(
+                    population[sortedFront.front()].getFitness().value(),
+                    objective);
             const Real maximumValue =
-                field.comparableValue(
-                    population[sortedFront.back()].getFitness().value());
+                specimenComparator.objectiveValue(
+                    population[sortedFront.back()].getFitness().value(),
+                    objective);
             const Real valueRange = maximumValue - minimumValue;
 
             if (valueRange == 0.0L)
@@ -216,11 +218,13 @@ namespace
                 }
 
                 const Real previousValue =
-                    field.comparableValue(
-                        population[sortedFront[i - 1]].getFitness().value());
+                    specimenComparator.objectiveValue(
+                        population[sortedFront[i - 1]].getFitness().value(),
+                        objective);
                 const Real nextValue =
-                    field.comparableValue(
-                        population[sortedFront[i + 1]].getFitness().value());
+                    specimenComparator.objectiveValue(
+                        population[sortedFront[i + 1]].getFitness().value(),
+                        objective);
 
                 distance +=
                     (nextValue - previousValue) /
