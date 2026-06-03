@@ -28,6 +28,8 @@ public:
         const Specimen& rhs
     ) const override;
 
+    std::span<const FitnessField> objectiveFields() const override;
+
 private:
     const SpecimenRank& rankFor(
         const Specimen& specimen) const;

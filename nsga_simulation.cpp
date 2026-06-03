@@ -6,7 +6,7 @@
 
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
-#include "genetics/comparison/SimpleSpecimenComparator.h"
+#include "genetics/comparison/NSGAIIComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
@@ -96,7 +96,7 @@ namespace
             state.targetPointFromTargetBody,
             verletFactory);
 
-        SimpleSpecimenComparator specimenComparator;
+        NSGAIIComparator specimenComparator;
 
         NSGAIIAlgorithm::Factories factories{
             initializerFactory,

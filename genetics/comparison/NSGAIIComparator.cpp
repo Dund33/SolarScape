@@ -1,8 +1,8 @@
-#include "SimpleSpecimenComparator.h"
+#include "NSGAIIComparator.h"
 
 #include "genetics/Specimen.h"
 
-std::partial_ordering SimpleSpecimenComparator::compare(
+std::partial_ordering NSGAIIComparator::compare(
     const Specimen& lhs,
     const Specimen& rhs
 ) const
@@ -16,14 +16,11 @@ std::partial_ordering SimpleSpecimenComparator::compare(
         fields);
 }
 
-bool SimpleSpecimenComparator::isLess(
+bool NSGAIIComparator::isLess(
     const Specimen& lhs,
     const Specimen& rhs
 ) const
 {
-    const FitnessValue& lhsFitness = lhs.getFitness().value();
-    const FitnessValue& rhsFitness = rhs.getFitness().value();
-
     const std::partial_ordering result =
         compare(lhs, rhs);
 
@@ -38,12 +35,12 @@ bool SimpleSpecimenComparator::isLess(
     }
 
     return lexicographicallyLess(
-        lhsFitness,
-        rhsFitness,
-        fields);
+        lhs.getFitness().value(),
+        rhs.getFitness().value(),
+        tieBreakerFields);
 }
 
-std::span<const FitnessField> SimpleSpecimenComparator::objectiveFields() const
+std::span<const FitnessField> NSGAIIComparator::objectiveFields() const
 {
     return fields;
 }

@@ -94,7 +94,8 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/GeneticAlgorithm.h
         genetics/Specimen.cpp
         genetics/Specimen.h
-        genetics/comparison/FitnessObjectives.h
+        genetics/comparison/NSGAIIComparator.cpp
+        genetics/comparison/NSGAIIComparator.h
         genetics/comparison/NSGAIIRankingComparator.cpp
         genetics/comparison/NSGAIIRankingComparator.h
         genetics/comparison/SpecimenComparator.h

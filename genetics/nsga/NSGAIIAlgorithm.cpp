@@ -6,11 +6,11 @@
 #include <iterator>
 #include <limits>
 #include <ranges>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
-#include "genetics/comparison/FitnessObjectives.h"
 #include "genetics/comparison/NSGAIIRankingComparator.h"
 #include "genetics/comparison/SpecimenRank.h"
 
@@ -65,7 +65,7 @@ namespace
             const FitnessValue& fitness =
                 population[specimenIndex].getFitness().value();
 
-            if (fitnessObjectives::satisfiesFuelConstraint(fitness))
+            if (fitness.fuelConstraintViolation <= 0.0L)
             {
                 ++stats.fuelFeasibleCount;
             }
@@ -142,18 +142,10 @@ namespace
             << '\n';
     }
 
-    bool dominates(
-        const Specimen& lhs,
-        const Specimen& rhs,
-        const SpecimenComparator& specimenComparator)
-    {
-        return specimenComparator.compare(lhs, rhs) ==
-            std::partial_ordering::less;
-    }
-
     void calculateCrowdingDistance(
         const std::vector<Specimen>& population,
         const std::vector<std::size_t>& front,
+        const SpecimenComparator& specimenComparator,
         std::vector<SpecimenRank>& ranks)
     {
         if (front.empty())
@@ -177,20 +169,22 @@ namespace
             return;
         }
 
-        for (std::size_t objective = 0;
-             objective < fitnessObjectives::objectiveCount;
-             ++objective)
+        const std::span<const FitnessField> fields =
+            specimenComparator.objectiveFields();
+
+        for (std::size_t objective = 0; objective < fields.size(); ++objective)
         {
+            const FitnessField& field = fields[objective];
             std::vector<std::size_t> sortedFront = front;
 
             std::ranges::sort(
                 sortedFront,
                 [&](std::size_t lhs, std::size_t rhs)
                 {
-                    return fitnessObjectives::comparableValues(
-                        population[lhs].getFitness().value())[objective] <
-                        fitnessObjectives::comparableValues(
-                            population[rhs].getFitness().value())[objective];
+                    return field.comparableValue(
+                        population[lhs].getFitness().value()) <
+                        field.comparableValue(
+                            population[rhs].getFitness().value());
                 });
 
             ranks[sortedFront.front()].crowdingDistance =
@@ -199,11 +193,11 @@ namespace
                 std::numeric_limits<Real>::infinity();
 
             const Real minimumValue =
-                fitnessObjectives::comparableValues(
-                    population[sortedFront.front()].getFitness().value())[objective];
+                field.comparableValue(
+                    population[sortedFront.front()].getFitness().value());
             const Real maximumValue =
-                fitnessObjectives::comparableValues(
-                    population[sortedFront.back()].getFitness().value())[objective];
+                field.comparableValue(
+                    population[sortedFront.back()].getFitness().value());
             const Real valueRange = maximumValue - minimumValue;
 
             if (valueRange == 0.0L)
@@ -222,11 +216,11 @@ namespace
                 }
 
                 const Real previousValue =
-                    fitnessObjectives::comparableValues(
-                        population[sortedFront[i - 1]].getFitness().value())[objective];
+                    field.comparableValue(
+                        population[sortedFront[i - 1]].getFitness().value());
                 const Real nextValue =
-                    fitnessObjectives::comparableValues(
-                        population[sortedFront[i + 1]].getFitness().value())[objective];
+                    field.comparableValue(
+                        population[sortedFront[i + 1]].getFitness().value());
 
                 distance +=
                     (nextValue - previousValue) /
@@ -259,17 +253,16 @@ namespace
                     continue;
                 }
 
-                if (dominates(
-                    population[lhs],
-                    population[rhs],
-                    specimenComparator))
+                const std::partial_ordering comparison =
+                    specimenComparator.compare(
+                        population[lhs],
+                        population[rhs]);
+
+                if (comparison == std::partial_ordering::less)
                 {
                     dominatedBySpecimen[lhs].push_back(rhs);
                 }
-                else if (dominates(
-                    population[rhs],
-                    population[lhs],
-                    specimenComparator))
+                else if (comparison == std::partial_ordering::greater)
                 {
                     ++dominationCounts[lhs];
                 }
@@ -321,6 +314,7 @@ namespace
             calculateCrowdingDistance(
                 population,
                 front,
+                specimenComparator,
                 rankedPopulation.ranks);
         }
 
@@ -330,7 +324,8 @@ namespace
     std::vector<Specimen> selectNextGeneration(
         const std::vector<Specimen>& combinedPopulation,
         const RankedPopulation& rankedPopulation,
-        std::size_t populationSize)
+        std::size_t populationSize,
+        const SpecimenComparator& specimenComparator)
     {
         std::vector<Specimen> nextPopulation;
         nextPopulation.reserve(populationSize);
@@ -349,22 +344,18 @@ namespace
             }
 
             std::vector<std::size_t> sortedFront = front;
+            const NSGAIIRankingComparator comparator(
+                combinedPopulation,
+                rankedPopulation.ranks,
+                specimenComparator);
 
             std::ranges::sort(
                 sortedFront,
                 [&](std::size_t lhs, std::size_t rhs)
                 {
-                    const Real lhsDistance =
-                        rankedPopulation.ranks[lhs].crowdingDistance;
-                    const Real rhsDistance =
-                        rankedPopulation.ranks[rhs].crowdingDistance;
-
-                    if (lhsDistance != rhsDistance)
-                    {
-                        return lhsDistance > rhsDistance;
-                    }
-
-                    return lhs < rhs;
+                    return comparator.isLess(
+                        combinedPopulation[lhs],
+                        combinedPopulation[rhs]);
                 });
 
             for (std::size_t specimenIndex : sortedFront)
@@ -497,7 +488,8 @@ std::vector<Specimen> NSGAIIAlgorithm::run() const
             selectNextGeneration(
                 combinedPopulation,
                 rankedCombined,
-                populationSize);
+                populationSize,
+                specimenComparator);
     }
 
     evaluatePopulationUnsequenced(

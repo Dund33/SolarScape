@@ -1,12 +1,12 @@
-#ifndef SOLARSCAPE_SIMPLESPECIMENCOMPARATOR_H
-#define SOLARSCAPE_SIMPLESPECIMENCOMPARATOR_H
+#ifndef SOLARSCAPE_NSGAIICOMPARATOR_H
+#define SOLARSCAPE_NSGAIICOMPARATOR_H
 
 #include <array>
 #include <span>
 
 #include "genetics/comparison/SpecimenComparator.h"
 
-class SimpleSpecimenComparator final : public SpecimenComparator
+class NSGAIIComparator final : public SpecimenComparator
 {
 public:
     std::partial_ordering compare(
@@ -22,10 +22,11 @@ public:
     std::span<const FitnessField> objectiveFields() const override;
 
 private:
-    const std::array<FitnessField, 4> fields{{
-        {&FitnessValue::minimumDistance, 1.0L},
-        {&FitnessValue::minimumDistanceTime, 1.0L},
+    const std::array<FitnessField, 2> fields{{
         {&FitnessValue::minimumDistanceFuelMass, -1.0L},
+        {&FitnessValue::minimumDistance, 1.0L}}};
+    const std::array<FitnessField, 2> tieBreakerFields{{
+        {&FitnessValue::minimumDistanceTime, 1.0L},
         {&FitnessValue::fuelConstraintViolation, 1.0L}}};
 };
 
