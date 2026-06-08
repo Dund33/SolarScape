@@ -127,6 +127,31 @@ namespace
         std::cout
             << "NSGA-II generation " << generation
             << " | Pareto front size = " << stats.size
+            << " | fronts = " << rankedPopulation.fronts.size()
+            << " [";
+
+        const std::size_t printedFrontCount =
+            std::min<std::size_t>(
+                rankedPopulation.fronts.size(),
+                5);
+
+        for (std::size_t i = 0; i < printedFrontCount; ++i)
+        {
+            if (i > 0)
+            {
+                std::cout << ", ";
+            }
+
+            std::cout << rankedPopulation.fronts[i].size();
+        }
+
+        if (printedFrontCount < rankedPopulation.fronts.size())
+        {
+            std::cout << ", ...";
+        }
+
+        std::cout
+            << ']'
             << " | fuel feasible = "
             << stats.fuelFeasibleCount << '/' << stats.size
             << " | distance = ["

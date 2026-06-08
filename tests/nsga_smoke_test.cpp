@@ -241,7 +241,7 @@ namespace
     {
         NSGAIIComparator comparator;
         Specimen betterObjectives =
-            specimenWithFitness({1.0L, 10.0L, 10.0L, 5.0L});
+            specimenWithFitness({1.0L, 10.0L, 10.0L});
         Specimen worseObjectives =
             specimenWithFitness({2.0L, 1.0L, 5.0L});
 
@@ -251,7 +251,7 @@ namespace
             "Expected higher remaining fuel and lower distance to dominate in NSGA-II comparator.");
 
         Specimen earlier =
-            specimenWithFitness({10.0L, 1.0L, 100.0L, 10.0L});
+            specimenWithFitness({10.0L, 1.0L, 100.0L});
         Specimen later =
             specimenWithFitness({1.0L, 2.0L, 1.0L});
 
@@ -262,6 +262,26 @@ namespace
         expect(
             comparator.isLess(earlier, later),
             "Expected remaining NSGA-II values to break ties by time first.");
+
+        Specimen feasible =
+            specimenWithFitness({2.0L, 10.0L, 5.0L});
+        Specimen infeasible =
+            specimenWithFitness({1.0L, 1.0L, 100.0L, 1.0L});
+
+        expect(
+            comparator.compare(feasible, infeasible) ==
+                std::partial_ordering::less,
+            "Expected feasible NSGA-II specimen to dominate infeasible specimen.");
+
+        Specimen smallerViolation =
+            specimenWithFitness({10.0L, 10.0L, 1.0L, 1.0L});
+        Specimen largerViolation =
+            specimenWithFitness({1.0L, 1.0L, 100.0L, 2.0L});
+
+        expect(
+            comparator.compare(smallerViolation, largerViolation) ==
+                std::partial_ordering::less,
+            "Expected smaller fuel violation to dominate larger violation in NSGA-II comparator.");
     }
 
     void testNSGAIIReturnsFirstParetoFront()

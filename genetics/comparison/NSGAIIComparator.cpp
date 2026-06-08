@@ -13,6 +13,18 @@ std::partial_ordering NSGAIIComparator::compare(
     const FitnessValue& lhsFitness = lhs.getFitness().value();
     const FitnessValue& rhsFitness = rhs.getFitness().value();
 
+    if (lhsFitness.fuelConstraintViolation <
+        rhsFitness.fuelConstraintViolation)
+    {
+        return std::partial_ordering::less;
+    }
+
+    if (rhsFitness.fuelConstraintViolation <
+        lhsFitness.fuelConstraintViolation)
+    {
+        return std::partial_ordering::greater;
+    }
+
     bool lhsStrictlyBetter = false;
     bool rhsStrictlyBetter = false;
 

@@ -7,7 +7,7 @@ inline constexpr double MAX_IMPULSE = 3000.0;
 inline constexpr double MAX_THRUST = 1000.0;
 inline constexpr double STANDARD_GRAVITY = 9.80665;
 
-inline constexpr std::size_t POPULATION_SIZE = 250;
+inline constexpr std::size_t POPULATION_SIZE = 500;
 inline constexpr std::size_t GENERATIONS = 250;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
