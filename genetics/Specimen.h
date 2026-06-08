@@ -1,7 +1,6 @@
 #ifndef SOLARSCAPE_SPECIMEN_H
 #define SOLARSCAPE_SPECIMEN_H
 
-#include <compare>
 #include <cstddef>
 #include <optional>
 #include <vector>
@@ -39,9 +38,5 @@ private:
     std::vector<Maneuver> maneuvers;
     std::optional<FitnessValue> fitness;
 };
-
-std::partial_ordering operator<=>(const Specimen& lhs, const Specimen& rhs);
-bool operator==(const Specimen& lhs, const Specimen& rhs);
-bool operator<(const Specimen& lhs, const Specimen& rhs);
 
 #endif

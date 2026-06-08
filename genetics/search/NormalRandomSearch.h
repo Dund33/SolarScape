@@ -20,7 +20,8 @@ public:
 
     void improve(
         Specimen& specimen,
-        const FitnessEvaluator& fitnessEvaluator) const override;
+        const FitnessEvaluator& fitnessEvaluator,
+        const SpecimenComparator& specimenComparator) const override;
 
 private:
     Maneuver perturbManeuver(

@@ -90,8 +90,18 @@ target_link_libraries(SolarScapeVisual
 )
 
 add_library(SolarScapeGeneticCore STATIC
+        genetics/GeneticAlgorithm.cpp
+        genetics/GeneticAlgorithm.h
         genetics/Specimen.cpp
         genetics/Specimen.h
+        genetics/comparison/NSGAIIComparator.cpp
+        genetics/comparison/NSGAIIComparator.h
+        genetics/comparison/NSGAIIRankingComparator.cpp
+        genetics/comparison/NSGAIIRankingComparator.h
+        genetics/comparison/SpecimenComparator.h
+        genetics/comparison/SpecimenRank.h
+        genetics/comparison/SimpleSpecimenComparator.cpp
+        genetics/comparison/SimpleSpecimenComparator.h
         genetics/fitness/FitnessValue.h
 )
 
@@ -117,6 +127,10 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/selection/TournamentSelectionFactory.h
         genetics/mutation/MutationFactory.h
         genetics/mutation/Mutation.h
+        genetics/mutation/ExtensiveMutation.cpp
+        genetics/mutation/ExtensiveMutation.h
+        genetics/mutation/ExtensiveMutationFactory.cpp
+        genetics/mutation/ExtensiveMutationFactory.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
         genetics/mutation/RandomUniformMutationFactory.cpp
@@ -129,6 +143,10 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/init/RandomInitializerFactory.h
         genetics/crossing/CrossoverFactory.h
         genetics/crossing/Crossover.h
+        genetics/crossing/AlignedSimilarityCrossover.cpp
+        genetics/crossing/AlignedSimilarityCrossover.h
+        genetics/crossing/AlignedSimilarityCrossoverFactory.cpp
+        genetics/crossing/AlignedSimilarityCrossoverFactory.h
         genetics/crossing/RandomCutCrossover.cpp
         genetics/crossing/RandomCutCrossover.h
         genetics/crossing/RandomCutCrossoverFactory.cpp
@@ -191,23 +209,41 @@ target_link_libraries(SolarScapeGeneticSearch
         SolarScape::GeneticFitness
 )
 
-add_library(SolarScapeGeneticAlgorithm STATIC
-        genetics/GeneticAlgorithm.cpp
-        genetics/GeneticAlgorithm.h
+add_library(SolarScapeGeneticAlgo STATIC
+        genetics/algo/Algo.cpp
+        genetics/algo/Algo.h
 )
 
-add_library(SolarScape::GeneticAlgorithm ALIAS SolarScapeGeneticAlgorithm)
+add_library(SolarScape::GeneticAlgo ALIAS SolarScapeGeneticAlgo)
 
-target_include_directories(SolarScapeGeneticAlgorithm
+target_include_directories(SolarScapeGeneticAlgo
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(SolarScapeGeneticAlgorithm
+target_link_libraries(SolarScapeGeneticAlgo
         PUBLIC
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticSearch
+)
+
+add_library(SolarScapeGeneticNSGAII STATIC
+        genetics/nsga/NSGAIIAlgorithm.cpp
+        genetics/nsga/NSGAIIAlgorithm.h
+)
+
+add_library(SolarScape::GeneticNSGAII ALIAS SolarScapeGeneticNSGAII)
+
+target_include_directories(SolarScapeGeneticNSGAII
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticNSGAII
+        PUBLIC
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
 )
 
 add_library(SolarScapeGenetic INTERFACE)
@@ -220,7 +256,7 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticSearch
-        SolarScape::GeneticAlgorithm
+        SolarScape::GeneticAlgo
 )
 
 add_custom_target(copy_yaml_files
@@ -239,7 +275,7 @@ if(LINUX)
 endif()
 
 add_executable(SolarScape
-        simulation.cpp
+        algo_simulation.cpp
 )
 
 add_dependencies(SolarScape
@@ -252,6 +288,38 @@ target_link_libraries(SolarScape
         SolarScape::Visual
         SolarScape::Genetic
         SolarScape::Simulation
+        $<$<PLATFORM_ID:Linux>:TBB::tbb>
+)
+
+add_executable(SolarScapeNSGAII
+        nsga_simulation.cpp
+)
+
+add_dependencies(SolarScapeNSGAII
+        copy_yaml_files
+)
+
+target_link_libraries(SolarScapeNSGAII
+        PRIVATE
+        SolarScape::Config
+        SolarScape::GeneticCore
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticNSGAII
+        SolarScape::Simulation
+        $<$<PLATFORM_ID:Linux>:TBB::tbb>
+)
+
+add_executable(NSGAIISmokeTest
+        tests/nsga_smoke_test.cpp
+)
+
+target_link_libraries(NSGAIISmokeTest
+        PRIVATE
+        SolarScape::GeneticCore
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticNSGAII
         $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 

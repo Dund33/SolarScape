@@ -5,68 +5,42 @@
 #include <vector>
 
 #include "genetics/Specimen.h"
-#include "genetics/crossing/CrossoverFactory.h"
-#include "genetics/fitness/FitnessEvaluatorFactory.h"
-#include "genetics/init/InitializerFactory.h"
-#include "genetics/mutation/MutationFactory.h"
-#include "genetics/search/LocalImprovementFactory.h"
-#include "genetics/selection/SelectionFactory.h"
+#include "genetics/comparison/SpecimenComparator.h"
+
+class Crossover;
+class FitnessEvaluator;
+class Initializer;
+class Mutation;
+class Selection;
 
 class GeneticAlgorithm
 {
 public:
-    struct Factories
-    {
-        const InitializerFactory& initializerFactory;
-        const SelectionFactory& selectionFactory;
-        const CrossoverFactory& crossoverFactory;
-        const MutationFactory& mutationFactory;
-        const LocalImprovementFactory& localImprovementFactory;
-        const FitnessEvaluatorFactory& fitnessEvaluatorFactory;
-    };
+    virtual ~GeneticAlgorithm() = 0;
 
-    GeneticAlgorithm(
-        std::size_t populationSize,
-        std::size_t generations,
-        std::size_t eliteCount,
-        std::size_t immigrantCount,
-        Factories factories
-    );
-
-    Specimen run() const;
-
-private:
+protected:
     void evaluatePopulationUnsequenced(
         std::vector<Specimen>& population,
         const FitnessEvaluator& fitnessEvaluator) const;
 
-    void copyElite(
-        const std::vector<Specimen>& population,
-        std::vector<Specimen>& newPopulation) const;
-
-    void fillPopulationWithChildren(
-        const std::vector<Specimen>& population,
-        std::vector<Specimen>& newPopulation,
+    void appendChildren(
+        const std::vector<Specimen>& parents,
+        std::vector<Specimen>& target,
+        std::size_t targetSize,
+        const SpecimenComparator& selectionComparator,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) const;
 
-    void addImmigrants(
+    void appendImmigrants(
         std::vector<Specimen>& population,
+        std::size_t count,
         Initializer& initializer) const;
 
-    auto createNextGeneration(
-        const std::vector<Specimen>& population,
-        Initializer& initializer,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const -> std::vector<Specimen>;
-
-    std::size_t populationSize;
-    std::size_t generations;
-    std::size_t eliteCount;
-    std::size_t immigrantCount;
-    Factories factories;
+    void replaceTailWithImmigrants(
+        std::vector<Specimen>& population,
+        std::size_t count,
+        Initializer& initializer) const;
 };
 
 #endif

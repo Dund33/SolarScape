@@ -11,7 +11,8 @@ public:
     explicit TournamentSelection(std::size_t tournamentSize);
 
     const Specimen& select(
-        const std::vector<Specimen>& population
+        const std::vector<Specimen>& population,
+        const SpecimenComparator& specimenComparator
     ) const override;
 
 private:

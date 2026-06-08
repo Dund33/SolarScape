@@ -5,13 +5,16 @@
 
 #include "genetics/Specimen.h"
 
+class SpecimenComparator;
+
 class Selection
 {
 public:
     virtual ~Selection() = default;
 
     virtual const Specimen& select(
-        const std::vector<Specimen>& population
+        const std::vector<Specimen>& population,
+        const SpecimenComparator& specimenComparator
     ) const = 0;
 };
 

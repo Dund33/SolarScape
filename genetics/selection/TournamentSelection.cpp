@@ -3,6 +3,8 @@
 #include <random>
 #include <stdexcept>
 
+#include "genetics/comparison/SpecimenComparator.h"
+
 TournamentSelection::TournamentSelection(std::size_t tournamentSize)
     : tournamentSize(tournamentSize)
 {
@@ -13,7 +15,8 @@ TournamentSelection::TournamentSelection(std::size_t tournamentSize)
 }
 
 const Specimen& TournamentSelection::select(
-    const std::vector<Specimen>& population
+    const std::vector<Specimen>& population,
+    const SpecimenComparator& specimenComparator
 ) const
 {
     if (population.empty())
@@ -30,7 +33,9 @@ const Specimen& TournamentSelection::select(
     {
         std::size_t candidateIndex = dist(rng);
 
-        if (population[candidateIndex] < population[bestIndex])
+        if (specimenComparator.isLess(
+            population[candidateIndex],
+            population[bestIndex]))
         {
             bestIndex = candidateIndex;
         }
