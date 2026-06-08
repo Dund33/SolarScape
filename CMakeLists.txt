@@ -246,6 +246,24 @@ target_link_libraries(SolarScapeGeneticNSGAII
         SolarScape::GeneticFitness
 )
 
+add_library(SolarScapeGeneticMOEAD STATIC
+        genetics/moead/MOEADAlgorithm.cpp
+        genetics/moead/MOEADAlgorithm.h
+)
+
+add_library(SolarScape::GeneticMOEAD ALIAS SolarScapeGeneticMOEAD)
+
+target_include_directories(SolarScapeGeneticMOEAD
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticMOEAD
+        PUBLIC
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+)
+
 add_library(SolarScapeGenetic INTERFACE)
 
 add_library(SolarScape::Genetic ALIAS SolarScapeGenetic)
@@ -306,6 +324,25 @@ target_link_libraries(SolarScapeNSGAII
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
+        SolarScape::Simulation
+        $<$<PLATFORM_ID:Linux>:TBB::tbb>
+)
+
+add_executable(SolarScapeMOEAD
+        moead_simulation.cpp
+)
+
+add_dependencies(SolarScapeMOEAD
+        copy_yaml_files
+)
+
+target_link_libraries(SolarScapeMOEAD
+        PRIVATE
+        SolarScape::Config
+        SolarScape::GeneticCore
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticMOEAD
         SolarScape::Simulation
         $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
