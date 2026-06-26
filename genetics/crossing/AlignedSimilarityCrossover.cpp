@@ -19,17 +19,12 @@ namespace
         Real endTime{};
     };
 
-    struct OffsetRange
-    {
-        std::size_t parent2Begin{};
-        std::size_t parent2End{};
-    };
-
     struct SimilarityRegion
     {
+        std::ptrdiff_t offset{};
         std::size_t parent2Begin{};
         std::size_t length{};
-        Real logSimilaritySum{};
+        Real score{};
     };
 
     std::vector<ManeuverTime> absoluteManeuverTimes(
@@ -57,7 +52,7 @@ namespace
         return times;
     }
 
-    OffsetRange validRangeForOffset(
+    std::pair<std::size_t, std::size_t> validRangeForOffset(
         std::ptrdiff_t offset,
         std::size_t parent1Size,
         std::size_t parent2Size)
@@ -84,88 +79,6 @@ namespace
         return {
             parent2Begin,
             parent2End};
-    }
-
-    Real alignmentCost(
-        std::ptrdiff_t offset,
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times)
-    {
-        const OffsetRange range =
-            validRangeForOffset(
-                offset,
-                parent1Times.size(),
-                parent2Times.size());
-
-        Real cost = 0.0L;
-
-        for (std::size_t parent2Index = range.parent2Begin;
-             parent2Index < range.parent2End;
-             ++parent2Index)
-        {
-            const std::size_t parent1Index =
-                static_cast<std::size_t>(
-                    static_cast<std::ptrdiff_t>(parent2Index) + offset);
-
-            cost +=
-                std::abs(
-                    parent1Times[parent1Index].initTime -
-                    parent2Times[parent2Index].initTime) +
-                std::abs(
-                    parent1Times[parent1Index].endTime -
-                    parent2Times[parent2Index].endTime);
-        }
-
-        return cost;
-    }
-
-    std::ptrdiff_t bestOffset(
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times)
-    {
-        const std::ptrdiff_t minOffset =
-            -static_cast<std::ptrdiff_t>(parent2Times.size() - 1);
-        const std::ptrdiff_t maxOffset =
-            static_cast<std::ptrdiff_t>(parent1Times.size() - 1);
-
-        std::ptrdiff_t bestOffset = 0;
-        Real bestCost = std::numeric_limits<Real>::infinity();
-        std::size_t bestPairCount = 0;
-
-        for (std::ptrdiff_t offset = minOffset;
-             offset <= maxOffset;
-             ++offset)
-        {
-            const OffsetRange range =
-                validRangeForOffset(
-                    offset,
-                    parent1Times.size(),
-                    parent2Times.size());
-
-            if (range.parent2Begin >= range.parent2End)
-            {
-                continue;
-            }
-
-            const Real cost =
-                alignmentCost(
-                    offset,
-                    parent1Times,
-                    parent2Times);
-            const std::size_t pairCount =
-                range.parent2End - range.parent2Begin;
-
-            if (
-                cost < bestCost ||
-                (cost == bestCost && pairCount > bestPairCount))
-            {
-                bestCost = cost;
-                bestOffset = offset;
-                bestPairCount = pairCount;
-            }
-        }
-
-        return bestOffset;
     }
 
     Real dot(
@@ -285,23 +198,22 @@ namespace
         Real timeScaleMultiplier,
         Real lengthReward)
     {
-        const OffsetRange range =
+        const auto [parent2Begin, parent2End] =
             validRangeForOffset(
                 offset,
                 parent1.size(),
                 parent2.size());
 
         SimilarityRegion region{
-            range.parent2Begin,
+            offset,
+            parent2Begin,
             0,
-            0.0L};
+            -std::numeric_limits<Real>::infinity()};
         Real logSimilaritySum = 0.0L;
-        Real bestScore =
-            -std::numeric_limits<Real>::infinity();
         std::size_t currentLength = 0;
 
-        for (std::size_t parent2Index = range.parent2Begin;
-             parent2Index < range.parent2End;
+        for (std::size_t parent2Index = parent2Begin;
+             parent2Index < parent2End;
              ++parent2Index)
         {
             const std::size_t parent1Index =
@@ -328,15 +240,65 @@ namespace
                 logSimilaritySum +
                 lengthReward * static_cast<Real>(currentLength);
 
-            if (score > bestScore)
+            if (score > region.score)
             {
-                bestScore = score;
                 region.length = currentLength;
-                region.logSimilaritySum = logSimilaritySum;
+                region.score = score;
             }
         }
 
         return region;
+    }
+
+    SimilarityRegion bestSimilarityRegion(
+        const Specimen& parent1,
+        const Specimen& parent2,
+        const std::vector<ManeuverTime>& parent1Times,
+        const std::vector<ManeuverTime>& parent2Times,
+        Real minPairLogSimilarity,
+        Real timeScaleMultiplier,
+        Real lengthReward)
+    {
+        const std::ptrdiff_t minOffset =
+            -static_cast<std::ptrdiff_t>(parent2Times.size() - 1);
+        const std::ptrdiff_t maxOffset =
+            static_cast<std::ptrdiff_t>(parent1Times.size() - 1);
+
+        SimilarityRegion bestRegion{};
+        Real bestScore =
+            -std::numeric_limits<Real>::infinity();
+
+        for (std::ptrdiff_t offset = minOffset;
+             offset <= maxOffset;
+             ++offset)
+        {
+            const SimilarityRegion region =
+                similarityRegion(
+                    offset,
+                    parent1,
+                    parent2,
+                    parent1Times,
+                    parent2Times,
+                    minPairLogSimilarity,
+                    timeScaleMultiplier,
+                    lengthReward);
+
+            if (region.length == 0)
+            {
+                continue;
+            }
+
+            if (
+                region.score > bestScore ||
+                (region.score == bestScore &&
+                    region.length > bestRegion.length))
+            {
+                bestScore = region.score;
+                bestRegion = region;
+            }
+        }
+
+        return bestRegion;
     }
 
     std::size_t randomizedSwapLength(
@@ -402,13 +364,8 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
         absoluteManeuverTimes(parent1);
     const std::vector<ManeuverTime> parent2Times =
         absoluteManeuverTimes(parent2);
-    const std::ptrdiff_t offset =
-        bestOffset(
-            parent1Times,
-            parent2Times);
     const SimilarityRegion region =
-        similarityRegion(
-            offset,
+        bestSimilarityRegion(
             parent1,
             parent2,
             parent1Times,
@@ -435,7 +392,7 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
             region.parent2Begin + i;
         const std::size_t parent1Index =
             static_cast<std::size_t>(
-                static_cast<std::ptrdiff_t>(parent2Index) + offset);
+                static_cast<std::ptrdiff_t>(parent2Index) + region.offset);
 
         std::swap(
             child1[parent1Index],
