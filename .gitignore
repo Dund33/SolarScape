@@ -18,3 +18,5 @@ __pycache__
 .venv
 .idea
 *.pdf
+build-*
+cmake-build-*
