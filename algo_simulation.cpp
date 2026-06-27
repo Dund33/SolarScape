@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <exception>
 #include <iostream>
+#include <string>
 
 #include <yaml-cpp/yaml.h>
 
+#include "config/CommandLineOptions.h"
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/algo/Algo.h"
@@ -51,11 +53,12 @@ namespace
         );
     }
 
-    auto run() -> int
+    auto run(
+        const std::string& configFilePath) -> int
     {
         SimulationConfig config =
             SimulationConfig::loadFromFile(
-                "config.yaml");
+                configFilePath);
 
         SimulationState state =
             createSimulationState(
@@ -142,20 +145,47 @@ namespace
     }
 }
 
-auto main() -> int
+auto main(
+    int argc,
+    char* argv[]) -> int
 {
     try
     {
-        return run();
+        const CommandLineOptions options =
+            CommandLineOptions::parse(
+                argc,
+                argv);
+
+        if (options.helpRequested())
+        {
+            CommandLineOptions::printUsage(
+                std::cout,
+                argc > 0 ? argv[0] : nullptr);
+            return 0;
+        }
+
+        try
+        {
+            return run(
+                options.configFilePath());
+        }
+        catch (const YAML::Exception& e)
+        {
+            std::cerr << "YAML error: " << e.what() << '\n';
+            return 1;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << '\n';
+            return 1;
+        }
     }
-    catch (const YAML::Exception& e)
+    catch (const CommandLineParseError& e)
     {
-        std::cerr << "YAML error: " << e.what() << '\n';
-        return 1;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << '\n';
-        return 1;
+        std::cerr << "Argument error: " << e.what() << '\n';
+        CommandLineOptions::printUsage(
+            std::cerr,
+            argc > 0 ? argv[0] : nullptr);
+        return 2;
     }
 }

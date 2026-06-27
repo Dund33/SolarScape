@@ -55,6 +55,8 @@ target_link_libraries(SolarScapeSimulation
 )
 
 add_library(SolarScapeConfig STATIC
+        config/CommandLineOptions.cpp
+        config/CommandLineOptions.h
         config/SimulationConfig.cpp
         config/SimulationConfig.h
 )
@@ -117,6 +119,15 @@ target_link_libraries(SolarScapeGeneticCore
         SolarScape::Math
         SolarScape::Simulation
 )
+
+if(LINUX)
+    find_package(TBB REQUIRED)
+
+    target_link_libraries(SolarScapeGeneticCore
+            PUBLIC
+            TBB::tbb
+    )
+endif()
 
 add_library(SolarScapeGeneticOperators STATIC
         genetics/selection/SelectionFactory.h
@@ -279,7 +290,9 @@ target_link_libraries(SolarScapeGenetic
 
 add_custom_target(copy_yaml_files
         COMMAND ${CMAKE_COMMAND} -E copy
-                "${CMAKE_CURRENT_SOURCE_DIR}/config.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario1.yml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario2.yml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario3.yml"
                 "${CMAKE_CURRENT_SOURCE_DIR}/validation-basic.yaml"
                 "${CMAKE_CURRENT_SOURCE_DIR}/validation-outer-body.yaml"
                 "${CMAKE_CURRENT_BINARY_DIR}"
@@ -287,10 +300,6 @@ add_custom_target(copy_yaml_files
         VERBATIM
 )
 
-
-if(LINUX)
-    find_package(TBB REQUIRED)
-endif()
 
 add_executable(SolarScape
         algo_simulation.cpp
@@ -306,7 +315,6 @@ target_link_libraries(SolarScape
         SolarScape::Visual
         SolarScape::Genetic
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(SolarScapeNSGAII
@@ -325,7 +333,6 @@ target_link_libraries(SolarScapeNSGAII
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(SolarScapeMOEAD
@@ -344,7 +351,6 @@ target_link_libraries(SolarScapeMOEAD
         SolarScape::GeneticFitness
         SolarScape::GeneticMOEAD
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(NSGAIISmokeTest
@@ -357,7 +363,6 @@ target_link_libraries(NSGAIISmokeTest
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(validation
