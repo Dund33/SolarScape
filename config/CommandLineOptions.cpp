@@ -1,15 +1,38 @@
 #include "CommandLineOptions.h"
 
+#include <boost/program_options.hpp>
+
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace
 {
-    auto isOption(const std::string& argument) -> bool
+    namespace po = boost::program_options;
+
+    auto createOptionsDescription(
+        const std::string& defaultConfigFile,
+        const std::string& defaultOutputFile) -> po::options_description
     {
-        return !argument.empty() && argument[0] == '-';
+        po::options_description options("Options");
+
+        options.add_options()
+            (
+                "help,h",
+                "Show this help message"
+            )
+            (
+                "config,c",
+                po::value<std::string>()->default_value(defaultConfigFile),
+                "YAML configuration file"
+            )
+            (
+                "output,o",
+                po::value<std::string>()->default_value(defaultOutputFile),
+                "Pareto front JSON output file"
+            );
+
+        return options;
     }
 
     auto programDisplayName(const char* programName) -> const char*
@@ -22,8 +45,10 @@ namespace
 
 CommandLineOptions::CommandLineOptions(
     std::string configFilePath,
+    std::string outputFilePath,
     bool helpRequested)
     : configFilePath_(std::move(configFilePath)),
+      outputFilePath_(std::move(outputFilePath)),
       helpRequested_(helpRequested)
 {
 }
@@ -31,113 +56,88 @@ CommandLineOptions::CommandLineOptions(
 auto CommandLineOptions::parse(
     int argc,
     char* argv[],
-    std::string defaultConfigFile) -> CommandLineOptions
+    std::string defaultConfigFile,
+    std::string defaultOutputFile) -> CommandLineOptions
 {
-    std::string configFilePath = defaultConfigFile;
-    bool configFileSet = false;
+    const po::options_description options =
+        createOptionsDescription(
+            defaultConfigFile,
+            defaultOutputFile);
 
-    for (int i = 1; i < argc; ++i)
+    po::positional_options_description positionalOptions;
+    positionalOptions.add(
+        "config",
+        1);
+
+    po::variables_map variables;
+
+    try
     {
-        const std::string argument = argv[i] != nullptr
-            ? argv[i]
-            : "";
-
-        if (argument == "-h" || argument == "--help")
-        {
-            return {std::move(configFilePath), true};
-        }
-
-        if (argument == "-c" || argument == "--config")
-        {
-            if (i + 1 >= argc)
-            {
-                throw CommandLineParseError(
-                    "Missing value after " + argument + ".");
-            }
-
-            if (configFileSet)
-            {
-                throw CommandLineParseError(
-                    "Configuration file specified more than once.");
-            }
-
-            const char* configArgument = argv[++i];
-            if (configArgument == nullptr || configArgument[0] == '\0')
-            {
-                throw CommandLineParseError(
-                    "Missing value after " + argument + ".");
-            }
-
-            configFilePath = configArgument;
-            configFileSet = true;
-            continue;
-        }
-
-        constexpr std::string_view configPrefix = "--config=";
-        if (argument.starts_with(configPrefix))
-        {
-            if (configFileSet)
-            {
-                throw CommandLineParseError(
-                    "Configuration file specified more than once.");
-            }
-
-            configFilePath = argument.substr(configPrefix.size());
-            if (configFilePath.empty())
-            {
-                throw CommandLineParseError(
-                    "Missing value after --config=.");
-            }
-
-            configFileSet = true;
-            continue;
-        }
-
-        if (isOption(argument))
-        {
-            throw CommandLineParseError(
-                "Unknown option: " + argument + ".");
-        }
-
-        if (configFileSet)
-        {
-            throw CommandLineParseError(
-                "Configuration file specified more than once.");
-        }
-
-        if (argument.empty())
-        {
-            throw CommandLineParseError(
-                "Configuration file path cannot be empty.");
-        }
-
-        configFilePath = argument;
-        configFileSet = true;
+        po::store(
+            po::command_line_parser(argc, argv)
+                .options(options)
+                .positional(positionalOptions)
+                .run(),
+            variables);
+        po::notify(
+            variables);
+    }
+    catch (const po::error& e)
+    {
+        throw CommandLineParseError(
+            e.what());
     }
 
-    return {std::move(configFilePath), false};
+    std::string configFilePath =
+        variables["config"].as<std::string>();
+    std::string outputFilePath =
+        variables["output"].as<std::string>();
+
+    if (configFilePath.empty())
+    {
+        throw CommandLineParseError(
+            "Configuration file path cannot be empty.");
+    }
+
+    if (outputFilePath.empty())
+    {
+        throw CommandLineParseError(
+            "Output file path cannot be empty.");
+    }
+
+    return {
+        std::move(configFilePath),
+        std::move(outputFilePath),
+        variables.count("help") > 0};
 }
 
 void CommandLineOptions::printUsage(
     std::ostream& output,
     const char* programName,
-    const std::string& defaultConfigFile)
+    const std::string& defaultConfigFile,
+    const std::string& defaultOutputFile)
 {
     const char* displayName = programDisplayName(programName);
+    const po::options_description options =
+        createOptionsDescription(
+            defaultConfigFile,
+            defaultOutputFile);
 
     output
-        << "Usage: " << displayName << " [config-file]\n"
-        << "       " << displayName << " --config <file>\n"
+        << "Usage: " << displayName << " [config-file] [--output <file>]\n"
+        << "       " << displayName << " --config <file> --output <file>\n"
         << '\n'
-        << "Options:\n"
-        << "  -c, --config <file>  YAML configuration file"
-        << " (default: " << defaultConfigFile << ")\n"
-        << "  -h, --help           Show this help message\n";
+        << options;
 }
 
 const std::string& CommandLineOptions::configFilePath() const
 {
     return configFilePath_;
+}
+
+const std::string& CommandLineOptions::outputFilePath() const
+{
+    return outputFilePath_;
 }
 
 bool CommandLineOptions::helpRequested() const

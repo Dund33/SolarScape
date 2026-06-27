@@ -2,6 +2,7 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <yaml-cpp/yaml.h>
 
@@ -9,6 +10,7 @@
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/algo/Algo.h"
+#include "genetics/ParetoFrontJsonWriter.h"
 #include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/comparison/SimpleSpecimenComparator.h"
 #include "genetics/fitness/FitnessValue.h"
@@ -30,31 +32,47 @@ namespace
 {
     constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
 
-    void printFinalResult(
-        const Specimen& best)
+    void printParetoFront(
+        const std::vector<Specimen>& paretoFront)
     {
         std::cout
-            << "\nFinal best fitness: ";
-        printFitnessValue(best.getFitness().value());
-        std::cout << '\n';
+            << "\nFinal Pareto front size: "
+            << paretoFront.size()
+            << '\n';
+
+        for (std::size_t i = 0; i < paretoFront.size(); ++i)
+        {
+            std::cout
+                << "Pareto front specimen " << i
+                << " fitness = ";
+            printFitnessValue(
+                paretoFront[i].getFitness().value());
+            std::cout << '\n';
+        }
     }
 
-    void plotBestTrajectory(
+    void plotRepresentativeTrajectory(
         const SimulationFactory& simulationFactory,
         const SimulationState& state,
-        const Specimen& best)
+        const std::vector<Specimen>& paretoFront)
     {
+        if (paretoFront.empty())
+        {
+            return;
+        }
+
         plotTrajectory(
             simulationFactory,
             state.timeStep,
             static_cast<std::size_t>(state.simulationTime / state.timeStep),
             state.targetPointFromTargetBody,
-            best.getManeuvers()
+            paretoFront.front().getManeuvers()
         );
     }
 
     auto run(
-        const std::string& configFilePath) -> int
+        const std::string& configFilePath,
+        const std::string& outputFilePath) -> int
     {
         SimulationConfig config =
             SimulationConfig::loadFromFile(
@@ -131,15 +149,25 @@ namespace
             specimenComparator,
             factories);
 
-        const Specimen best = algorithm.run();
+        const std::vector<Specimen> paretoFront =
+            algorithm.run();
 
-        printFinalResult(
-            best);
+        printParetoFront(
+            paretoFront);
 
-        plotBestTrajectory(
+        writeParetoFrontJson(
+            outputFilePath,
+            paretoFront);
+
+        std::cout
+            << "Saved Pareto front JSON to: "
+            << outputFilePath
+            << '\n';
+
+        plotRepresentativeTrajectory(
             verletFactory,
             state,
-            best);
+            paretoFront);
 
         return 0;
     }
@@ -167,7 +195,8 @@ auto main(
         try
         {
             return run(
-                options.configFilePath());
+                options.configFilePath(),
+                options.outputFilePath());
         }
         catch (const YAML::Exception& e)
         {

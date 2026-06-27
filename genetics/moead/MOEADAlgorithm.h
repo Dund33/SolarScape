@@ -31,7 +31,7 @@ public:
         Factories factories
     );
 
-    std::vector<Specimen> run() const;
+    std::vector<Specimen> run() const override;
 
 private:
     std::size_t populationSize;

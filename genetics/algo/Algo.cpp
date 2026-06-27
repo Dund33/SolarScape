@@ -6,6 +6,7 @@
 #include <ranges>
 
 #include "genetics/fitness/FitnessValue.h"
+#include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
 {
@@ -42,6 +43,7 @@ namespace
         printFitnessValue(best.getFitness().value());
         std::cout << '\n';
     }
+
 }
 
 Algo::Algo(
@@ -61,7 +63,7 @@ Algo::Algo(
 {
 }
 
-Specimen Algo::run() const
+std::vector<Specimen> Algo::run() const
 {
     auto initializer =
         factories.initializerFactory.create();
@@ -116,7 +118,9 @@ Specimen Algo::run() const
         population,
         specimenComparator);
 
-    return population.front();
+    return ParetoFrontUtils::firstFront(
+        population,
+        specimenComparator);
 }
 
 void Algo::copyElite(

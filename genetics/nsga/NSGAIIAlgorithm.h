@@ -33,7 +33,7 @@ public:
         Factories factories
     );
 
-    std::vector<Specimen> run() const;
+    std::vector<Specimen> run() const override;
 
 private:
     std::vector<Specimen> createOffspringPopulation(

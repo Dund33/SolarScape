@@ -10,6 +10,7 @@ set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 
 find_package(yaml-cpp CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options json)
 
 add_library(SolarScapeMath STATIC
         math/Vector3.cpp
@@ -72,6 +73,7 @@ target_link_libraries(SolarScapeConfig
         PUBLIC
         SolarScape::Math
         yaml-cpp::yaml-cpp
+        Boost::program_options
 )
 
 add_library(SolarScapeVisual STATIC
@@ -94,6 +96,8 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGeneticCore STATIC
         genetics/GeneticAlgorithm.cpp
         genetics/GeneticAlgorithm.h
+        genetics/ParetoFrontJsonWriter.cpp
+        genetics/ParetoFrontJsonWriter.h
         genetics/Specimen.cpp
         genetics/Specimen.h
         genetics/comparison/NSGAIIComparator.cpp
@@ -104,6 +108,8 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/comparison/SpecimenRank.h
         genetics/comparison/SimpleSpecimenComparator.cpp
         genetics/comparison/SimpleSpecimenComparator.h
+        genetics/utils/ParetoFrontUtils.cpp
+        genetics/utils/ParetoFrontUtils.h
         genetics/fitness/FitnessValue.h
 )
 
@@ -118,6 +124,7 @@ target_link_libraries(SolarScapeGeneticCore
         PUBLIC
         SolarScape::Math
         SolarScape::Simulation
+        Boost::json
 )
 
 if(LINUX)

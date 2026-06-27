@@ -12,6 +12,7 @@
 
 #include "genetics/comparison/NSGAIIRankingComparator.h"
 #include "genetics/comparison/SpecimenRank.h"
+#include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
 {
@@ -20,91 +21,6 @@ namespace
         std::vector<std::vector<std::size_t>> fronts;
         std::vector<SpecimenRank> ranks;
     };
-
-    struct FrontStats
-    {
-        std::size_t size{};
-        std::size_t fuelFeasibleCount{};
-        Real minDistance{};
-        Real maxDistance{};
-        Real minTime{};
-        Real maxTime{};
-        Real minFuel{};
-        Real maxFuel{};
-        Real minFuelViolation{};
-        Real maxFuelViolation{};
-    };
-
-    FrontStats calculateFrontStats(
-        const std::vector<Specimen>& population,
-        const std::vector<std::size_t>& front)
-    {
-        FrontStats stats;
-        stats.size = front.size();
-
-        if (front.empty())
-        {
-            return stats;
-        }
-
-        const FitnessValue& firstFitness =
-            population[front.front()].getFitness().value();
-
-        stats.minDistance = firstFitness.minimumDistance;
-        stats.maxDistance = firstFitness.minimumDistance;
-        stats.minTime = firstFitness.minimumDistanceTime;
-        stats.maxTime = firstFitness.minimumDistanceTime;
-        stats.minFuel = firstFitness.minimumDistanceFuelMass;
-        stats.maxFuel = firstFitness.minimumDistanceFuelMass;
-        stats.minFuelViolation = firstFitness.fuelConstraintViolation;
-        stats.maxFuelViolation = firstFitness.fuelConstraintViolation;
-
-        for (std::size_t specimenIndex : front)
-        {
-            const FitnessValue& fitness =
-                population[specimenIndex].getFitness().value();
-
-            if (fitness.fuelConstraintViolation <= 0.0L)
-            {
-                ++stats.fuelFeasibleCount;
-            }
-
-            stats.minDistance =
-                std::min(
-                    stats.minDistance,
-                    fitness.minimumDistance);
-            stats.maxDistance =
-                std::max(
-                    stats.maxDistance,
-                    fitness.minimumDistance);
-            stats.minTime =
-                std::min(
-                    stats.minTime,
-                    fitness.minimumDistanceTime);
-            stats.maxTime =
-                std::max(
-                    stats.maxTime,
-                    fitness.minimumDistanceTime);
-            stats.minFuel =
-                std::min(
-                    stats.minFuel,
-                    fitness.minimumDistanceFuelMass);
-            stats.maxFuel =
-                std::max(
-                    stats.maxFuel,
-                    fitness.minimumDistanceFuelMass);
-            stats.minFuelViolation =
-                std::min(
-                    stats.minFuelViolation,
-                    fitness.fuelConstraintViolation);
-            stats.maxFuelViolation =
-                std::max(
-                    stats.maxFuelViolation,
-                    fitness.fuelConstraintViolation);
-        }
-
-        return stats;
-    }
 
     void printGenerationResult(
         std::size_t generation,
@@ -119,8 +35,8 @@ namespace
             return;
         }
 
-        const FrontStats stats =
-            calculateFrontStats(
+        const ParetoFrontStats stats =
+            ParetoFrontUtils::calculateStats(
                 population,
                 rankedPopulation.fronts.front());
 
@@ -415,16 +331,9 @@ namespace
             return front;
         }
 
-        front.reserve(
-            rankedPopulation.fronts.front().size());
-
-        for (std::size_t specimenIndex : rankedPopulation.fronts.front())
-        {
-            front.push_back(
-                population[specimenIndex]);
-        }
-
-        return front;
+        return ParetoFrontUtils::frontFromIndices(
+            population,
+            rankedPopulation.fronts.front());
     }
 }
 

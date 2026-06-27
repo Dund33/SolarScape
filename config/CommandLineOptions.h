@@ -17,23 +17,29 @@ public:
     static CommandLineOptions parse(
         int argc,
         char* argv[],
-        std::string defaultConfigFile = "scenario1.yml");
+        std::string defaultConfigFile = "scenario1.yml",
+        std::string defaultOutputFile = "pareto-front.json");
 
     static void printUsage(
         std::ostream& output,
         const char* programName,
-        const std::string& defaultConfigFile = "scenario1.yml");
+        const std::string& defaultConfigFile = "scenario1.yml",
+        const std::string& defaultOutputFile = "pareto-front.json");
 
     const std::string& configFilePath() const;
+
+    const std::string& outputFilePath() const;
 
     bool helpRequested() const;
 
 private:
     CommandLineOptions(
         std::string configFilePath,
+        std::string outputFilePath,
         bool helpRequested);
 
     std::string configFilePath_;
+    std::string outputFilePath_;
     bool helpRequested_{};
 };
 

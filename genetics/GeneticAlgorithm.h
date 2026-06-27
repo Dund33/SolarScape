@@ -18,6 +18,8 @@ class GeneticAlgorithm
 public:
     virtual ~GeneticAlgorithm() = 0;
 
+    virtual std::vector<Specimen> run() const = 0;
+
 protected:
     void evaluatePopulationUnsequenced(
         std::vector<Specimen>& population,

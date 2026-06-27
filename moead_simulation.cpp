@@ -11,6 +11,7 @@
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/Specimen.h"
+#include "genetics/ParetoFrontJsonWriter.h"
 #include "genetics/comparison/NSGAIIComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
@@ -46,7 +47,8 @@ namespace
     }
 
     auto run(
-        const std::string& configFilePath) -> int
+        const std::string& configFilePath,
+        const std::string& outputFilePath) -> int
     {
         SimulationConfig config =
             SimulationConfig::loadFromFile(
@@ -123,6 +125,15 @@ namespace
         printParetoFront(
             paretoFront);
 
+        writeParetoFrontJson(
+            outputFilePath,
+            paretoFront);
+
+        std::cout
+            << "Saved Pareto front JSON to: "
+            << outputFilePath
+            << '\n';
+
         return 0;
     }
 }
@@ -149,7 +160,8 @@ auto main(
         try
         {
             return run(
-                options.configFilePath());
+                options.configFilePath(),
+                options.outputFilePath());
         }
         catch (const YAML::Exception& e)
         {

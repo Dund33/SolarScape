@@ -36,7 +36,7 @@ public:
         Factories factories
     );
 
-    Specimen run() const;
+    std::vector<Specimen> run() const override;
 
 private:
     void copyElite(
