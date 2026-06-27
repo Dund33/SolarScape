@@ -80,6 +80,10 @@ Verlet::Verlet(
         std::move(maneuvers),
         gravitationalConstant)
 {
+    const std::size_t reserveSize = mutableBodies().size() + 1;
+    bodyPointers_.reserve(reserveSize);
+    previousAccelerations_.reserve(reserveSize);
+    nextAccelerations_.reserve(reserveSize);
 }
 
 auto Verlet::calculateAccelerationForBody(
@@ -124,21 +128,18 @@ auto Verlet::calculateAccelerationForBody(
 
 auto Verlet::calculateAccelerations(
     const std::vector<Body*>& bodies,
-    Real gravitationalConstant) -> std::vector<Vector3>
+    Real gravitationalConstant,
+    std::vector<Vector3>& accelerations) -> void
 {
-    std::vector<Vector3> accelerations;
-    accelerations.reserve(bodies.size());
+    accelerations.resize(bodies.size());
 
     for (std::size_t i = 0; i < bodies.size(); ++i)
     {
-        accelerations.push_back(
-            calculateAccelerationForBody(
-                bodies,
-                i,
-                gravitationalConstant));
+        accelerations[i] = calculateAccelerationForBody(
+            bodies,
+            i,
+            gravitationalConstant);
     }
-
-    return accelerations;
 }
 
 void Verlet::step(
@@ -149,42 +150,42 @@ void Verlet::step(
             maneuvers(),
             time());
 
-    std::vector<Body*> bodyPointers;
-    bodyPointers.reserve(mutableBodies().size() + 1);
+    bodyPointers_.clear();
+    bodyPointers_.reserve(mutableBodies().size() + 1);
 
     for (Body& body : mutableBodies())
     {
-        bodyPointers.push_back(&body);
+        bodyPointers_.push_back(&body);
     }
 
     Probe& simulationProbe = mutableProbe();
-    bodyPointers.push_back(&simulationProbe);
+    bodyPointers_.push_back(&simulationProbe);
 
-    const std::vector<Vector3> previousAccelerations =
-        calculateAccelerations(
-            bodyPointers,
-            gravitationalConstant());
+    calculateAccelerations(
+        bodyPointers_,
+        gravitationalConstant(),
+        previousAccelerations_);
 
     const Real timeStepSquared =
         timeStep * timeStep;
 
-    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers_.size(); ++i)
     {
         const Vector3 velocityPart =
-            bodyPointers[i]->velocity() * timeStep;
+            bodyPointers_[i]->velocity() * timeStep;
 
         const Vector3 accelerationPart =
-            previousAccelerations[i] *
+            previousAccelerations_[i] *
             (0.5L * timeStepSquared);
 
-        bodyPointers[i]->position() +=
+        bodyPointers_[i]->position() +=
             velocityPart + accelerationPart;
     }
 
-    const std::vector<Vector3> nextAccelerations =
-        calculateAccelerations(
-            bodyPointers,
-            gravitationalConstant());
+    calculateAccelerations(
+        bodyPointers_,
+        gravitationalConstant(),
+        nextAccelerations_);
 
     const Vector3 maneuverAcceleration =
         calculateManeuverAcceleration(
@@ -192,13 +193,13 @@ void Verlet::step(
             maneuver,
             timeStep);
 
-    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers_.size(); ++i)
     {
         Vector3 averageAcceleration =
-            (previousAccelerations[i] +
-                nextAccelerations[i]) * 0.5L;
+            (previousAccelerations_[i] +
+                nextAccelerations_[i]) * 0.5L;
 
-        bodyPointers[i]->velocity() +=
+        bodyPointers_[i]->velocity() +=
             averageAcceleration * timeStep;
     }
 

@@ -26,9 +26,14 @@ private:
         std::size_t bodyIndex,
         Real gravitationalConstant);
 
-    static std::vector<Vector3> calculateAccelerations(
+    static void calculateAccelerations(
         const std::vector<Body*>& bodies,
-        Real gravitationalConstant);
+        Real gravitationalConstant,
+        std::vector<Vector3>& accelerations);
+
+    std::vector<Body*> bodyPointers_;
+    std::vector<Vector3> previousAccelerations_;
+    std::vector<Vector3> nextAccelerations_;
 };
 
 #endif
