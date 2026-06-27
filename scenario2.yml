@@ -1,7 +1,7 @@
 simulation:
   gravitationalConstant: 0.000000000066743
-  timeStep: 600.0
-  simulationTime: 63072000.0
+  timeStep: 300.0
+  simulationTime: 60480000.0
 
 targetPointFromTargetBody:
   x: 0.0
