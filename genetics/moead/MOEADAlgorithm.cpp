@@ -526,9 +526,8 @@ std::vector<Specimen> MOEADAlgorithm::run() const
                 child,
                 specimenComparator);
 
-            for (std::size_t replacementIndex = 0;
-                 replacementIndex < populationSize;
-                 ++replacementIndex)
+            for (std::size_t replacementIndex :
+                 neighborhoods[subproblemIndex])
             {
                 if (isBetterForSubproblem(
                     child,
