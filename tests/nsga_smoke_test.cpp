@@ -284,7 +284,7 @@ namespace
             "Expected smaller fuel violation to dominate larger violation in NSGA-II comparator.");
     }
 
-    void testNSGAIIReturnsFirstParetoFront()
+    void testNSGAIIReturnsParetoFrontHistory()
     {
         const FitnessValue bestDistance{1.0L, 5.0L, 4.0L};
         const FitnessValue bestFuel{2.0L, 8.0L, 10.0L};
@@ -304,7 +304,7 @@ namespace
 
         NSGAIIAlgorithm algorithm(
             4,
-            0,
+            1,
             0,
             comparator,
             {
@@ -314,12 +314,15 @@ namespace
                 mutationFactory,
                 fitnessEvaluatorFactory});
 
-        const std::vector<Specimen> paretoFront =
+        const ParetoFrontHistory paretoFrontHistory =
             algorithm.run();
 
         expect(
-            paretoFront.size() == 2,
-            "Expected distance/fuel nondominated specimens in the first Pareto front.");
+            paretoFrontHistory.size() == 1,
+            "Expected one Pareto front entry for one NSGA-II generation.");
+
+        const ParetoFront& paretoFront =
+            paretoFrontHistory.back();
 
         bool foundBestDistance = false;
         bool foundBestFuel = false;
@@ -412,7 +415,7 @@ auto main() -> int
     {
         testComparatorDominance();
         testNSGAIIComparatorObjectivesAndTieBreakers();
-        testNSGAIIReturnsFirstParetoFront();
+        testNSGAIIReturnsParetoFrontHistory();
         testAlignedSimilarityCrossoverSwapsAlignedManeuvers();
         testAlignedSimilarityCrossoverHandlesNegativeOffset();
         std::cout << "NSGA-II smoke tests passed.\n";

@@ -205,33 +205,9 @@ target_link_libraries(SolarScapeGeneticFitness
         SolarScape::Simulation
 )
 
-add_library(SolarScapeGeneticSearch STATIC
-        genetics/search/LocalImprovement.h
-        genetics/search/LocalImprovementFactory.h
-        genetics/search/NormalRandomSearch.cpp
-        genetics/search/NormalRandomSearch.h
-        genetics/search/NormalRandomSearchFactory.cpp
-        genetics/search/NormalRandomSearchFactory.h
-)
-
-add_library(SolarScape::GeneticSearch ALIAS SolarScapeGeneticSearch)
-
-target_include_directories(SolarScapeGeneticSearch
-        PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_link_libraries(SolarScapeGeneticSearch
-        PUBLIC
-        SolarScape::GeneticCore
-        SolarScape::GeneticFitness
-)
-
 add_library(SolarScapeGeneticAlgo STATIC
         genetics/algo/Algo.cpp
         genetics/algo/Algo.h
-        genetics/algo/PopulationPyramid.cpp
-        genetics/algo/PopulationPyramid.h
 )
 
 add_library(SolarScape::GeneticAlgo ALIAS SolarScapeGeneticAlgo)
@@ -245,7 +221,6 @@ target_link_libraries(SolarScapeGeneticAlgo
         PUBLIC
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
-        SolarScape::GeneticSearch
 )
 
 add_library(SolarScapeGeneticNSGAII STATIC
@@ -293,7 +268,6 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticCore
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
-        SolarScape::GeneticSearch
         SolarScape::GeneticAlgo
 )
 

@@ -3,26 +3,23 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <ranges>
+#include <stdexcept>
 #include <utility>
 
-#include "genetics/algo/PopulationPyramid.h"
+#include "genetics/crossing/Crossover.h"
+#include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/fitness/FitnessValue.h"
+#include "genetics/init/Initializer.h"
+#include "genetics/mutation/Mutation.h"
+#include "genetics/selection/Selection.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
 {
-    void sortPopulationByFitness(
-        std::vector<Specimen>& population,
-        const SpecimenComparator& specimenComparator)
-    {
-        std::ranges::sort(
-            population,
-            [&specimenComparator](const Specimen& lhs, const Specimen& rhs)
-            {
-                return specimenComparator.isLess(lhs, rhs);
-            });
-    }
+    constexpr std::size_t TARGET_ISLAND_COUNT = 8;
+    constexpr std::size_t MIGRATION_INTERVAL = 10;
 
     void printFitnessValue(
         const FitnessValue& fitness)
@@ -35,45 +32,35 @@ namespace
             << ']';
     }
 
-    const Specimen* bestSpecimen(
-        const PopulationPyramid& pyramid,
+    void sortPopulationByFitness(
+        std::vector<Specimen>& population,
         const SpecimenComparator& specimenComparator)
     {
-        const Specimen* best = nullptr;
-
-        for (const auto& level : pyramid.levels())
-        {
-            if (level.empty())
+        std::ranges::sort(
+            population,
+            [&specimenComparator](
+                const Specimen& lhs,
+                const Specimen& rhs)
             {
-                continue;
-            }
-
-            if (
-                best == nullptr ||
-                specimenComparator.isLess(
-                    level.front(),
-                    *best))
-            {
-                best = &level.front();
-            }
-        }
-
-        return best;
+                return specimenComparator.isLess(
+                    lhs,
+                    rhs);
+            });
     }
 
-    void printLevelSizes(
-        const PopulationPyramid& pyramid)
+    void printIslandSizes(
+        const std::vector<std::vector<Specimen>>& islands)
     {
         std::cout << '[';
 
-        for (std::size_t i = 0; i < pyramid.levels().size(); ++i)
+        for (std::size_t i = 0; i < islands.size(); ++i)
         {
             if (i > 0)
             {
                 std::cout << ", ";
             }
 
-            std::cout << pyramid.levels()[i].size();
+            std::cout << islands[i].size();
         }
 
         std::cout << ']';
@@ -81,32 +68,28 @@ namespace
 
     void printGenerationResult(
         std::size_t generation,
-        const PopulationPyramid& pyramid,
-        const SpecimenComparator& specimenComparator)
+        const std::vector<std::vector<Specimen>>& islands,
+        const ParetoFront& paretoFront)
     {
-        const Specimen* best =
-            bestSpecimen(
-                pyramid,
-                specimenComparator);
-
-        if (best == nullptr)
-        {
-            std::cout
-                << "Generation " << generation
-                << " | Population pyramid is empty\n";
-            return;
-        }
-
         std::cout
             << "Generation " << generation
-            << " | Pyramid levels = ";
-        printLevelSizes(
-            pyramid);
-        std::cout << " | Best fitness = ";
-        printFitnessValue(best->getFitness().value());
+            << " | Islands = ";
+        printIslandSizes(
+            islands);
+        std::cout
+            << " | Pareto front size = "
+            << paretoFront.size();
+
+        if (!paretoFront.empty())
+        {
+            std::cout
+                << " | Representative fitness = ";
+            printFitnessValue(
+                paretoFront.front().getFitness().value());
+        }
+
         std::cout << '\n';
     }
-
 }
 
 Algo::Algo(
@@ -124,9 +107,14 @@ Algo::Algo(
       specimenComparator(specimenComparator),
       factories(factories)
 {
+    if (populationSize == 0)
+    {
+        throw std::invalid_argument(
+            "Population size must be greater than zero.");
+    }
 }
 
-std::vector<Specimen> Algo::run() const
+ParetoFrontHistory Algo::run() const
 {
     auto initializer =
         factories.initializerFactory.create();
@@ -136,151 +124,261 @@ std::vector<Specimen> Algo::run() const
         factories.crossoverFactory.create();
     auto mutation =
         factories.mutationFactory.create();
-    auto localImprovement =
-        factories.localImprovementFactory.create();
     auto fitnessEvaluator =
         factories.fitnessEvaluatorFactory.create();
 
-    PopulationPyramid pyramid =
-        PopulationPyramid::create(
-            populationSize,
+    Islands islands =
+        createIslands(
             *initializer);
+
+    evaluateAndSortIslands(
+        islands,
+        *fitnessEvaluator);
+
+    ParetoFrontHistory history;
+    history.reserve(
+        generations);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
-        for (auto& level : pyramid.levels())
+        Islands nextIslands;
+        nextIslands.reserve(
+            islands.size());
+
+        for (const auto& island : islands)
         {
-            evaluatePopulationUnsequenced(
-                level,
-                *fitnessEvaluator);
-
-            sortPopulationByFitness(
-                level,
-                specimenComparator);
-
-            localImprovement->improve(
-                level.front(),
-                *fitnessEvaluator,
-                specimenComparator);
-
-            sortPopulationByFitness(
-                level,
-                specimenComparator);
-        }
-
-        pyramid.promoteElite(
-            eliteCount,
-            specimenComparator);
-
-        printGenerationResult(
-            generation,
-            pyramid,
-            specimenComparator);
-
-        std::vector<std::vector<Specimen>> nextLevels;
-        nextLevels.reserve(
-            pyramid.levels().size());
-
-        for (const auto& level : pyramid.levels())
-        {
-            nextLevels.push_back(
-                createNextGeneration(
-                    level,
-                    level.size(),
-                    immigrantCountForLevel(level.size()),
+            nextIslands.push_back(
+                createNextIsland(
+                    island,
                     *initializer,
                     *selection,
                     *crossover,
                     *mutation));
         }
 
-        pyramid =
-            PopulationPyramid(
-                std::move(nextLevels));
-    }
-
-    for (auto& level : pyramid.levels())
-    {
-        evaluatePopulationUnsequenced(
-            level,
+        evaluateAndSortIslands(
+            nextIslands,
             *fitnessEvaluator);
 
-        sortPopulationByFitness(
-            level,
-            specimenComparator);
+        if (
+            MIGRATION_INTERVAL > 0 &&
+            (generation + 1) % MIGRATION_INTERVAL == 0)
+        {
+            migrate(
+                nextIslands);
+        }
+
+        std::vector<Specimen> population =
+            flatten(
+                nextIslands);
+        ParetoFront paretoFront =
+            ParetoFrontUtils::firstFront(
+                population,
+                specimenComparator);
+
+        printGenerationResult(
+            generation,
+            nextIslands,
+            paretoFront);
+
+        history.push_back(
+            std::move(paretoFront));
+        islands =
+            std::move(
+                nextIslands);
     }
 
-    pyramid.promoteElite(
-        eliteCount,
-        specimenComparator);
-
-    std::vector<Specimen> population =
-        pyramid.flatten();
-
-    return ParetoFrontUtils::firstFront(
-        population,
-        specimenComparator);
+    return history;
 }
 
-void Algo::copyElite(
-    const std::vector<Specimen>& population,
-    std::vector<Specimen>& newPopulation) const
+Algo::Islands Algo::createIslands(
+    Initializer& initializer) const
 {
-    std::ranges::copy(
-        population |
-        std::views::take(std::min(eliteCount, population.size())),
-        std::back_inserter(newPopulation));
+    const std::size_t islandCount =
+        std::min(
+            TARGET_ISLAND_COUNT,
+            populationSize);
+    const std::size_t baseIslandSize =
+        populationSize / islandCount;
+    const std::size_t largerIslandCount =
+        populationSize % islandCount;
+
+    Islands islands;
+    islands.reserve(
+        islandCount);
+
+    for (std::size_t islandIndex = 0;
+         islandIndex < islandCount;
+         ++islandIndex)
+    {
+        const std::size_t islandSize =
+            baseIslandSize +
+            (islandIndex < largerIslandCount ? 1 : 0);
+
+        islands.push_back(
+            initializer.createPopulation(
+                islandSize));
+    }
+
+    return islands;
 }
 
-auto Algo::createNextGeneration(
-    const std::vector<Specimen>& population,
-    std::size_t targetSize,
-    std::size_t nextGenerationImmigrantCount,
+void Algo::evaluateAndSortIslands(
+    Islands& islands,
+    const FitnessEvaluator& fitnessEvaluator) const
+{
+    for (auto& island : islands)
+    {
+        evaluatePopulationUnsequenced(
+            island,
+            fitnessEvaluator);
+        sortPopulationByFitness(
+            island,
+            specimenComparator);
+    }
+}
+
+auto Algo::createNextIsland(
+    const std::vector<Specimen>& island,
     Initializer& initializer,
     Selection& selection,
     Crossover& crossover,
     Mutation& mutation) const -> std::vector<Specimen>
 {
-    std::vector<Specimen> newPopulation;
-    newPopulation.reserve(targetSize);
+    const std::size_t islandSize =
+        island.size();
+    std::vector<Specimen> nextIsland;
+    nextIsland.reserve(
+        islandSize);
 
-    copyElite(
-        population,
-        newPopulation);
+    std::ranges::copy(
+        island |
+        std::views::take(
+            std::min(
+                eliteCount,
+                islandSize)),
+        std::back_inserter(
+            nextIsland));
 
     appendChildren(
-        population,
-        newPopulation,
-        targetSize,
+        island,
+        nextIsland,
+        islandSize,
         specimenComparator,
         selection,
         crossover,
         mutation);
 
     replaceTailWithImmigrants(
-        newPopulation,
-        nextGenerationImmigrantCount,
+        nextIsland,
+        immigrantCountForIsland(
+            islandSize),
         initializer);
 
-    return newPopulation;
+    return nextIsland;
 }
 
-std::size_t Algo::immigrantCountForLevel(
-    std::size_t levelSize) const
+void Algo::migrate(
+    Islands& islands) const
 {
-    if (immigrantCount == 0 || populationSize == 0)
+    if (islands.size() < 2 || eliteCount == 0)
     {
-        return 0;
+        return;
     }
 
-    const std::size_t levelEliteCount =
+    const std::size_t migrantCount =
+        std::max<std::size_t>(
+            1,
+            eliteCount);
+    Islands migrants;
+    migrants.reserve(
+        islands.size());
+
+    for (const auto& island : islands)
+    {
+        std::vector<Specimen> islandMigrants;
+        std::ranges::copy(
+            island |
+            std::views::take(
+                std::min(
+                    migrantCount,
+                    island.size())),
+            std::back_inserter(
+                islandMigrants));
+        migrants.push_back(
+            std::move(
+                islandMigrants));
+    }
+
+    for (std::size_t islandIndex = 0;
+         islandIndex < islands.size();
+         ++islandIndex)
+    {
+        std::vector<Specimen>& targetIsland =
+            islands[(islandIndex + 1) % islands.size()];
+        const std::vector<Specimen>& sourceMigrants =
+            migrants[islandIndex];
+        const std::size_t replacementCount =
+            std::min(
+                sourceMigrants.size(),
+                targetIsland.size());
+
+        for (std::size_t migrantIndex = 0;
+             migrantIndex < replacementCount;
+             ++migrantIndex)
+        {
+            targetIsland[targetIsland.size() - 1 - migrantIndex] =
+                sourceMigrants[migrantIndex];
+        }
+    }
+
+    for (auto& island : islands)
+    {
+        sortPopulationByFitness(
+            island,
+            specimenComparator);
+    }
+}
+
+std::vector<Specimen> Algo::flatten(
+    const Islands& islands) const
+{
+    const std::size_t specimenCount =
+        std::accumulate(
+            islands.begin(),
+            islands.end(),
+            std::size_t{0},
+            [](std::size_t total, const auto& island)
+            {
+                return total + island.size();
+            });
+
+    std::vector<Specimen> population;
+    population.reserve(
+        specimenCount);
+
+    for (const auto& island : islands)
+    {
+        std::ranges::copy(
+            island,
+            std::back_inserter(
+                population));
+    }
+
+    return population;
+}
+
+std::size_t Algo::immigrantCountForIsland(
+    std::size_t islandSize) const
+{
+    const std::size_t islandEliteCount =
         std::min(
             eliteCount,
-            levelSize);
+            islandSize);
     const std::size_t replaceableCount =
-        levelSize - levelEliteCount;
+        islandSize - islandEliteCount;
 
     return std::min(
         replaceableCount,
-        levelSize * immigrantCount / populationSize);
+        islandSize * immigrantCount / populationSize);
 }

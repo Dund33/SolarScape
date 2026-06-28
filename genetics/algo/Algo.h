@@ -11,7 +11,6 @@
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
 #include "genetics/init/InitializerFactory.h"
 #include "genetics/mutation/MutationFactory.h"
-#include "genetics/search/LocalImprovementFactory.h"
 #include "genetics/selection/SelectionFactory.h"
 
 class Algo final : public GeneticAlgorithm
@@ -23,7 +22,6 @@ public:
         const SelectionFactory& selectionFactory;
         const CrossoverFactory& crossoverFactory;
         const MutationFactory& mutationFactory;
-        const LocalImprovementFactory& localImprovementFactory;
         const FitnessEvaluatorFactory& fitnessEvaluatorFactory;
     };
 
@@ -36,24 +34,33 @@ public:
         Factories factories
     );
 
-    std::vector<Specimen> run() const override;
+    ParetoFrontHistory run() const override;
 
 private:
-    void copyElite(
-        const std::vector<Specimen>& population,
-        std::vector<Specimen>& newPopulation) const;
+    using Islands = std::vector<std::vector<Specimen>>;
 
-    auto createNextGeneration(
-        const std::vector<Specimen>& population,
-        std::size_t targetSize,
-        std::size_t nextGenerationImmigrantCount,
+    Islands createIslands(
+        Initializer& initializer) const;
+
+    void evaluateAndSortIslands(
+        Islands& islands,
+        const FitnessEvaluator& fitnessEvaluator) const;
+
+    auto createNextIsland(
+        const std::vector<Specimen>& island,
         Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) const -> std::vector<Specimen>;
 
-    std::size_t immigrantCountForLevel(
-        std::size_t levelSize) const;
+    void migrate(
+        Islands& islands) const;
+
+    std::vector<Specimen> flatten(
+        const Islands& islands) const;
+
+    std::size_t immigrantCountForIsland(
+        std::size_t islandSize) const;
 
     std::size_t populationSize;
     std::size_t generations;

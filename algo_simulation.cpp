@@ -17,7 +17,6 @@
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/ExtensiveMutationFactory.h"
-#include "genetics/search/NormalRandomSearchFactory.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
 #include "math/Body.h"
@@ -30,12 +29,22 @@
 
 namespace
 {
-    constexpr std::size_t LOCAL_SEARCH_ITERATIONS = 25;
-
-    void printParetoFront(
-        const std::vector<Specimen>& paretoFront)
+    void printParetoFrontHistory(
+        const ParetoFrontHistory& paretoFrontHistory)
     {
+        if (paretoFrontHistory.empty())
+        {
+            std::cout
+                << "\nNo Pareto fronts were generated.\n";
+            return;
+        }
+
+        const ParetoFront& paretoFront =
+            paretoFrontHistory.back();
+
         std::cout
+            << "\nPareto front generations: "
+            << paretoFrontHistory.size()
             << "\nFinal Pareto front size: "
             << paretoFront.size()
             << '\n';
@@ -54,8 +63,16 @@ namespace
     void plotRepresentativeTrajectory(
         const SimulationFactory& simulationFactory,
         const SimulationState& state,
-        const std::vector<Specimen>& paretoFront)
+        const ParetoFrontHistory& paretoFrontHistory)
     {
+        if (paretoFrontHistory.empty())
+        {
+            return;
+        }
+
+        const ParetoFront& paretoFront =
+            paretoFrontHistory.back();
+
         if (paretoFront.empty())
         {
             return;
@@ -120,19 +137,6 @@ namespace
             MUTATION_THRUST_RANGE,
             state.probeProperties);
 
-        const Real maxPhysicalThrust =
-            std::max(
-                state.probeProperties.fuelFlow() *
-                    state.probeProperties.specificImpulse(),
-                1.0L);
-
-        NormalRandomSearchFactory localImprovementFactory(
-            LOCAL_SEARCH_ITERATIONS,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE / maxPhysicalThrust,
-            state.probeProperties);
-
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.timeStep,
             state.simulationTime,
@@ -146,7 +150,6 @@ namespace
             selectionFactory,
             crossoverFactory,
             mutationFactory,
-            localImprovementFactory,
             fitnessEvaluatorFactory};
 
         Algo algorithm(
@@ -157,25 +160,25 @@ namespace
             specimenComparator,
             factories);
 
-        const std::vector<Specimen> paretoFront =
+        const ParetoFrontHistory paretoFrontHistory =
             algorithm.run();
 
-        printParetoFront(
-            paretoFront);
+        printParetoFrontHistory(
+            paretoFrontHistory);
 
         writeParetoFrontJson(
             outputFilePath,
-            paretoFront);
+            paretoFrontHistory);
 
         std::cout
-            << "Saved Pareto front JSON to: "
+            << "Saved Pareto front history JSON to: "
             << outputFilePath
             << '\n';
 
         plotRepresentativeTrajectory(
             verletFactory,
             state,
-            paretoFront);
+            paretoFrontHistory);
 
         return 0;
     }

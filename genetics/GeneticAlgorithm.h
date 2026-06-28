@@ -7,6 +7,9 @@
 #include "genetics/Specimen.h"
 #include "genetics/comparison/SpecimenComparator.h"
 
+using ParetoFront = std::vector<Specimen>;
+using ParetoFrontHistory = std::vector<ParetoFront>;
+
 class Crossover;
 class FitnessEvaluator;
 class Initializer;
@@ -18,7 +21,7 @@ class GeneticAlgorithm
 public:
     virtual ~GeneticAlgorithm() = 0;
 
-    virtual std::vector<Specimen> run() const = 0;
+    virtual ParetoFrontHistory run() const = 0;
 
 protected:
     void evaluatePopulationUnsequenced(

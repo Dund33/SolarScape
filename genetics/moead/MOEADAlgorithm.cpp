@@ -397,14 +397,8 @@ namespace
 
     void printGenerationResult(
         std::size_t generation,
-        const std::vector<Specimen>& population,
-        const SpecimenComparator& specimenComparator)
+        const ParetoFront& paretoFront)
     {
-        const std::vector<Specimen> paretoFront =
-            ParetoFrontUtils::firstFront(
-                population,
-                specimenComparator);
-
         if (paretoFront.empty())
         {
             std::cout
@@ -464,7 +458,7 @@ MOEADAlgorithm::MOEADAlgorithm(
     }
 }
 
-std::vector<Specimen> MOEADAlgorithm::run() const
+ParetoFrontHistory MOEADAlgorithm::run() const
 {
     auto initializer =
         factories.initializerFactory.create();
@@ -493,16 +487,14 @@ std::vector<Specimen> MOEADAlgorithm::run() const
             neighborhoodSize);
 
     static thread_local std::mt19937 rng(std::random_device{}());
+    ParetoFrontHistory history;
+    history.reserve(
+        generations);
 
     for (std::size_t generation = 0;
          generation < generations;
          ++generation)
     {
-        printGenerationResult(
-            generation,
-            population,
-            specimenComparator);
-
         ObjectiveBounds bounds =
             calculateObjectiveBounds(
                 population,
@@ -540,13 +532,19 @@ std::vector<Specimen> MOEADAlgorithm::run() const
                 }
             }
         }
+
+        ParetoFront paretoFront =
+            ParetoFrontUtils::firstFront(
+                population,
+                specimenComparator);
+
+        printGenerationResult(
+            generation,
+            paretoFront);
+
+        history.push_back(
+            std::move(paretoFront));
     }
 
-    evaluatePopulationUnsequenced(
-        population,
-        *fitnessEvaluator);
-
-    return ParetoFrontUtils::firstFront(
-        population,
-        specimenComparator);
+    return history;
 }

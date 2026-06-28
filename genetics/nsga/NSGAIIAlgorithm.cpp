@@ -320,11 +320,11 @@ namespace
         return nextPopulation;
     }
 
-    std::vector<Specimen> firstParetoFront(
+    ParetoFront firstParetoFront(
         const std::vector<Specimen>& population,
         const RankedPopulation& rankedPopulation)
     {
-        std::vector<Specimen> front;
+        ParetoFront front;
 
         if (rankedPopulation.fronts.empty())
         {
@@ -356,7 +356,7 @@ NSGAIIAlgorithm::NSGAIIAlgorithm(
     }
 }
 
-std::vector<Specimen> NSGAIIAlgorithm::run() const
+ParetoFrontHistory NSGAIIAlgorithm::run() const
 {
     auto initializer =
         factories.initializerFactory.create();
@@ -372,6 +372,9 @@ std::vector<Specimen> NSGAIIAlgorithm::run() const
     std::vector<Specimen> population =
         initializer->createPopulation(
             populationSize);
+    ParetoFrontHistory history;
+    history.reserve(
+        generations);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
@@ -383,11 +386,6 @@ std::vector<Specimen> NSGAIIAlgorithm::run() const
             rankPopulation(
                 population,
                 specimenComparator);
-
-        printGenerationResult(
-            generation,
-            population,
-            rankedParents);
 
         const NSGAIIRankingComparator selectionComparator(
             population,
@@ -428,20 +426,28 @@ std::vector<Specimen> NSGAIIAlgorithm::run() const
                 rankedCombined,
                 populationSize,
                 specimenComparator);
+
+        evaluatePopulationUnsequenced(
+            population,
+            *fitnessEvaluator);
+
+        const RankedPopulation rankedPopulation =
+            rankPopulation(
+                population,
+                specimenComparator);
+
+        printGenerationResult(
+            generation,
+            population,
+            rankedPopulation);
+
+        history.push_back(
+            firstParetoFront(
+                population,
+                rankedPopulation));
     }
 
-    evaluatePopulationUnsequenced(
-        population,
-        *fitnessEvaluator);
-
-    const RankedPopulation rankedPopulation =
-        rankPopulation(
-            population,
-            specimenComparator);
-
-    return firstParetoFront(
-        population,
-        rankedPopulation);
+    return history;
 }
 
 std::vector<Specimen> NSGAIIAlgorithm::createOffspringPopulation(

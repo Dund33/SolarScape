@@ -111,6 +111,40 @@ namespace
             {"paretoFrontSize", paretoFront.size()},
             {"paretoFront", std::move(front)}};
     }
+
+    auto generationParetoFrontToJson(
+        std::size_t generation,
+        const ParetoFront& paretoFront) -> json::object
+    {
+        json::object result =
+            paretoFrontToJson(
+                paretoFront);
+        result["generation"] = generation;
+
+        return result;
+    }
+
+    auto paretoFrontHistoryToJson(
+        const ParetoFrontHistory& paretoFrontHistory) -> json::object
+    {
+        json::array generations;
+        generations.reserve(
+            paretoFrontHistory.size());
+
+        for (std::size_t generation = 0;
+             generation < paretoFrontHistory.size();
+             ++generation)
+        {
+            generations.push_back(
+                generationParetoFrontToJson(
+                    generation,
+                    paretoFrontHistory[generation]));
+        }
+
+        return {
+            {"generationCount", paretoFrontHistory.size()},
+            {"generations", std::move(generations)}};
+    }
 }
 
 void writeParetoFrontJson(
@@ -129,5 +163,24 @@ void writeParetoFrontJson(
         << json::serialize(
             paretoFrontToJson(
                 paretoFront))
+        << '\n';
+}
+
+void writeParetoFrontJson(
+    const std::string& filePath,
+    const ParetoFrontHistory& paretoFrontHistory)
+{
+    std::ofstream output(filePath);
+
+    if (!output)
+    {
+        throw std::runtime_error(
+            "Could not open Pareto front output file: " + filePath);
+    }
+
+    output
+        << json::serialize(
+            paretoFrontHistoryToJson(
+                paretoFrontHistory))
         << '\n';
 }

@@ -26,10 +26,22 @@
 
 namespace
 {
-    void printParetoFront(
-        const std::vector<Specimen>& paretoFront)
+    void printParetoFrontHistory(
+        const ParetoFrontHistory& paretoFrontHistory)
     {
+        if (paretoFrontHistory.empty())
+        {
+            std::cout
+                << "\nNo Pareto fronts were generated.\n";
+            return;
+        }
+
+        const ParetoFront& paretoFront =
+            paretoFrontHistory.back();
+
         std::cout
+            << "\nPareto front generations: "
+            << paretoFrontHistory.size()
             << "\nFinal Pareto front size: "
             << paretoFront.size()
             << '\n';
@@ -109,18 +121,18 @@ namespace
             specimenComparator,
             factories);
 
-        const std::vector<Specimen> paretoFront =
+        const ParetoFrontHistory paretoFrontHistory =
             algorithm.run();
 
-        printParetoFront(
-            paretoFront);
+        printParetoFrontHistory(
+            paretoFrontHistory);
 
         writeParetoFrontJson(
             outputFilePath,
-            paretoFront);
+            paretoFrontHistory);
 
         std::cout
-            << "Saved Pareto front JSON to: "
+            << "Saved Pareto front history JSON to: "
             << outputFilePath
             << '\n';
 
