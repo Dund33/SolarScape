@@ -131,9 +131,11 @@ ParetoFrontHistory Algo::run() const
         createIslands(
             *initializer);
 
-    evaluateAndSortIslands(
+    evaluateIslands(
         islands,
         *fitnessEvaluator);
+    sortIslands(
+        islands);
 
     ParetoFrontHistory history;
     history.reserve(
@@ -156,9 +158,11 @@ ParetoFrontHistory Algo::run() const
                     *mutation));
         }
 
-        evaluateAndSortIslands(
+        evaluateIslands(
             nextIslands,
             *fitnessEvaluator);
+        sortIslands(
+            nextIslands);
 
         if (
             MIGRATION_INTERVAL > 0 &&
@@ -223,15 +227,33 @@ Algo::Islands Algo::createIslands(
     return islands;
 }
 
-void Algo::evaluateAndSortIslands(
+void Algo::evaluateIslands(
     Islands& islands,
     const FitnessEvaluator& fitnessEvaluator) const
 {
+    std::vector<Specimen*> specimens;
+    specimens.reserve(
+        populationSize);
+
     for (auto& island : islands)
     {
-        evaluatePopulationUnsequenced(
-            island,
-            fitnessEvaluator);
+        for (Specimen& specimen : island)
+        {
+            specimens.push_back(
+                &specimen);
+        }
+    }
+
+    evaluateSpecimensUnsequenced(
+        specimens,
+        fitnessEvaluator);
+}
+
+void Algo::sortIslands(
+    Islands& islands) const
+{
+    for (auto& island : islands)
+    {
         sortPopulationByFitness(
             island,
             specimenComparator);

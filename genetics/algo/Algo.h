@@ -42,9 +42,12 @@ private:
     Islands createIslands(
         Initializer& initializer) const;
 
-    void evaluateAndSortIslands(
+    void evaluateIslands(
         Islands& islands,
         const FitnessEvaluator& fitnessEvaluator) const;
+
+    void sortIslands(
+        Islands& islands) const;
 
     auto createNextIsland(
         const std::vector<Specimen>& island,

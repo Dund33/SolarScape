@@ -28,6 +28,10 @@ protected:
         std::vector<Specimen>& population,
         const FitnessEvaluator& fitnessEvaluator) const;
 
+    void evaluateSpecimensUnsequenced(
+        std::vector<Specimen*>& specimens,
+        const FitnessEvaluator& fitnessEvaluator) const;
+
     void appendChildren(
         const std::vector<Specimen>& parents,
         std::vector<Specimen>& target,

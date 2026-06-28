@@ -28,6 +28,20 @@ void GeneticAlgorithm::evaluatePopulationUnsequenced(
         });
 }
 
+void GeneticAlgorithm::evaluateSpecimensUnsequenced(
+    std::vector<Specimen*>& specimens,
+    const FitnessEvaluator& fitnessEvaluator) const
+{
+    std::for_each(
+        std::execution::par,
+        specimens.begin(),
+        specimens.end(),
+        [&](Specimen* specimen)
+        {
+            fitnessEvaluator.evaluate(*specimen);
+        });
+}
+
 void GeneticAlgorithm::appendChildren(
     const std::vector<Specimen>& parents,
     std::vector<Specimen>& target,
