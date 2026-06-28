@@ -13,12 +13,12 @@
 #include "genetics/Specimen.h"
 #include "genetics/ParetoFrontJsonWriter.h"
 #include "genetics/comparison/NSGAIIComparator.h"
-#include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
+#include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/moead/MOEADAlgorithm.h"
-#include "genetics/mutation/ExtensiveMutationFactory.h"
+#include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
@@ -76,18 +76,10 @@ namespace
             MAX_MANEUVER_DURATION,
             state.probeProperties);
 
-        AlignedSimilarityCrossoverFactory crossoverFactory;
+        RandomCutCrossoverFactory crossoverFactory;
 
-        ExtensiveMutationFactory mutationFactory(
+        RandomUniformMutationFactory mutationFactory(
             MUTATION_PROBABILITY,
-            0.5,
-            0.5,
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE,

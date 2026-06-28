@@ -230,6 +230,8 @@ target_link_libraries(SolarScapeGeneticSearch
 add_library(SolarScapeGeneticAlgo STATIC
         genetics/algo/Algo.cpp
         genetics/algo/Algo.h
+        genetics/algo/PopulationPyramid.cpp
+        genetics/algo/PopulationPyramid.h
 )
 
 add_library(SolarScape::GeneticAlgo ALIAS SolarScapeGeneticAlgo)

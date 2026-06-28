@@ -4,7 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <ranges>
+#include <utility>
 
+#include "genetics/algo/PopulationPyramid.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 
@@ -33,14 +35,75 @@ namespace
             << ']';
     }
 
+    const Specimen* bestSpecimen(
+        const PopulationPyramid& pyramid,
+        const SpecimenComparator& specimenComparator)
+    {
+        const Specimen* best = nullptr;
+
+        for (const auto& level : pyramid.levels())
+        {
+            if (level.empty())
+            {
+                continue;
+            }
+
+            if (
+                best == nullptr ||
+                specimenComparator.isLess(
+                    level.front(),
+                    *best))
+            {
+                best = &level.front();
+            }
+        }
+
+        return best;
+    }
+
+    void printLevelSizes(
+        const PopulationPyramid& pyramid)
+    {
+        std::cout << '[';
+
+        for (std::size_t i = 0; i < pyramid.levels().size(); ++i)
+        {
+            if (i > 0)
+            {
+                std::cout << ", ";
+            }
+
+            std::cout << pyramid.levels()[i].size();
+        }
+
+        std::cout << ']';
+    }
+
     void printGenerationResult(
         std::size_t generation,
-        const Specimen& best)
+        const PopulationPyramid& pyramid,
+        const SpecimenComparator& specimenComparator)
     {
+        const Specimen* best =
+            bestSpecimen(
+                pyramid,
+                specimenComparator);
+
+        if (best == nullptr)
+        {
+            std::cout
+                << "Generation " << generation
+                << " | Population pyramid is empty\n";
+            return;
+        }
+
         std::cout
             << "Generation " << generation
-            << " | Best fitness = ";
-        printFitnessValue(best.getFitness().value());
+            << " | Pyramid levels = ";
+        printLevelSizes(
+            pyramid);
+        std::cout << " | Best fitness = ";
+        printFitnessValue(best->getFitness().value());
         std::cout << '\n';
     }
 
@@ -78,45 +141,81 @@ std::vector<Specimen> Algo::run() const
     auto fitnessEvaluator =
         factories.fitnessEvaluatorFactory.create();
 
-    std::vector<Specimen> population =
-        initializer->createPopulation(
-            populationSize);
+    PopulationPyramid pyramid =
+        PopulationPyramid::create(
+            populationSize,
+            *initializer);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
-        evaluatePopulationUnsequenced(
-            population,
-            *fitnessEvaluator);
+        for (auto& level : pyramid.levels())
+        {
+            evaluatePopulationUnsequenced(
+                level,
+                *fitnessEvaluator);
 
-        sortPopulationByFitness(
-            population,
-            specimenComparator);
+            sortPopulationByFitness(
+                level,
+                specimenComparator);
 
-        localImprovement->improve(
-            population.front(),
-            *fitnessEvaluator,
+            localImprovement->improve(
+                level.front(),
+                *fitnessEvaluator,
+                specimenComparator);
+
+            sortPopulationByFitness(
+                level,
+                specimenComparator);
+        }
+
+        pyramid.promoteElite(
+            eliteCount,
             specimenComparator);
 
         printGenerationResult(
             generation,
-            population.front());
+            pyramid,
+            specimenComparator);
 
-        population =
-            createNextGeneration(
-                population,
-                *initializer,
-                *selection,
-                *crossover,
-                *mutation);
+        std::vector<std::vector<Specimen>> nextLevels;
+        nextLevels.reserve(
+            pyramid.levels().size());
+
+        for (const auto& level : pyramid.levels())
+        {
+            nextLevels.push_back(
+                createNextGeneration(
+                    level,
+                    level.size(),
+                    immigrantCountForLevel(level.size()),
+                    *initializer,
+                    *selection,
+                    *crossover,
+                    *mutation));
+        }
+
+        pyramid =
+            PopulationPyramid(
+                std::move(nextLevels));
     }
 
-    evaluatePopulationUnsequenced(
-        population,
-        *fitnessEvaluator);
+    for (auto& level : pyramid.levels())
+    {
+        evaluatePopulationUnsequenced(
+            level,
+            *fitnessEvaluator);
 
-    sortPopulationByFitness(
-        population,
+        sortPopulationByFitness(
+            level,
+            specimenComparator);
+    }
+
+    pyramid.promoteElite(
+        eliteCount,
         specimenComparator);
+
+    std::vector<Specimen> population =
+        pyramid.flatten();
 
     return ParetoFrontUtils::firstFront(
         population,
@@ -135,13 +234,15 @@ void Algo::copyElite(
 
 auto Algo::createNextGeneration(
     const std::vector<Specimen>& population,
+    std::size_t targetSize,
+    std::size_t nextGenerationImmigrantCount,
     Initializer& initializer,
     Selection& selection,
     Crossover& crossover,
     Mutation& mutation) const -> std::vector<Specimen>
 {
     std::vector<Specimen> newPopulation;
-    newPopulation.reserve(populationSize);
+    newPopulation.reserve(targetSize);
 
     copyElite(
         population,
@@ -150,7 +251,7 @@ auto Algo::createNextGeneration(
     appendChildren(
         population,
         newPopulation,
-        populationSize,
+        targetSize,
         specimenComparator,
         selection,
         crossover,
@@ -158,8 +259,28 @@ auto Algo::createNextGeneration(
 
     replaceTailWithImmigrants(
         newPopulation,
-        immigrantCount,
+        nextGenerationImmigrantCount,
         initializer);
 
     return newPopulation;
+}
+
+std::size_t Algo::immigrantCountForLevel(
+    std::size_t levelSize) const
+{
+    if (immigrantCount == 0 || populationSize == 0)
+    {
+        return 0;
+    }
+
+    const std::size_t levelEliteCount =
+        std::min(
+            eliteCount,
+            levelSize);
+    const std::size_t replaceableCount =
+        levelSize - levelEliteCount;
+
+    return std::min(
+        replaceableCount,
+        levelSize * immigrantCount / populationSize);
 }

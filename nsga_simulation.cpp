@@ -10,11 +10,11 @@
 #include "config/consts.h"
 #include "genetics/ParetoFrontJsonWriter.h"
 #include "genetics/comparison/NSGAIIComparator.h"
-#include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
+#include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
-#include "genetics/mutation/ExtensiveMutationFactory.h"
+#include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "genetics/nsga/NSGAIIAlgorithm.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
 #include "genetics/Specimen.h"
@@ -78,18 +78,10 @@ namespace
         TournamentSelectionFactory selectionFactory(
             TOURNAMENT_SIZE);
 
-        AlignedSimilarityCrossoverFactory crossoverFactory;
+        RandomCutCrossoverFactory crossoverFactory;
 
-        ExtensiveMutationFactory mutationFactory(
+        RandomUniformMutationFactory mutationFactory(
             MUTATION_PROBABILITY,
-            0.5,
-            0.5,
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
             MUTATION_THRUST_RANGE,

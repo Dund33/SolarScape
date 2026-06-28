@@ -20,12 +20,23 @@
       }
     },
     {
-      "name": "wsl",
-      "displayName": "WSL Release",
-      "description": "Configure a Release build inside WSL using system packages.",
+      "name": "wsl-release-lto",
+      "displayName": "WSL Release LTO",
+      "description": "Configure a Release build inside WSL with link-time optimization.",
       "binaryDir": "${sourceDir}/build-wsl",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    },
+    {
+      "name": "wsl-debug",
+      "displayName": "WSL Debug",
+      "description": "Configure a Debug build inside WSL without link-time optimization.",
+      "binaryDir": "${sourceDir}/build-wsl-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF"
       }
     }
   ],
@@ -41,9 +52,14 @@
       "configurePreset": "windows-vcpkg-mingw"
     },
     {
-      "name": "wsl",
-      "displayName": "Build WSL Release",
-      "configurePreset": "wsl"
+      "name": "wsl-release-lto",
+      "displayName": "Build WSL Release LTO",
+      "configurePreset": "wsl-release-lto"
+    },
+    {
+      "name": "wsl-debug",
+      "displayName": "Build WSL Debug",
+      "configurePreset": "wsl-debug"
     }
   ]
 }

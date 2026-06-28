@@ -45,10 +45,15 @@ private:
 
     auto createNextGeneration(
         const std::vector<Specimen>& population,
+        std::size_t targetSize,
+        std::size_t nextGenerationImmigrantCount,
         Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) const -> std::vector<Specimen>;
+
+    std::size_t immigrantCountForLevel(
+        std::size_t levelSize) const;
 
     std::size_t populationSize;
     std::size_t generations;
