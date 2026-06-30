@@ -5,8 +5,8 @@
 #include <utility>
 #include <vector>
 
-#include "genetics/comparison/NSGAIIComparator.h"
 #include "genetics/comparison/SimpleSpecimenComparator.h"
+#include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
 #include "genetics/crossing/CrossoverFactory.h"
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
@@ -237,18 +237,18 @@ namespace
             "Expected smaller fuel constraint violation to dominate when other criteria match.");
     }
 
-    void testNSGAIIComparatorObjectivesAndTieBreakers()
+    void testTrajectoryComparatorObjectivesAndTieBreakers()
     {
-        NSGAIIComparator comparator;
+        TrajectorySpecimenComparator comparator;
         Specimen betterObjectives =
-            specimenWithFitness({1.0L, 10.0L, 10.0L});
+            specimenWithFitness({1.0L, 1.0L, 10.0L});
         Specimen worseObjectives =
-            specimenWithFitness({2.0L, 1.0L, 5.0L});
+            specimenWithFitness({2.0L, 2.0L, 5.0L});
 
         expect(
             comparator.compare(betterObjectives, worseObjectives) ==
                 std::partial_ordering::less,
-            "Expected higher remaining fuel and lower distance to dominate in NSGA-II comparator.");
+            "Expected lower distance, earlier time, and higher remaining fuel to dominate.");
 
         Specimen earlier =
             specimenWithFitness({10.0L, 1.0L, 100.0L});
@@ -258,10 +258,10 @@ namespace
         expect(
             comparator.compare(earlier, later) ==
                 std::partial_ordering::unordered,
-            "Expected distance/fuel trade-off to be unordered for NSGA-II dominance.");
+            "Expected distance/time/fuel trade-off to be unordered.");
         expect(
             comparator.isLess(earlier, later),
-            "Expected remaining NSGA-II values to break ties by time first.");
+            "Expected trajectory comparator to break ties by distance, time, then fuel.");
 
         Specimen feasible =
             specimenWithFitness({2.0L, 10.0L, 5.0L});
@@ -271,7 +271,7 @@ namespace
         expect(
             comparator.compare(feasible, infeasible) ==
                 std::partial_ordering::less,
-            "Expected feasible NSGA-II specimen to dominate infeasible specimen.");
+            "Expected feasible trajectory specimen to dominate infeasible specimen.");
 
         Specimen smallerViolation =
             specimenWithFitness({10.0L, 10.0L, 1.0L, 1.0L});
@@ -281,7 +281,7 @@ namespace
         expect(
             comparator.compare(smallerViolation, largerViolation) ==
                 std::partial_ordering::less,
-            "Expected smaller fuel violation to dominate larger violation in NSGA-II comparator.");
+            "Expected smaller fuel violation to dominate larger violation.");
     }
 
     void testNSGAIIReturnsParetoFrontHistory()
@@ -300,7 +300,7 @@ namespace
         CopyCrossoverFactory crossoverFactory;
         NoopMutationFactory mutationFactory;
         NoopFitnessEvaluatorFactory fitnessEvaluatorFactory;
-        NSGAIIComparator comparator;
+        TrajectorySpecimenComparator comparator;
 
         NSGAIIAlgorithm algorithm(
             4,
@@ -414,7 +414,7 @@ auto main() -> int
     try
     {
         testComparatorDominance();
-        testNSGAIIComparatorObjectivesAndTieBreakers();
+        testTrajectoryComparatorObjectivesAndTieBreakers();
         testNSGAIIReturnsParetoFrontHistory();
         testAlignedSimilarityCrossoverSwapsAlignedManeuvers();
         testAlignedSimilarityCrossoverHandlesNegativeOffset();
