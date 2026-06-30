@@ -12,7 +12,7 @@
 #include "genetics/algo/Algo.h"
 #include "genetics/ParetoFrontJsonWriter.h"
 #include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
-#include "genetics/comparison/SimpleSpecimenComparator.h"
+#include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
@@ -143,7 +143,7 @@ namespace
             state.targetPointFromTargetBody,
             verletFactory);
 
-        SimpleSpecimenComparator specimenComparator;
+        TrajectorySpecimenComparator specimenComparator;
 
         Algo::Factories factories{
             initializerFactory,

@@ -9,7 +9,7 @@
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/ParetoFrontJsonWriter.h"
-#include "genetics/comparison/NSGAIIComparator.h"
+#include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
@@ -105,7 +105,7 @@ namespace
             state.targetPointFromTargetBody,
             verletFactory);
 
-        NSGAIIComparator specimenComparator;
+        TrajectorySpecimenComparator specimenComparator;
 
         NSGAIIAlgorithm::Factories factories{
             initializerFactory,
