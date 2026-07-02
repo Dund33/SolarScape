@@ -6,19 +6,16 @@
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
 
 AlignedSimilarityCrossoverFactory::AlignedSimilarityCrossoverFactory(
-    Real minPairSimilarity,
-    Real timeScaleMultiplier,
-    Real lengthReward)
-    : minPairSimilarity(minPairSimilarity),
-      timeScaleMultiplier(timeScaleMultiplier),
-      lengthReward(lengthReward)
+    Real minRegionSimilarity,
+    Real timeScaleMultiplier)
+    : minRegionSimilarity(minRegionSimilarity),
+      timeScaleMultiplier(timeScaleMultiplier)
 {
 }
 
 std::unique_ptr<Crossover> AlignedSimilarityCrossoverFactory::create() const
 {
     return std::make_unique<AlignedSimilarityCrossover>(
-        minPairSimilarity,
-        timeScaleMultiplier,
-        lengthReward);
+        minRegionSimilarity,
+        timeScaleMultiplier);
 }

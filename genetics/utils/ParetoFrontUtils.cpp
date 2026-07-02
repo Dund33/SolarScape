@@ -5,6 +5,24 @@
 
 #include "genetics/fitness/FitnessValue.h"
 
+namespace
+{
+    void updateRange(
+        Real& minValue,
+        Real& maxValue,
+        Real value)
+    {
+        minValue =
+            std::min(
+                minValue,
+                value);
+        maxValue =
+            std::max(
+                maxValue,
+                value);
+    }
+}
+
 std::vector<Specimen> ParetoFrontUtils::firstFront(
     const std::vector<Specimen>& population,
     const SpecimenComparator& specimenComparator)
@@ -96,38 +114,22 @@ ParetoFrontStats ParetoFrontUtils::calculateStats(
             ++stats.fuelFeasibleCount;
         }
 
-        stats.minDistance =
-            std::min(
-                stats.minDistance,
-                fitness.minimumDistance);
-        stats.maxDistance =
-            std::max(
-                stats.maxDistance,
-                fitness.minimumDistance);
-        stats.minTime =
-            std::min(
-                stats.minTime,
-                fitness.minimumDistanceTime);
-        stats.maxTime =
-            std::max(
-                stats.maxTime,
-                fitness.minimumDistanceTime);
-        stats.minFuel =
-            std::min(
-                stats.minFuel,
-                fitness.minimumDistanceFuelMass);
-        stats.maxFuel =
-            std::max(
-                stats.maxFuel,
-                fitness.minimumDistanceFuelMass);
-        stats.minFuelViolation =
-            std::min(
-                stats.minFuelViolation,
-                fitness.fuelConstraintViolation);
-        stats.maxFuelViolation =
-            std::max(
-                stats.maxFuelViolation,
-                fitness.fuelConstraintViolation);
+        updateRange(
+            stats.minDistance,
+            stats.maxDistance,
+            fitness.minimumDistance);
+        updateRange(
+            stats.minTime,
+            stats.maxTime,
+            fitness.minimumDistanceTime);
+        updateRange(
+            stats.minFuel,
+            stats.maxFuel,
+            fitness.minimumDistanceFuelMass);
+        updateRange(
+            stats.minFuelViolation,
+            stats.maxFuelViolation,
+            fitness.fuelConstraintViolation);
     }
 
     return stats;

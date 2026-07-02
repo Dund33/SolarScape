@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <limits>
 #include <random>
+#include <ranges>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -19,12 +20,19 @@ namespace
         Real endTime{};
     };
 
-    struct SimilarityRegion
+    struct ExchangeRegion
     {
-        std::ptrdiff_t offset{};
-        std::size_t parent2Begin{};
+        std::size_t longerBegin{};
         std::size_t length{};
-        Real score{};
+    };
+
+    struct OrientedGenomes
+    {
+        const Specimen& shorter;
+        const Specimen& longer;
+        const std::vector<ManeuverTime>& shorterTimes;
+        const std::vector<ManeuverTime>& longerTimes;
+        bool parent1IsShorter{};
     };
 
     std::vector<ManeuverTime> absoluteManeuverTimes(
@@ -52,33 +60,28 @@ namespace
         return times;
     }
 
-    std::pair<std::size_t, std::size_t> validRangeForOffset(
-        std::ptrdiff_t offset,
-        std::size_t parent1Size,
-        std::size_t parent2Size)
+    OrientedGenomes orientGenomes(
+        const Specimen& parent1,
+        const Specimen& parent2,
+        const std::vector<ManeuverTime>& parent1Times,
+        const std::vector<ManeuverTime>& parent2Times)
     {
-        const std::ptrdiff_t signedParent2Begin =
-            std::max(
-                static_cast<std::ptrdiff_t>(0),
-                -offset);
-        const std::ptrdiff_t signedParent2End =
-            std::min(
-                static_cast<std::ptrdiff_t>(parent2Size),
-                static_cast<std::ptrdiff_t>(parent1Size) - offset);
-
-        if (signedParent2Begin >= signedParent2End)
+        if (parent1.size() <= parent2.size())
         {
-            return {};
+            return {
+                parent1,
+                parent2,
+                parent1Times,
+                parent2Times,
+                true};
         }
 
-        const std::size_t parent2Begin =
-            static_cast<std::size_t>(signedParent2Begin);
-        const std::size_t parent2End =
-            static_cast<std::size_t>(signedParent2End);
-
         return {
-            parent2Begin,
-            parent2End};
+            parent2,
+            parent1,
+            parent2Times,
+            parent1Times,
+            false};
     }
 
     Real dot(
@@ -188,148 +191,199 @@ namespace
                 timeScale);
     }
 
-    SimilarityRegion similarityRegion(
-        std::ptrdiff_t offset,
-        const Specimen& parent1,
-        const Specimen& parent2,
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times,
-        Real minPairLogSimilarity,
-        Real timeScaleMultiplier,
-        Real lengthReward)
+    auto alignedManeuvers(
+        const OrientedGenomes& genomes,
+        std::size_t longerBegin)
     {
-        const auto [parent2Begin, parent2End] =
-            validRangeForOffset(
-                offset,
-                parent1.size(),
-                parent2.size());
+        return std::views::zip(
+            genomes.shorter.getManeuvers(),
+            genomes.longer.getManeuvers() |
+                std::views::drop(longerBegin) |
+                std::views::take(genomes.shorter.size()),
+            genomes.shorterTimes,
+            genomes.longerTimes |
+                std::views::drop(longerBegin) |
+                std::views::take(genomes.shorter.size()));
+    }
 
-        SimilarityRegion region{
-            offset,
-            parent2Begin,
-            0,
-            -std::numeric_limits<Real>::infinity()};
+    Real alignmentLogSimilaritySum(
+        const OrientedGenomes& genomes,
+        std::size_t longerBegin,
+        Real timeScaleMultiplier)
+    {
         Real logSimilaritySum = 0.0L;
-        std::size_t currentLength = 0;
 
-        for (std::size_t parent2Index = parent2Begin;
-             parent2Index < parent2End;
-             ++parent2Index)
+        for (auto&& [
+                 shorterManeuver,
+                 longerManeuver,
+                 shorterTime,
+                 longerTime] :
+             alignedManeuvers(
+                 genomes,
+                 longerBegin))
         {
-            const std::size_t parent1Index =
-                static_cast<std::size_t>(
-                    static_cast<std::ptrdiff_t>(parent2Index) + offset);
-
-            const Real logSimilarity =
+            logSimilaritySum +=
                 maneuverLogSimilarity(
-                    parent1[parent1Index],
-                    parent2[parent2Index],
-                    parent1Times[parent1Index],
-                    parent2Times[parent2Index],
+                    shorterManeuver,
+                    longerManeuver,
+                    shorterTime,
+                    longerTime,
+                    timeScaleMultiplier);
+        }
+
+        return logSimilaritySum;
+    }
+
+    std::size_t bestAlignmentBegin(
+        const OrientedGenomes& genomes,
+        Real timeScaleMultiplier)
+    {
+        std::size_t bestBegin = 0;
+        Real bestScore =
+            -std::numeric_limits<Real>::infinity();
+        const std::size_t maxLongerBegin =
+            genomes.longer.size() - genomes.shorter.size();
+
+        for (std::size_t longerBegin = 0;
+             longerBegin <= maxLongerBegin;
+             ++longerBegin)
+        {
+            const Real score =
+                alignmentLogSimilaritySum(
+                    genomes,
+                    longerBegin,
                     timeScaleMultiplier);
 
-            if (logSimilarity < minPairLogSimilarity)
+            if (score > bestScore)
+            {
+                bestBegin = longerBegin;
+                bestScore = score;
+            }
+        }
+
+        return bestBegin;
+    }
+
+    ExchangeRegion exchangeRegionForAlignment(
+        const OrientedGenomes& genomes,
+        std::size_t longerBegin,
+        Real minRegionLogSimilarity,
+        Real timeScaleMultiplier)
+    {
+        ExchangeRegion region{
+            longerBegin,
+            0};
+        Real cumulativeLogSimilarity = 0.0L;
+
+        for (auto&& [
+                 shorterManeuver,
+                 longerManeuver,
+                 shorterTime,
+                 longerTime] :
+             alignedManeuvers(
+                 genomes,
+                 longerBegin))
+        {
+            const Real nextLogSimilarity =
+                cumulativeLogSimilarity +
+                maneuverLogSimilarity(
+                    shorterManeuver,
+                    longerManeuver,
+                    shorterTime,
+                    longerTime,
+                    timeScaleMultiplier);
+
+            if (nextLogSimilarity < minRegionLogSimilarity)
             {
                 break;
             }
 
-            logSimilaritySum += logSimilarity;
-            ++currentLength;
-
-            const Real score =
-                logSimilaritySum +
-                lengthReward * static_cast<Real>(currentLength);
-
-            if (score > region.score)
-            {
-                region.length = currentLength;
-                region.score = score;
-            }
+            cumulativeLogSimilarity = nextLogSimilarity;
+            ++region.length;
         }
 
         return region;
     }
 
-    SimilarityRegion bestSimilarityRegion(
-        const Specimen& parent1,
-        const Specimen& parent2,
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times,
-        Real minPairLogSimilarity,
-        Real timeScaleMultiplier,
-        Real lengthReward)
+    void swapAlignedPair(
+        Specimen& child1,
+        Specimen& child2,
+        const OrientedGenomes& genomes,
+        const ExchangeRegion& region,
+        std::size_t shorterIndex)
     {
-        const std::ptrdiff_t minOffset =
-            -static_cast<std::ptrdiff_t>(parent2Times.size() - 1);
-        const std::ptrdiff_t maxOffset =
-            static_cast<std::ptrdiff_t>(parent1Times.size() - 1);
+        const std::size_t parent1Index =
+            genomes.parent1IsShorter
+                ? shorterIndex
+                : region.longerBegin + shorterIndex;
+        const std::size_t parent2Index =
+            genomes.parent1IsShorter
+                ? region.longerBegin + shorterIndex
+                : shorterIndex;
 
-        SimilarityRegion bestRegion{};
-        Real bestScore =
-            -std::numeric_limits<Real>::infinity();
+        std::swap(
+            child1[parent1Index],
+            child2[parent2Index]);
+    }
 
-        for (std::ptrdiff_t offset = minOffset;
-             offset <= maxOffset;
-             ++offset)
+    void swapRandomGeneGroups(
+        Specimen& child1,
+        Specimen& child2,
+        const OrientedGenomes& genomes,
+        const ExchangeRegion& region)
+    {
+        if (region.length == 0)
         {
-            const SimilarityRegion region =
-                similarityRegion(
-                    offset,
-                    parent1,
-                    parent2,
-                    parent1Times,
-                    parent2Times,
-                    minPairLogSimilarity,
-                    timeScaleMultiplier,
-                    lengthReward);
+            return;
+        }
 
-            if (region.length == 0)
+        static thread_local std::mt19937 rng(std::random_device{}());
+        std::bernoulli_distribution shouldSwap(0.5);
+        bool swappedAny = false;
+
+        for (std::size_t shorterIndex = 0;
+             shorterIndex < region.length;
+             ++shorterIndex)
+        {
+            if (!shouldSwap(rng))
             {
                 continue;
             }
 
-            if (
-                region.score > bestScore ||
-                (region.score == bestScore &&
-                    region.length > bestRegion.length))
-            {
-                bestScore = region.score;
-                bestRegion = region;
-            }
+            swapAlignedPair(
+                child1,
+                child2,
+                genomes,
+                region,
+                shorterIndex);
+            swappedAny = true;
         }
 
-        return bestRegion;
-    }
-
-    std::size_t randomizedSwapLength(
-        std::size_t maxLength)
-    {
-        if (maxLength <= 1)
+        if (!swappedAny)
         {
-            return maxLength;
+            std::uniform_int_distribution<std::size_t> forcedSwapDist(
+                0,
+                region.length - 1);
+            swapAlignedPair(
+                child1,
+                child2,
+                genomes,
+                region,
+                forcedSwapDist(rng));
         }
-
-        static thread_local std::mt19937 rng(std::random_device{}());
-        std::uniform_int_distribution<std::size_t> dist(1, maxLength);
-
-        return std::max(
-            dist(rng),
-            dist(rng));
     }
 }
 
 AlignedSimilarityCrossover::AlignedSimilarityCrossover(
-    Real minPairSimilarity,
-    Real timeScaleMultiplier,
-    Real lengthReward)
-    : minPairLogSimilarity(0.0L),
-      timeScaleMultiplier(timeScaleMultiplier),
-      lengthReward(lengthReward)
+    Real minRegionSimilarity,
+    Real timeScaleMultiplier)
+    : minRegionLogSimilarity(0.0L),
+      timeScaleMultiplier(timeScaleMultiplier)
 {
-    if (minPairSimilarity <= 0.0L || minPairSimilarity > 1.0L)
+    if (minRegionSimilarity <= 0.0L || minRegionSimilarity > 1.0L)
     {
         throw std::invalid_argument(
-            "minPairSimilarity must be in range (0, 1].");
+            "minRegionSimilarity must be in range (0, 1].");
     }
 
     if (timeScaleMultiplier <= 0.0L)
@@ -338,14 +392,8 @@ AlignedSimilarityCrossover::AlignedSimilarityCrossover(
             "timeScaleMultiplier must be greater than zero.");
     }
 
-    if (lengthReward < 0.0L)
-    {
-        throw std::invalid_argument(
-            "lengthReward must be non-negative.");
-    }
-
-    minPairLogSimilarity =
-        std::log(minPairSimilarity);
+    minRegionLogSimilarity =
+        std::log(minRegionSimilarity);
 }
 
 std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
@@ -364,15 +412,22 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
         absoluteManeuverTimes(parent1);
     const std::vector<ManeuverTime> parent2Times =
         absoluteManeuverTimes(parent2);
-    const SimilarityRegion region =
-        bestSimilarityRegion(
+    const OrientedGenomes genomes =
+        orientGenomes(
             parent1,
             parent2,
             parent1Times,
-            parent2Times,
-            minPairLogSimilarity,
-            timeScaleMultiplier,
-            lengthReward);
+            parent2Times);
+    const std::size_t longerBegin =
+        bestAlignmentBegin(
+            genomes,
+            timeScaleMultiplier);
+    const ExchangeRegion region =
+        exchangeRegionForAlignment(
+            genomes,
+            longerBegin,
+            minRegionLogSimilarity,
+            timeScaleMultiplier);
 
     if (region.length == 0)
     {
@@ -383,21 +438,11 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
 
     Specimen child1(parent1.getManeuvers());
     Specimen child2(parent2.getManeuvers());
-    const std::size_t swapLength =
-        randomizedSwapLength(region.length);
-
-    for (std::size_t i = 0; i < swapLength; ++i)
-    {
-        const std::size_t parent2Index =
-            region.parent2Begin + i;
-        const std::size_t parent1Index =
-            static_cast<std::size_t>(
-                static_cast<std::ptrdiff_t>(parent2Index) + region.offset);
-
-        std::swap(
-            child1[parent1Index],
-            child2[parent2Index]);
-    }
+    swapRandomGeneGroups(
+        child1,
+        child2,
+        genomes,
+        region);
 
     return {
         std::move(child1),

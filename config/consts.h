@@ -23,6 +23,8 @@ inline constexpr long double MUTATION_TIME_RANGE = 10000.0L;
 inline constexpr long double MUTATION_DURATION_RANGE = 5000.0L;
 inline constexpr long double MUTATION_THRUST_RANGE = 1000.0L;
 
+inline constexpr long double ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.01L;
+
 inline constexpr std::size_t TOURNAMENT_SIZE = 5;
 
 #endif
