@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <stdexcept>
 
+#include "genetics/fitness/FitnessMetrics.h"
+
 std::size_t TrajectorySpecimenComparator::objectiveCount() const
 {
     return 3;
@@ -15,11 +17,11 @@ Real TrajectorySpecimenComparator::objectiveValue(
     switch (objective)
     {
     case 0:
-        return fitness.minimumDistance;
+        return targetWindowViolation(fitness);
     case 1:
-        return fitness.minimumDistanceTime;
-    case 2:
         return fitness.fuelUsed;
+    case 2:
+        return fitness.minimumDistanceTime;
     }
 
     throw std::out_of_range(
@@ -31,9 +33,14 @@ bool TrajectorySpecimenComparator::prioritizesFuelConstraintViolation() const
     return true;
 }
 
+bool TrajectorySpecimenComparator::prioritizesTargetWindowViolation() const
+{
+    return true;
+}
+
 std::size_t TrajectorySpecimenComparator::tieBreakerCount() const
 {
-    return 4;
+    return 5;
 }
 
 Real TrajectorySpecimenComparator::tieBreakerValue(
@@ -43,12 +50,14 @@ Real TrajectorySpecimenComparator::tieBreakerValue(
     switch (tieBreaker)
     {
     case 0:
-        return fitness.minimumDistanceTime;
+        return targetWindowViolation(fitness);
     case 1:
-        return fitness.minimumDistance;
-    case 2:
         return fitness.fuelUsed;
+    case 2:
+        return fitness.minimumDistanceTime;
     case 3:
+        return fitness.minimumDistance;
+    case 4:
         return fitness.fuelConstraintViolation;
     }
 

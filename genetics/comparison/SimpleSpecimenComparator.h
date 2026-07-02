@@ -11,6 +11,9 @@ public:
     Real objectiveValue(
         const FitnessValue& fitness,
         std::size_t objective) const override;
+
+protected:
+    bool prioritizesTargetWindowViolation() const override;
 };
 
 #endif

@@ -21,9 +21,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_INPUT_DIR = SCRIPT_DIR / "out" / "experiments"
 DEFAULT_OUTPUT_PATH = SCRIPT_DIR / "out" / "pareto_front_summary.csv"
 DEFAULT_CRITERIA = (
-    "minimumDistance",
-    "minimumDistanceTime",
+    "targetWindowViolation",
     "fuelUsed",
+    "minimumDistanceTime",
     "fuelConstraintViolation",
 )
 

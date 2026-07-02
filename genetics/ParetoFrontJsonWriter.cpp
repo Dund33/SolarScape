@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "genetics/fitness/FitnessMetrics.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "simulation/Maneuver.h"
 
@@ -31,6 +32,7 @@ namespace
     {
         return {
             {"minimumDistance", toJsonNumber(fitness.minimumDistance)},
+            {"targetWindowViolation", toJsonNumber(targetWindowViolation(fitness))},
             {"minimumDistanceTime", toJsonNumber(fitness.minimumDistanceTime)},
             {
                 "fuelUsed",

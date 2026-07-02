@@ -18,6 +18,7 @@ public:
 
 protected:
     virtual bool prioritizesFuelConstraintViolation() const;
+    virtual bool prioritizesTargetWindowViolation() const;
 
     virtual std::size_t tieBreakerCount() const;
 

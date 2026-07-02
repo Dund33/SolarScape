@@ -14,6 +14,7 @@ public:
 
 protected:
     bool prioritizesFuelConstraintViolation() const override;
+    bool prioritizesTargetWindowViolation() const override;
 
     std::size_t tieBreakerCount() const override;
 

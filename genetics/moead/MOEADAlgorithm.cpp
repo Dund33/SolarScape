@@ -14,6 +14,7 @@
 
 #include "genetics/crossing/Crossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
+#include "genetics/fitness/FitnessMetrics.h"
 #include "genetics/init/Initializer.h"
 #include "genetics/mutation/Mutation.h"
 #include "genetics/utils/GenerationProgressLogger.h"
@@ -299,6 +300,21 @@ namespace
 
         if (currentFitness.fuelConstraintViolation <
             candidateFitness.fuelConstraintViolation)
+        {
+            return false;
+        }
+
+        const Real candidateTargetViolation =
+            targetWindowViolation(candidateFitness);
+        const Real currentTargetViolation =
+            targetWindowViolation(currentFitness);
+
+        if (candidateTargetViolation < currentTargetViolation)
+        {
+            return true;
+        }
+
+        if (currentTargetViolation < candidateTargetViolation)
         {
             return false;
         }

@@ -28,6 +28,12 @@ CRITERIA = {
         axis_label="minimum distance [m]",
         goal="min",
     ),
+    "targetWindowViolation": Criterion(
+        key="targetWindowViolation",
+        label="Target window violation",
+        axis_label="target window violation [m]",
+        goal="min",
+    ),
     "minimumDistanceTime": Criterion(
         key="minimumDistanceTime",
         label="Time of minimum distance",
@@ -49,9 +55,9 @@ CRITERIA = {
 }
 
 DEFAULT_CRITERIA = (
-    "minimumDistance",
-    "minimumDistanceTime",
+    "targetWindowViolation",
     "fuelUsed",
+    "minimumDistanceTime",
 )
 
 

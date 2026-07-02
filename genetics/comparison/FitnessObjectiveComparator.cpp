@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "genetics/Specimen.h"
+#include "genetics/fitness/FitnessMetrics.h"
 
 std::partial_ordering FitnessObjectiveComparator::compare(
     const Specimen& lhs,
@@ -25,6 +26,24 @@ std::partial_ordering FitnessObjectiveComparator::compare(
 
         if (rhsFitness.fuelConstraintViolation <
             lhsFitness.fuelConstraintViolation)
+        {
+            return std::partial_ordering::greater;
+        }
+    }
+
+    if (prioritizesTargetWindowViolation())
+    {
+        const Real lhsViolation =
+            targetWindowViolation(lhsFitness);
+        const Real rhsViolation =
+            targetWindowViolation(rhsFitness);
+
+        if (lhsViolation < rhsViolation)
+        {
+            return std::partial_ordering::less;
+        }
+
+        if (rhsViolation < lhsViolation)
         {
             return std::partial_ordering::greater;
         }
@@ -126,6 +145,11 @@ bool FitnessObjectiveComparator::isLess(
 }
 
 bool FitnessObjectiveComparator::prioritizesFuelConstraintViolation() const
+{
+    return false;
+}
+
+bool FitnessObjectiveComparator::prioritizesTargetWindowViolation() const
 {
     return false;
 }

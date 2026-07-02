@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "config/consts.h"
 #include "genetics/comparison/SimpleSpecimenComparator.h"
 #include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
@@ -177,18 +178,18 @@ namespace
     {
         SimpleSpecimenComparator comparator;
         Specimen better =
-            specimenWithFitness({1.0L, 1.0L, 5.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 5.0L, 10.0L});
         Specimen worse =
-            specimenWithFitness({2.0L, 2.0L, 10.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 2.0L, 1.0L, 1.0L});
 
         expect(
             comparator.compare(better, worse) ==
                 std::partial_ordering::less,
-            "Expected better specimen to dominate worse specimen.");
+            "Expected smaller target-window violation to dominate.");
         expect(
             comparator.compare(worse, better) ==
                 std::partial_ordering::greater,
-            "Expected worse specimen to be dominated by better specimen.");
+            "Expected larger target-window violation to be dominated.");
 
         Specimen earlier =
             specimenWithFitness({1.0L, 1.0L, 5.0L});
@@ -213,8 +214,8 @@ namespace
                 std::partial_ordering::unordered,
             "Expected fuel and time trade-off to be unordered.");
         expect(
-            !comparator.isLess(lowerFuelLater, higherFuelEarlier),
-            "Expected earlier time to beat lower fuel use in tie-breaker order.");
+            comparator.isLess(lowerFuelLater, higherFuelEarlier),
+            "Expected lower fuel use to beat earlier time in tie-breaker order.");
 
         Specimen feasible =
             specimenWithFitness({2.0L, 2.0L, 1.0L});
@@ -241,27 +242,37 @@ namespace
     {
         TrajectorySpecimenComparator comparator;
         Specimen betterObjectives =
-            specimenWithFitness({1.0L, 1.0L, 5.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 10.0L, 100.0L});
         Specimen worseObjectives =
-            specimenWithFitness({2.0L, 2.0L, 10.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 2.0L, 1.0L, 1.0L});
 
         expect(
             comparator.compare(betterObjectives, worseObjectives) ==
                 std::partial_ordering::less,
-            "Expected lower distance, earlier time, and lower fuel use to dominate.");
+            "Expected smaller target-window violation to dominate.");
 
-        Specimen earlier =
-            specimenWithFitness({10.0L, 1.0L, 100.0L});
-        Specimen later =
-            specimenWithFitness({1.0L, 2.0L, 1.0L});
+        Specimen lowerFuelLater =
+            specimenWithFitness({10.0L, 2.0L, 1.0L});
+        Specimen higherFuelEarlier =
+            specimenWithFitness({1.0L, 1.0L, 10.0L});
 
         expect(
-            comparator.compare(earlier, later) ==
+            comparator.compare(lowerFuelLater, higherFuelEarlier) ==
                 std::partial_ordering::unordered,
-            "Expected distance/time/fuel trade-off to be unordered.");
+            "Expected in-window fuel/time trade-off to be unordered.");
         expect(
-            comparator.isLess(earlier, later),
-            "Expected trajectory comparator to break ties by time, distance, then fuel.");
+            comparator.isLess(lowerFuelLater, higherFuelEarlier),
+            "Expected trajectory comparator to break ties by fuel, then time.");
+
+        Specimen closerInsideWindow =
+            specimenWithFitness({1.0L, 10.0L, 5.0L});
+        Specimen fartherInsideWindow =
+            specimenWithFitness({TARGET_WINDOW_DISTANCE - 1.0L, 10.0L, 5.0L});
+
+        expect(
+            comparator.compare(closerInsideWindow, fartherInsideWindow) ==
+                std::partial_ordering::equivalent,
+            "Expected raw distance to stop dominating inside target window.");
 
         Specimen feasible =
             specimenWithFitness({2.0L, 10.0L, 5.0L});
@@ -286,16 +297,16 @@ namespace
 
     void testNSGAIIReturnsParetoFrontHistory()
     {
-        const FitnessValue bestDistance{1.0L, 5.0L, 4.0L};
-        const FitnessValue bestFuel{2.0L, 8.0L, 1.0L};
-        const FitnessValue dominatedA{3.0L, 1.0L, 3.0L};
-        const FitnessValue timeOnlyBest{2.0L, 1.0L, 5.0L};
+        const FitnessValue bestFuel{1.0L, 8.0L, 1.0L};
+        const FitnessValue bestTime{2.0L, 1.0L, 5.0L};
+        const FitnessValue dominatedA{3.0L, 9.0L, 6.0L};
+        const FitnessValue dominatedB{4.0L, 10.0L, 10.0L};
 
         FixtureInitializerFactory initializerFactory({
-            specimenWithFitness(bestDistance),
             specimenWithFitness(bestFuel),
+            specimenWithFitness(bestTime),
             specimenWithFitness(dominatedA),
-            specimenWithFitness(timeOnlyBest)});
+            specimenWithFitness(dominatedB)});
         FirstSelectionFactory selectionFactory;
         CopyCrossoverFactory crossoverFactory;
         NoopMutationFactory mutationFactory;
@@ -324,28 +335,28 @@ namespace
         const ParetoFront& paretoFront =
             paretoFrontHistory.back();
 
-        bool foundBestDistance = false;
         bool foundBestFuel = false;
+        bool foundBestTime = false;
 
         for (const Specimen& specimen : paretoFront)
         {
             const FitnessValue& fitness =
                 specimen.getFitness().value();
 
-            foundBestDistance =
-                foundBestDistance ||
-                sameFitness(fitness, bestDistance);
             foundBestFuel =
                 foundBestFuel ||
                 sameFitness(fitness, bestFuel);
+            foundBestTime =
+                foundBestTime ||
+                sameFitness(fitness, bestTime);
         }
 
         expect(
-            foundBestDistance,
-            "Expected best distance specimen in Pareto front.");
-        expect(
             foundBestFuel,
             "Expected best fuel specimen in Pareto front.");
+        expect(
+            foundBestTime,
+            "Expected best time specimen in Pareto front.");
     }
 
     void testAlignedSimilarityCrossoverSwapsAlignedManeuvers()

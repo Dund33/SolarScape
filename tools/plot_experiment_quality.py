@@ -50,12 +50,14 @@ ALGORITHM_PALETTE = {
 }
 AXIS_LABELS = {
     "minimumDistance": "Minimum distance [m]",
+    "targetWindowViolation": "Target window violation [m]",
     "fuelUsed": "Fuel used [kg]",
     "minimumDistanceTime": "Time at minimum distance [s]",
     "fuelConstraintViolation": "Fuel constraint violation [kg]",
 }
 METRIC_LABELS = {
     "minimumDistance": "Minimum distance",
+    "targetWindowViolation": "Target window violation",
     "fuelUsed": "Fuel used",
     "minimumDistanceTime": "Time at minimum distance",
     "fuelConstraintViolation": "Fuel constraint violation",
@@ -104,9 +106,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--criteria",
         nargs="+",
-        default=["minimumDistance"],
+        default=["targetWindowViolation"],
         help=(
-            "Fitness criteria to plot as convergence curves. Default: minimumDistance. "
+            "Fitness criteria to plot as convergence curves. Default: targetWindowViolation. "
             "Useful alternatives: "
             + ", ".join(DEFAULT_CRITERIA)
             + "."

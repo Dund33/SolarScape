@@ -11,6 +11,7 @@
 
 #include "genetics/Specimen.h"
 #include "genetics/comparison/SpecimenComparator.h"
+#include "genetics/fitness/FitnessMetrics.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "math/Real.h"
 
@@ -20,6 +21,8 @@ struct ParetoFrontStats
     std::size_t fuelFeasibleCount{};
     Real minDistance{};
     Real maxDistance{};
+    Real minTargetWindowViolation{};
+    Real maxTargetWindowViolation{};
     Real minTime{};
     Real maxTime{};
     Real minFuel{};
@@ -97,6 +100,10 @@ public:
             {
                 stats.minDistance = fitness.minimumDistance;
                 stats.maxDistance = fitness.minimumDistance;
+                stats.minTargetWindowViolation =
+                    targetWindowViolation(fitness);
+                stats.maxTargetWindowViolation =
+                    targetWindowViolation(fitness);
                 stats.minTime = fitness.minimumDistanceTime;
                 stats.maxTime = fitness.minimumDistanceTime;
                 stats.minFuel = fitness.fuelUsed;
@@ -116,6 +123,14 @@ public:
                 std::min(stats.minDistance, fitness.minimumDistance);
             stats.maxDistance =
                 std::max(stats.maxDistance, fitness.minimumDistance);
+            stats.minTargetWindowViolation =
+                std::min(
+                    stats.minTargetWindowViolation,
+                    targetWindowViolation(fitness));
+            stats.maxTargetWindowViolation =
+                std::max(
+                    stats.maxTargetWindowViolation,
+                    targetWindowViolation(fitness));
             stats.minTime =
                 std::min(stats.minTime, fitness.minimumDistanceTime);
             stats.maxTime =

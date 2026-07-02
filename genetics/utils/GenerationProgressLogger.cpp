@@ -39,6 +39,9 @@ void GenerationProgressLogger::print(
         << " | distance=["
         << paretoFrontStats.minDistance
         << ", " << paretoFrontStats.maxDistance
+        << "] | target_window_violation=["
+        << paretoFrontStats.minTargetWindowViolation
+        << ", " << paretoFrontStats.maxTargetWindowViolation
         << "] | time=["
         << paretoFrontStats.minTime
         << ", " << paretoFrontStats.maxTime

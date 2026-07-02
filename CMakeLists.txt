@@ -125,6 +125,7 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/utils/ParetoRanking.h
         genetics/utils/ParetoFrontUtils.cpp
         genetics/utils/ParetoFrontUtils.h
+        genetics/fitness/FitnessMetrics.h
         genetics/fitness/FitnessValue.h
 )
 

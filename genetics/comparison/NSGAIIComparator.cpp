@@ -3,9 +3,11 @@
 #include <cstddef>
 #include <stdexcept>
 
+#include "genetics/fitness/FitnessMetrics.h"
+
 std::size_t NSGAIIComparator::objectiveCount() const
 {
-    return 2;
+    return 3;
 }
 
 Real NSGAIIComparator::objectiveValue(
@@ -15,9 +17,11 @@ Real NSGAIIComparator::objectiveValue(
     switch (objective)
     {
     case 0:
-        return fitness.fuelUsed;
+        return targetWindowViolation(fitness);
     case 1:
-        return fitness.minimumDistance;
+        return fitness.fuelUsed;
+    case 2:
+        return fitness.minimumDistanceTime;
     }
 
     throw std::out_of_range("Invalid NSGA-II comparator objective index.");
@@ -28,9 +32,14 @@ bool NSGAIIComparator::prioritizesFuelConstraintViolation() const
     return true;
 }
 
+bool NSGAIIComparator::prioritizesTargetWindowViolation() const
+{
+    return true;
+}
+
 std::size_t NSGAIIComparator::tieBreakerCount() const
 {
-    return 2;
+    return 4;
 }
 
 Real NSGAIIComparator::tieBreakerValue(
@@ -40,8 +49,12 @@ Real NSGAIIComparator::tieBreakerValue(
     switch (tieBreaker)
     {
     case 0:
-        return fitness.minimumDistanceTime;
+        return targetWindowViolation(fitness);
     case 1:
+        return fitness.fuelUsed;
+    case 2:
+        return fitness.minimumDistanceTime;
+    case 3:
         return fitness.fuelConstraintViolation;
     }
 
