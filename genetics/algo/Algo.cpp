@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "config/consts.h"
 #include "genetics/comparison/NSGAIIRankingComparator.h"
 #include "genetics/crossing/Crossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
@@ -18,9 +19,6 @@
 
 namespace
 {
-    constexpr std::size_t TARGET_ISLAND_COUNT = 8;
-    constexpr std::size_t MIGRATION_INTERVAL = 10;
-
     void sortPopulationByParetoRank(
         std::vector<Specimen>& population,
         const SpecimenComparator& specimenComparator)
@@ -280,8 +278,8 @@ ParetoFrontHistory Algo::run() const
             nextIslands);
 
         if (
-            MIGRATION_INTERVAL > 0 &&
-            (generation + 1) % MIGRATION_INTERVAL == 0)
+            ALGO_MIGRATION_INTERVAL > 0 &&
+            (generation + 1) % ALGO_MIGRATION_INTERVAL == 0)
         {
             migrate(
                 nextIslands);
@@ -316,7 +314,7 @@ Algo::Islands Algo::createIslands(
     Initializer& initializer) const
 {
     const std::size_t islandCount =
-        std::min(TARGET_ISLAND_COUNT, populationSize);
+        std::min(ALGO_TARGET_ISLAND_COUNT, populationSize);
     const std::size_t baseIslandSize =
         populationSize / islandCount;
     const std::size_t largerIslandCount =
@@ -421,7 +419,8 @@ void Algo::migrate(
         return;
     }
 
-    const std::size_t migrantCount = std::max<std::size_t>(1, eliteCount);
+    const std::size_t migrantCount =
+        std::max(ALGO_MIN_MIGRANT_COUNT, eliteCount);
     Islands migrants;
     migrants.reserve(islands.size());
 
@@ -465,5 +464,7 @@ std::size_t Algo::immigrantCountForIsland(
     const std::size_t replaceableCount =
         islandSize - islandEliteCount;
 
-    return std::min(replaceableCount, islandSize * immigrantCount / populationSize);
+    return std::min(
+        replaceableCount,
+        islandSize * immigrantCount / populationSize);
 }

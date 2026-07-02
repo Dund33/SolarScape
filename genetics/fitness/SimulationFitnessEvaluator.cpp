@@ -72,9 +72,11 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         simulation->targetBody();
     const Probe& simulatedProbe =
         simulation->probe();
+    const Real fuelUsed =
+        simulation->requestedFuelUse();
 
     const Real fuelConstraintViolation =
-        std::max(0.0L, simulation->requestedFuelUse() - simulatedProbe.fuelMass());
+        std::max(0.0L, fuelUsed - simulatedProbe.fuelMass());
 
     Real minimumDistance =
         distance(
@@ -84,8 +86,6 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
                 targetPointFromTargetBody));
 
     Real minimumDistanceTime = currentTime;
-    Real minimumDistanceFuelMass = simulatedProbe.fuelMass();
-
     while (currentTime < simulationTime)
     {
         const Real remainingTime =
@@ -112,13 +112,12 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         {
             minimumDistance = currentDistance;
             minimumDistanceTime = currentTime;
-            minimumDistanceFuelMass = simulatedProbe.fuelMass();
         }
     }
 
     return {
         minimumDistance,
         minimumDistanceTime,
-        minimumDistanceFuelMass,
+        fuelUsed,
         fuelConstraintViolation};
 }

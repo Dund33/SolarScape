@@ -15,7 +15,7 @@ Real NSGAIIComparator::objectiveValue(
     switch (objective)
     {
     case 0:
-        return -fitness.minimumDistanceFuelMass;
+        return fitness.fuelUsed;
     case 1:
         return fitness.minimumDistance;
     }

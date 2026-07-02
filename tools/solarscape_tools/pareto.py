@@ -34,11 +34,11 @@ CRITERIA = {
         axis_label="time of minimum distance [s]",
         goal="min",
     ),
-    "minimumDistanceFuelMass": Criterion(
-        key="minimumDistanceFuelMass",
-        label="Fuel mass at minimum distance",
-        axis_label="fuel mass at minimum distance [kg]",
-        goal="max",
+    "fuelUsed": Criterion(
+        key="fuelUsed",
+        label="Fuel used",
+        axis_label="fuel used [kg]",
+        goal="min",
     ),
     "fuelConstraintViolation": Criterion(
         key="fuelConstraintViolation",
@@ -51,7 +51,7 @@ CRITERIA = {
 DEFAULT_CRITERIA = (
     "minimumDistance",
     "minimumDistanceTime",
-    "minimumDistanceFuelMass",
+    "fuelUsed",
 )
 
 
@@ -207,4 +207,3 @@ def best_generation_value(
     if value is None:
         return math.nan
     return value
-

@@ -33,8 +33,8 @@ namespace
             {"minimumDistance", toJsonNumber(fitness.minimumDistance)},
             {"minimumDistanceTime", toJsonNumber(fitness.minimumDistanceTime)},
             {
-                "minimumDistanceFuelMass",
-                toJsonNumber(fitness.minimumDistanceFuelMass)
+                "fuelUsed",
+                toJsonNumber(fitness.fuelUsed)
             },
             {
                 "fuelConstraintViolation",

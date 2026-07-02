@@ -19,7 +19,7 @@ Real SimpleSpecimenComparator::objectiveValue(
     case 1:
         return fitness.minimumDistanceTime;
     case 2:
-        return -fitness.minimumDistanceFuelMass;
+        return fitness.fuelUsed;
     case 3:
         return fitness.fuelConstraintViolation;
     }

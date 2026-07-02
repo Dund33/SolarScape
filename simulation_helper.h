@@ -46,7 +46,7 @@ inline void printFitnessValue(
     std::cout
         << "[minimumDistance=" << fitness.minimumDistance
         << ", minimumDistanceTime=" << fitness.minimumDistanceTime
-        << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
+        << ", fuelUsed=" << fitness.fuelUsed
         << ", fuelConstraintViolation=" << fitness.fuelConstraintViolation
         << ']';
 }

@@ -22,7 +22,7 @@ from solarscape_tools.pareto import CRITERIA, final_pareto_front, load_pareto_js
 FITNESS_COLUMNS = [
     "minimumDistance",
     "minimumDistanceTime",
-    "minimumDistanceFuelMass",
+    "fuelUsed",
     "fuelConstraintViolation",
 ]
 SUMMARY_COLUMNS = [
@@ -35,15 +35,15 @@ SUMMARY_COLUMNS = [
     "final_feasible",
     "final_feasible_rate",
     "final_min_distance",
-    "final_best_fuel",
+    "final_min_fuel_used",
     "final_best_time",
     "best_so_far_distance_mean",
     "best_so_far_distance_std",
     "best_so_far_distance_best",
     "best_so_far_generation_mean",
     "time_at_best_distance_mean",
-    "fuel_at_best_distance_mean",
-    "best_so_far_fuel_mean",
+    "fuel_used_at_best_distance_mean",
+    "best_so_far_fuel_used_mean",
     "earliest_time_mean",
 ]
 BEST_SOLUTION_COLUMNS = [
@@ -59,7 +59,7 @@ BEST_SOLUTION_COLUMNS = [
     "feasible",
     "minimumDistance",
     "minimumDistanceTime",
-    "minimumDistanceFuelMass",
+    "fuelUsed",
     "fuelConstraintViolation",
     "maneuvers",
 ]
@@ -317,7 +317,7 @@ def best_solutions_by_metric(
                 "fuelViolation",
                 "minimumDistance",
                 "minimumDistanceTime",
-                "minimumDistanceFuelMass",
+                "fuelUsed",
                 "run",
                 "generation",
                 "specimen",
@@ -329,7 +329,7 @@ def best_solutions_by_metric(
                 True,
                 True,
                 True,
-                False,
+                True,
                 True,
                 True,
                 True,
@@ -580,7 +580,7 @@ def final_pareto_points_frame(
         "front_size",
         "feasible",
         "minimumDistance",
-        "minimumDistanceFuelMass",
+        "fuelUsed",
         "minimumDistanceTime",
         "fuelConstraintViolation",
         "fuelViolation",
@@ -621,7 +621,7 @@ def final_group_stats(
 
     candidate_stats = candidates.groupby(group_columns, as_index=False).agg(
         final_min_distance=("minimumDistance", "min"),
-        final_best_fuel=("minimumDistanceFuelMass", "max"),
+        final_min_fuel_used=("fuelUsed", "min"),
         final_best_time=("minimumDistanceTime", "min"),
     )
     return stats.merge(candidate_stats, on=group_columns, how="left")
@@ -635,10 +635,10 @@ def best_so_far_stats(candidates: pd.DataFrame) -> pd.DataFrame:
             *group_columns,
             "minimumDistance",
             "minimumDistanceTime",
-            "minimumDistanceFuelMass",
+            "fuelUsed",
             "fuelViolation",
         ],
-        ascending=[True, True, True, True, True, False, True],
+        ascending=[True, True, True, True, True, True, True],
     )
     best_distance = distance_candidates.drop_duplicates(group_columns)
     best_distance = best_distance[
@@ -647,19 +647,19 @@ def best_so_far_stats(candidates: pd.DataFrame) -> pd.DataFrame:
             "minimumDistance",
             "generation",
             "minimumDistanceTime",
-            "minimumDistanceFuelMass",
+            "fuelUsed",
         ]
     ].rename(
         columns={
             "minimumDistance": "best_so_far_distance",
             "generation": "best_so_far_generation",
             "minimumDistanceTime": "time_at_best_distance",
-            "minimumDistanceFuelMass": "fuel_at_best_distance",
+            "fuelUsed": "fuel_used_at_best_distance",
         }
     )
 
     other = candidates.groupby(group_columns, as_index=False).agg(
-        best_so_far_fuel=("minimumDistanceFuelMass", "max"),
+        best_so_far_fuel_used=("fuelUsed", "min"),
         earliest_time=("minimumDistanceTime", "min"),
     )
     return best_distance.merge(other, on=group_columns, how="outer")
@@ -689,15 +689,15 @@ def aggregate_summary_mean(
         final_feasible=("final_feasible", "mean"),
         final_feasible_rate=("final_feasible_rate", "mean"),
         final_min_distance=("final_min_distance", "mean"),
-        final_best_fuel=("final_best_fuel", "mean"),
+        final_min_fuel_used=("final_min_fuel_used", "mean"),
         final_best_time=("final_best_time", "mean"),
         best_so_far_distance_mean=("best_so_far_distance", "mean"),
         best_so_far_distance_std=("best_so_far_distance", sample_std),
         best_so_far_distance_best=("best_so_far_distance", "min"),
         best_so_far_generation_mean=("best_so_far_generation", "mean"),
         time_at_best_distance_mean=("time_at_best_distance", "mean"),
-        fuel_at_best_distance_mean=("fuel_at_best_distance", "mean"),
-        best_so_far_fuel_mean=("best_so_far_fuel", "mean"),
+        fuel_used_at_best_distance_mean=("fuel_used_at_best_distance", "mean"),
+        best_so_far_fuel_used_mean=("best_so_far_fuel_used", "mean"),
         earliest_time_mean=("earliest_time", "mean"),
     )
     result.insert(3, "aggregation", aggregation)
@@ -716,15 +716,15 @@ def aggregate_summary_best(
         final_feasible=("final_feasible", "max"),
         final_feasible_rate=("final_feasible_rate", "max"),
         final_min_distance=("final_min_distance", "min"),
-        final_best_fuel=("final_best_fuel", "max"),
+        final_min_fuel_used=("final_min_fuel_used", "min"),
         final_best_time=("final_best_time", "min"),
         best_so_far_distance_mean=("best_so_far_distance", "min"),
         best_so_far_distance_std=("best_so_far_distance", lambda _: 0.0),
         best_so_far_distance_best=("best_so_far_distance", "min"),
         best_so_far_generation_mean=("best_so_far_generation", "min"),
         time_at_best_distance_mean=("time_at_best_distance", "min"),
-        fuel_at_best_distance_mean=("fuel_at_best_distance", "max"),
-        best_so_far_fuel_mean=("best_so_far_fuel", "max"),
+        fuel_used_at_best_distance_mean=("fuel_used_at_best_distance", "min"),
+        best_so_far_fuel_used_mean=("best_so_far_fuel_used", "min"),
         earliest_time_mean=("earliest_time", "min"),
     )
     result.insert(3, "aggregation", aggregation)
@@ -745,12 +745,12 @@ def aggregate_summary_best_run(
             "scenario",
             "algorithm",
             "best_so_far_distance",
-            "fuel_at_best_distance",
+            "fuel_used_at_best_distance",
             "time_at_best_distance",
             "final_feasible_rate",
             "run",
         ],
-        ascending=[True, True, True, False, True, False, True],
+        ascending=[True, True, True, True, True, False, True],
     )
     result = ranked.drop_duplicates(["scenario", "algorithm"]).copy()
     result = result.merge(run_counts, on=["scenario", "algorithm"], how="left")
@@ -760,8 +760,8 @@ def aggregate_summary_best_run(
             "best_so_far_distance": "best_so_far_distance_mean",
             "best_so_far_generation": "best_so_far_generation_mean",
             "time_at_best_distance": "time_at_best_distance_mean",
-            "fuel_at_best_distance": "fuel_at_best_distance_mean",
-            "best_so_far_fuel": "best_so_far_fuel_mean",
+            "fuel_used_at_best_distance": "fuel_used_at_best_distance_mean",
+            "best_so_far_fuel_used": "best_so_far_fuel_used_mean",
             "earliest_time": "earliest_time_mean",
         }
     )

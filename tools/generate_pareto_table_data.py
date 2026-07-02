@@ -23,7 +23,7 @@ DEFAULT_OUTPUT_PATH = SCRIPT_DIR / "out" / "pareto_front_summary.csv"
 DEFAULT_CRITERIA = (
     "minimumDistance",
     "minimumDistanceTime",
-    "minimumDistanceFuelMass",
+    "fuelUsed",
     "fuelConstraintViolation",
 )
 

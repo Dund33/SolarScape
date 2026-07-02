@@ -32,7 +32,7 @@ namespace
         return
             lhs.minimumDistance == rhs.minimumDistance &&
             lhs.minimumDistanceTime == rhs.minimumDistanceTime &&
-            lhs.minimumDistanceFuelMass == rhs.minimumDistanceFuelMass &&
+            lhs.fuelUsed == rhs.fuelUsed &&
             lhs.fuelConstraintViolation == rhs.fuelConstraintViolation;
     }
 
@@ -177,9 +177,9 @@ namespace
     {
         SimpleSpecimenComparator comparator;
         Specimen better =
-            specimenWithFitness({1.0L, 1.0L, 10.0L});
+            specimenWithFitness({1.0L, 1.0L, 5.0L});
         Specimen worse =
-            specimenWithFitness({2.0L, 2.0L, 5.0L});
+            specimenWithFitness({2.0L, 2.0L, 10.0L});
 
         expect(
             comparator.compare(better, worse) ==
@@ -191,9 +191,9 @@ namespace
             "Expected worse specimen to be dominated by better specimen.");
 
         Specimen earlier =
-            specimenWithFitness({1.0L, 1.0L, 10.0L});
+            specimenWithFitness({1.0L, 1.0L, 5.0L});
         Specimen later =
-            specimenWithFitness({1.0L, 2.0L, 10.0L});
+            specimenWithFitness({1.0L, 2.0L, 5.0L});
 
         expect(
             comparator.compare(earlier, later) ==
@@ -203,18 +203,18 @@ namespace
             comparator.isLess(earlier, later),
             "Expected earlier time to be ordered first.");
 
-        Specimen moreFuel =
-            specimenWithFitness({1.0L, 2.0L, 10.0L});
-        Specimen lessFuel =
-            specimenWithFitness({1.0L, 1.0L, 5.0L});
+        Specimen lowerFuelLater =
+            specimenWithFitness({1.0L, 2.0L, 5.0L});
+        Specimen higherFuelEarlier =
+            specimenWithFitness({1.0L, 1.0L, 10.0L});
 
         expect(
-            comparator.compare(moreFuel, lessFuel) ==
+            comparator.compare(lowerFuelLater, higherFuelEarlier) ==
                 std::partial_ordering::unordered,
             "Expected fuel and time trade-off to be unordered.");
         expect(
-            !comparator.isLess(moreFuel, lessFuel),
-            "Expected earlier time to beat higher fuel in tie-breaker order.");
+            !comparator.isLess(lowerFuelLater, higherFuelEarlier),
+            "Expected earlier time to beat lower fuel use in tie-breaker order.");
 
         Specimen feasible =
             specimenWithFitness({2.0L, 2.0L, 1.0L});
@@ -241,14 +241,14 @@ namespace
     {
         TrajectorySpecimenComparator comparator;
         Specimen betterObjectives =
-            specimenWithFitness({1.0L, 1.0L, 10.0L});
+            specimenWithFitness({1.0L, 1.0L, 5.0L});
         Specimen worseObjectives =
-            specimenWithFitness({2.0L, 2.0L, 5.0L});
+            specimenWithFitness({2.0L, 2.0L, 10.0L});
 
         expect(
             comparator.compare(betterObjectives, worseObjectives) ==
                 std::partial_ordering::less,
-            "Expected lower distance, earlier time, and higher remaining fuel to dominate.");
+            "Expected lower distance, earlier time, and lower fuel use to dominate.");
 
         Specimen earlier =
             specimenWithFitness({10.0L, 1.0L, 100.0L});
@@ -261,7 +261,7 @@ namespace
             "Expected distance/time/fuel trade-off to be unordered.");
         expect(
             comparator.isLess(earlier, later),
-            "Expected trajectory comparator to break ties by distance, time, then fuel.");
+            "Expected trajectory comparator to break ties by time, distance, then fuel.");
 
         Specimen feasible =
             specimenWithFitness({2.0L, 10.0L, 5.0L});
@@ -287,7 +287,7 @@ namespace
     void testNSGAIIReturnsParetoFrontHistory()
     {
         const FitnessValue bestDistance{1.0L, 5.0L, 4.0L};
-        const FitnessValue bestFuel{2.0L, 8.0L, 10.0L};
+        const FitnessValue bestFuel{2.0L, 8.0L, 1.0L};
         const FitnessValue dominatedA{3.0L, 1.0L, 3.0L};
         const FitnessValue timeOnlyBest{2.0L, 1.0L, 5.0L};
 

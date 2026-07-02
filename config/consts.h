@@ -11,6 +11,10 @@ inline constexpr std::size_t POPULATION_SIZE = 250;
 inline constexpr std::size_t GENERATIONS = 250;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
+inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 4;
+inline constexpr std::size_t ALGO_MIGRATION_INTERVAL = 10;
+inline constexpr std::size_t ALGO_MIN_MIGRANT_COUNT = 1;
+
 inline constexpr std::size_t MIN_MANEUVERS = 1;
 inline constexpr std::size_t MAX_MANEUVERS = 25;
 

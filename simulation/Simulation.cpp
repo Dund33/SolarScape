@@ -49,10 +49,7 @@ Real Simulation::requestedFuelUse() const
         {
             return totalFuelUse +
                 probe_.fuelFlow() *
-                std::clamp(
-                    maneuver.getThrottleValue(),
-                    0.0L,
-                    1.0L) *
+                maneuver.getThrottleValue() *
                 maneuver.getDuration();
         });
 }

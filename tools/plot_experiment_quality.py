@@ -50,13 +50,13 @@ ALGORITHM_PALETTE = {
 }
 AXIS_LABELS = {
     "minimumDistance": "Minimum distance [m]",
-    "minimumDistanceFuelMass": "Fuel mass at minimum distance [kg]",
+    "fuelUsed": "Fuel used [kg]",
     "minimumDistanceTime": "Time at minimum distance [s]",
     "fuelConstraintViolation": "Fuel constraint violation [kg]",
 }
 METRIC_LABELS = {
     "minimumDistance": "Minimum distance",
-    "minimumDistanceFuelMass": "Fuel mass at minimum distance",
+    "fuelUsed": "Fuel used",
     "minimumDistanceTime": "Time at minimum distance",
     "fuelConstraintViolation": "Fuel constraint violation",
 }
@@ -387,7 +387,7 @@ def plot_final_pareto(
     dpi: int,
 ) -> None:
     group = add_display_columns(group).dropna(
-        subset=["minimumDistance", "minimumDistanceFuelMass"]
+        subset=["minimumDistance", "fuelUsed"]
     )
     if group.empty:
         return
@@ -400,7 +400,7 @@ def plot_final_pareto(
     sns.scatterplot(
         data=plot_data,
         x="minimumDistance",
-        y="minimumDistanceFuelMass",
+        y="fuelUsed",
         hue="algorithm_label",
         hue_order=hue_order,
         palette=palette,
@@ -411,10 +411,10 @@ def plot_final_pareto(
     )
 
     ax.set_xlabel("Minimum distance [m]")
-    ax.set_ylabel("Fuel mass at minimum distance [kg]")
+    ax.set_ylabel("Fuel used [kg]")
     ax.set_title(f"{scenario_title(group['scenario'].iloc[0])}: final Pareto front")
     format_legend(ax)
-    apply_y_axis_scale(ax, plot_data[["minimumDistanceFuelMass"]], log_y)
+    apply_y_axis_scale(ax, plot_data[["fuelUsed"]], log_y)
     style_numeric_axis(ax)
     save_figure(fig, output_path, dpi)
 

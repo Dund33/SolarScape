@@ -7,7 +7,7 @@ struct FitnessValue
 {
     Real minimumDistance{};
     Real minimumDistanceTime{};
-    Real minimumDistanceFuelMass{};
+    Real fuelUsed{};
     Real fuelConstraintViolation{};
 };
 

@@ -19,7 +19,7 @@ Real TrajectorySpecimenComparator::objectiveValue(
     case 1:
         return fitness.minimumDistanceTime;
     case 2:
-        return -fitness.minimumDistanceFuelMass;
+        return fitness.fuelUsed;
     }
 
     throw std::out_of_range(
@@ -47,7 +47,7 @@ Real TrajectorySpecimenComparator::tieBreakerValue(
     case 1:
         return fitness.minimumDistance;
     case 2:
-        return -fitness.minimumDistanceFuelMass;
+        return fitness.fuelUsed;
     case 3:
         return fitness.fuelConstraintViolation;
     }

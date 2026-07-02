@@ -99,8 +99,8 @@ public:
                 stats.maxDistance = fitness.minimumDistance;
                 stats.minTime = fitness.minimumDistanceTime;
                 stats.maxTime = fitness.minimumDistanceTime;
-                stats.minFuel = fitness.minimumDistanceFuelMass;
-                stats.maxFuel = fitness.minimumDistanceFuelMass;
+                stats.minFuel = fitness.fuelUsed;
+                stats.maxFuel = fitness.fuelUsed;
                 stats.minFuelViolation = fitness.fuelConstraintViolation;
                 stats.maxFuelViolation = fitness.fuelConstraintViolation;
             }
@@ -121,9 +121,9 @@ public:
             stats.maxTime =
                 std::max(stats.maxTime, fitness.minimumDistanceTime);
             stats.minFuel =
-                std::min(stats.minFuel, fitness.minimumDistanceFuelMass);
+                std::min(stats.minFuel, fitness.fuelUsed);
             stats.maxFuel =
-                std::max(stats.maxFuel, fitness.minimumDistanceFuelMass);
+                std::max(stats.maxFuel, fitness.fuelUsed);
             stats.minFuelViolation =
                 std::min(stats.minFuelViolation, fitness.fuelConstraintViolation);
             stats.maxFuelViolation =
