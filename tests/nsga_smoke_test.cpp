@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "config/consts.h"
-#include "genetics/comparison/SimpleSpecimenComparator.h"
 #include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
 #include "genetics/crossing/CrossoverFactory.h"
@@ -172,70 +171,6 @@ namespace
         {
             throw std::runtime_error(message);
         }
-    }
-
-    void testComparatorDominance()
-    {
-        SimpleSpecimenComparator comparator;
-        Specimen better =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 5.0L, 10.0L});
-        Specimen worse =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 2.0L, 1.0L, 1.0L});
-
-        expect(
-            comparator.compare(better, worse) ==
-                std::partial_ordering::less,
-            "Expected smaller target-window violation to dominate.");
-        expect(
-            comparator.compare(worse, better) ==
-                std::partial_ordering::greater,
-            "Expected larger target-window violation to be dominated.");
-
-        Specimen earlier =
-            specimenWithFitness({1.0L, 1.0L, 5.0L});
-        Specimen later =
-            specimenWithFitness({1.0L, 2.0L, 5.0L});
-
-        expect(
-            comparator.compare(earlier, later) ==
-                std::partial_ordering::less,
-            "Expected earlier time to dominate when other criteria match.");
-        expect(
-            comparator.isLess(earlier, later),
-            "Expected earlier time to be ordered first.");
-
-        Specimen lowerFuelLater =
-            specimenWithFitness({1.0L, 2.0L, 5.0L});
-        Specimen higherFuelEarlier =
-            specimenWithFitness({1.0L, 1.0L, 10.0L});
-
-        expect(
-            comparator.compare(lowerFuelLater, higherFuelEarlier) ==
-                std::partial_ordering::unordered,
-            "Expected fuel and time trade-off to be unordered.");
-        expect(
-            comparator.isLess(lowerFuelLater, higherFuelEarlier),
-            "Expected lower fuel use to beat earlier time in tie-breaker order.");
-
-        Specimen feasible =
-            specimenWithFitness({2.0L, 2.0L, 1.0L});
-        Specimen infeasible =
-            specimenWithFitness({1.0L, 1.0L, 10.0L, 1.0L});
-
-        expect(
-            comparator.compare(feasible, infeasible) ==
-                std::partial_ordering::unordered,
-            "Expected fuel violation trade-off to be unordered.");
-
-        Specimen smallerViolation =
-            specimenWithFitness({1.0L, 1.0L, 10.0L, 1.0L});
-        Specimen largerViolation =
-            specimenWithFitness({1.0L, 1.0L, 10.0L, 2.0L});
-
-        expect(
-            comparator.compare(smallerViolation, largerViolation) ==
-                std::partial_ordering::less,
-            "Expected smaller fuel constraint violation to dominate when other criteria match.");
     }
 
     void testTrajectoryComparatorObjectivesAndTieBreakers()
@@ -437,7 +372,6 @@ auto main() -> int
 {
     try
     {
-        testComparatorDominance();
         testTrajectoryComparatorObjectivesAndTieBreakers();
         testNSGAIIReturnsParetoFrontHistory();
         testAlignedSimilarityCrossoverSwapsAlignedManeuvers();
