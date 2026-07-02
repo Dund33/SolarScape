@@ -4,7 +4,6 @@
 #include <compare>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <limits>
 #include <numeric>
 #include <random>
@@ -17,6 +16,7 @@
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/init/Initializer.h"
 #include "genetics/mutation/Mutation.h"
+#include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
@@ -399,33 +399,11 @@ namespace
         std::size_t generation,
         const ParetoFront& paretoFront)
     {
-        if (paretoFront.empty())
-        {
-            std::cout
-                << "MOEA-D generation " << generation
-                << " | Pareto front size = 0\n";
-            return;
-        }
-
-        const ParetoFrontStats stats =
+        GenerationProgressLogger::print(
+            "MOEA-D",
+            generation,
             ParetoFrontUtils::calculateStats(
-                paretoFront);
-
-        std::cout
-            << "MOEA-D generation " << generation
-            << " | Pareto front size = " << stats.size
-            << " | fuel feasible = "
-            << stats.fuelFeasibleCount << '/' << stats.size
-            << " | distance = ["
-            << stats.minDistance << ", " << stats.maxDistance << ']'
-            << " | time = ["
-            << stats.minTime << ", " << stats.maxTime << ']'
-            << " | fuel = ["
-            << stats.minFuel << ", " << stats.maxFuel << ']'
-            << " | fuel violation = ["
-            << stats.minFuelViolation << ", "
-            << stats.maxFuelViolation << ']'
-            << '\n';
+                paretoFront));
     }
 }
 

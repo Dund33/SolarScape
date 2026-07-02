@@ -1,6 +1,7 @@
 #include "Specimen.h"
 
 #include <numeric>
+#include <utility>
 
 #include "math/ProbeProperties.h"
 
@@ -10,6 +11,11 @@ Specimen::Specimen()
 
 Specimen::Specimen(const std::vector<Maneuver>& maneuvers)
     : maneuvers(maneuvers)
+{
+}
+
+Specimen::Specimen(std::vector<Maneuver>&& maneuvers)
+    : maneuvers(std::move(maneuvers))
 {
 }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "genetics/Specimen.h"
@@ -258,7 +259,9 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
             maxThrustOffset,
             probeProperties);
 
-        specimen = Specimen(maneuvers);
+        specimen = Specimen(
+            std::move(
+                maneuvers));
         return;
     }
 
@@ -291,5 +294,7 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
         maxThrustOffset,
         probeProperties);
 
-    specimen = Specimen(maneuvers);
+    specimen = Specimen(
+        std::move(
+            maneuvers));
 }

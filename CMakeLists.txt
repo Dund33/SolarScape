@@ -119,6 +119,8 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/comparison/SimpleSpecimenComparator.h
         genetics/comparison/TrajectorySpecimenComparator.cpp
         genetics/comparison/TrajectorySpecimenComparator.h
+        genetics/utils/GenerationProgressLogger.cpp
+        genetics/utils/GenerationProgressLogger.h
         genetics/utils/ParetoFrontUtils.cpp
         genetics/utils/ParetoFrontUtils.h
         genetics/fitness/FitnessValue.h

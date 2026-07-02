@@ -60,9 +60,6 @@ private:
     void migrate(
         Islands& islands) const;
 
-    std::vector<Specimen> flatten(
-        const Islands& islands) const;
-
     std::size_t immigrantCountForIsland(
         std::size_t islandSize) const;
 

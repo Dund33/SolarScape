@@ -1,36 +1,24 @@
 #include "Algo.h"
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
-#include <numeric>
 #include <ranges>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
 #include "genetics/crossing/Crossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
-#include "genetics/fitness/FitnessValue.h"
 #include "genetics/init/Initializer.h"
 #include "genetics/mutation/Mutation.h"
 #include "genetics/selection/Selection.h"
+#include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
 {
     constexpr std::size_t TARGET_ISLAND_COUNT = 8;
     constexpr std::size_t MIGRATION_INTERVAL = 10;
-
-    void printFitnessValue(
-        const FitnessValue& fitness)
-    {
-        std::cout
-            << "[minimumDistance=" << fitness.minimumDistance
-            << ", minimumDistanceTime=" << fitness.minimumDistanceTime
-            << ", minimumDistanceFuelMass=" << fitness.minimumDistanceFuelMass
-            << ", fuelConstraintViolation=" << fitness.fuelConstraintViolation
-            << ']';
-    }
 
     void sortPopulationByFitness(
         std::vector<Specimen>& population,
@@ -48,22 +36,25 @@ namespace
             });
     }
 
-    void printIslandSizes(
+    std::string islandSizesDetails(
         const std::vector<std::vector<Specimen>>& islands)
     {
-        std::cout << '[';
+        std::ostringstream details;
+        details << "islands=[";
 
         for (std::size_t i = 0; i < islands.size(); ++i)
         {
             if (i > 0)
             {
-                std::cout << ", ";
+                details << ", ";
             }
 
-            std::cout << islands[i].size();
+            details << islands[i].size();
         }
 
-        std::cout << ']';
+        details << ']';
+
+        return details.str();
     }
 
     void printGenerationResult(
@@ -71,24 +62,13 @@ namespace
         const std::vector<std::vector<Specimen>>& islands,
         const ParetoFront& paretoFront)
     {
-        std::cout
-            << "Generation " << generation
-            << " | Islands = ";
-        printIslandSizes(
-            islands);
-        std::cout
-            << " | Pareto front size = "
-            << paretoFront.size();
-
-        if (!paretoFront.empty())
-        {
-            std::cout
-                << " | Representative fitness = ";
-            printFitnessValue(
-                paretoFront.front().getFitness().value());
-        }
-
-        std::cout << '\n';
+        GenerationProgressLogger::print(
+            "ALGO",
+            generation,
+            ParetoFrontUtils::calculateStats(
+                paretoFront),
+            islandSizesDetails(
+                islands));
     }
 }
 
@@ -174,12 +154,10 @@ ParetoFrontHistory Algo::run() const
                 nextIslands);
         }
 
-        std::vector<Specimen> population =
-            flatten(
-                nextIslands);
         ParetoFront paretoFront =
             ParetoFrontUtils::firstFront(
-                population,
+                nextIslands |
+                std::views::join,
                 specimenComparator);
 
         if (verbose)
@@ -191,7 +169,8 @@ ParetoFrontHistory Algo::run() const
         }
 
         history.push_back(
-            std::move(paretoFront));
+            std::move(
+                paretoFront));
         islands =
             std::move(
                 nextIslands);
@@ -240,13 +219,10 @@ void Algo::evaluateIslands(
     specimens.reserve(
         populationSize);
 
-    for (auto& island : islands)
+    for (Specimen& specimen : islands | std::views::join)
     {
-        for (Specimen& specimen : island)
-        {
-            specimens.push_back(
-                &specimen);
-        }
+        specimens.push_back(
+            &specimen);
     }
 
     evaluateSpecimensUnsequenced(
@@ -365,34 +341,6 @@ void Algo::migrate(
             island,
             specimenComparator);
     }
-}
-
-std::vector<Specimen> Algo::flatten(
-    const Islands& islands) const
-{
-    const std::size_t specimenCount =
-        std::accumulate(
-            islands.begin(),
-            islands.end(),
-            std::size_t{0},
-            [](std::size_t total, const auto& island)
-            {
-                return total + island.size();
-            });
-
-    std::vector<Specimen> population;
-    population.reserve(
-        specimenCount);
-
-    for (const auto& island : islands)
-    {
-        std::ranges::copy(
-            island,
-            std::back_inserter(
-                population));
-    }
-
-    return population;
 }
 
 std::size_t Algo::immigrantCountForIsland(

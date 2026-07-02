@@ -2,16 +2,17 @@
 
 #include <algorithm>
 #include <compare>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <ranges>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include "genetics/comparison/NSGAIIRankingComparator.h"
 #include "genetics/comparison/SpecimenRank.h"
+#include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 
 namespace
@@ -22,64 +23,60 @@ namespace
         std::vector<SpecimenRank> ranks;
     };
 
+    std::string frontsDetails(
+        const RankedPopulation& rankedPopulation)
+    {
+        std::ostringstream details;
+        details
+            << "fronts="
+            << rankedPopulation.fronts.size()
+            << " [";
+
+        const auto printedFronts =
+            rankedPopulation.fronts |
+            std::views::take(5);
+
+        bool first = true;
+
+        for (const auto& front : printedFronts)
+        {
+            if (!first)
+            {
+                details << ", ";
+            }
+
+            details << front.size();
+            first = false;
+        }
+
+        if (rankedPopulation.fronts.size() > 5)
+        {
+            details << ", ...";
+        }
+
+        details << ']';
+
+        return details.str();
+    }
+
     void printGenerationResult(
         std::size_t generation,
         const std::vector<Specimen>& population,
         const RankedPopulation& rankedPopulation)
     {
-        if (rankedPopulation.fronts.empty())
-        {
-            std::cout
-                << "NSGA-II generation " << generation
-                << " | Pareto front size = 0\n";
-            return;
-        }
-
         const ParetoFrontStats stats =
-            ParetoFrontUtils::calculateStats(
-                population,
-                rankedPopulation.fronts.front());
+            rankedPopulation.fronts.empty()
+                ? ParetoFrontStats{}
+                : ParetoFrontUtils::calculateStats(
+                    population,
+                    rankedPopulation.fronts.front());
 
-        std::cout
-            << "NSGA-II generation " << generation
-            << " | Pareto front size = " << stats.size
-            << " | fronts = " << rankedPopulation.fronts.size()
-            << " [";
-
-        const std::size_t printedFrontCount =
-            std::min<std::size_t>(
-                rankedPopulation.fronts.size(),
-                5);
-
-        for (std::size_t i = 0; i < printedFrontCount; ++i)
-        {
-            if (i > 0)
-            {
-                std::cout << ", ";
-            }
-
-            std::cout << rankedPopulation.fronts[i].size();
-        }
-
-        if (printedFrontCount < rankedPopulation.fronts.size())
-        {
-            std::cout << ", ...";
-        }
-
-        std::cout
-            << ']'
-            << " | fuel feasible = "
-            << stats.fuelFeasibleCount << '/' << stats.size
-            << " | distance = ["
-            << stats.minDistance << ", " << stats.maxDistance << ']'
-            << " | time = ["
-            << stats.minTime << ", " << stats.maxTime << ']'
-            << " | fuel = ["
-            << stats.minFuel << ", " << stats.maxFuel << ']'
-            << " | fuel violation = ["
-            << stats.minFuelViolation << ", "
-            << stats.maxFuelViolation << ']'
-            << '\n';
+        GenerationProgressLogger::print(
+            "NSGA-II",
+            generation,
+            stats,
+            frontsDetails(
+                rankedPopulation));
     }
 
     void calculateCrowdingDistance(
@@ -267,7 +264,7 @@ namespace
     }
 
     std::vector<Specimen> selectNextGeneration(
-        const std::vector<Specimen>& combinedPopulation,
+        std::vector<Specimen>& combinedPopulation,
         const RankedPopulation& rankedPopulation,
         std::size_t populationSize,
         const SpecimenComparator& specimenComparator)
@@ -282,7 +279,13 @@ namespace
                 for (std::size_t specimenIndex : front)
                 {
                     nextPopulation.push_back(
-                        combinedPopulation[specimenIndex]);
+                        std::move(
+                            combinedPopulation[specimenIndex]));
+                }
+
+                if (nextPopulation.size() == populationSize)
+                {
+                    break;
                 }
 
                 continue;
@@ -311,7 +314,8 @@ namespace
                 }
 
                 nextPopulation.push_back(
-                    combinedPopulation[specimenIndex]);
+                    std::move(
+                        combinedPopulation[specimenIndex]));
             }
 
             break;
@@ -410,10 +414,10 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
         std::vector<Specimen> combinedPopulation;
         combinedPopulation.reserve(
             population.size() + offspring.size());
-        std::ranges::copy(
+        std::ranges::move(
             population,
             std::back_inserter(combinedPopulation));
-        std::ranges::copy(
+        std::ranges::move(
             offspring,
             std::back_inserter(combinedPopulation));
 
