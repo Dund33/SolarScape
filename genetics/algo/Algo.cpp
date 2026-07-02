@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "genetics/comparison/NSGAIIRankingComparator.h"
 #include "genetics/crossing/Crossover.h"
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/init/Initializer.h"
@@ -14,26 +15,136 @@
 #include "genetics/selection/Selection.h"
 #include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
+#include "genetics/utils/ParetoRanking.h"
 
 namespace
 {
     constexpr std::size_t TARGET_ISLAND_COUNT = 8;
     constexpr std::size_t MIGRATION_INTERVAL = 10;
 
-    void sortPopulationByFitness(
+    void sortPopulationByParetoRank(
         std::vector<Specimen>& population,
         const SpecimenComparator& specimenComparator)
     {
-        std::ranges::sort(
-            population,
-            [&specimenComparator](
-                const Specimen& lhs,
-                const Specimen& rhs)
+        if (population.size() < 2)
+        {
+            return;
+        }
+
+        const ParetoRankedPopulation rankedPopulation =
+            ParetoRanking::rankPopulation(
+                population,
+                specimenComparator);
+        const std::vector<std::size_t> sortedIndices =
+            ParetoRanking::sortedIndices(
+                population,
+                rankedPopulation,
+                specimenComparator);
+
+        std::vector<Specimen> sortedPopulation;
+        sortedPopulation.reserve(
+            population.size());
+
+        for (std::size_t specimenIndex : sortedIndices)
+        {
+            sortedPopulation.push_back(
+                std::move(
+                    population[specimenIndex]));
+        }
+
+        population =
+            std::move(
+                sortedPopulation);
+    }
+
+    bool hasSameObjectiveValues(
+        const Specimen& lhs,
+        const Specimen& rhs,
+        const SpecimenComparator& specimenComparator)
+    {
+        for (std::size_t objective = 0;
+             objective < specimenComparator.objectiveCount();
+             ++objective)
+        {
+            if (
+                specimenComparator.objectiveValue(
+                    lhs.getFitness().value(),
+                    objective) !=
+                specimenComparator.objectiveValue(
+                    rhs.getFitness().value(),
+                    objective))
             {
-                return specimenComparator.isLess(
-                    lhs,
-                    rhs);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool containsSameObjectiveValues(
+        const ParetoFront& front,
+        const Specimen& specimen,
+        const SpecimenComparator& specimenComparator)
+    {
+        return std::ranges::any_of(
+            front,
+            [&](const Specimen& frontSpecimen)
+            {
+                return hasSameObjectiveValues(
+                    frontSpecimen,
+                    specimen,
+                    specimenComparator);
             });
+    }
+
+    void appendDistinctByObjectiveValues(
+        ParetoFront& target,
+        ParetoFront& source,
+        const SpecimenComparator& specimenComparator)
+    {
+        for (Specimen& specimen : source)
+        {
+            if (
+                containsSameObjectiveValues(
+                    target,
+                    specimen,
+                    specimenComparator))
+            {
+                continue;
+            }
+
+            target.push_back(
+                std::move(
+                    specimen));
+        }
+    }
+
+    ParetoFront updateParetoArchive(
+        ParetoFront archive,
+        ParetoFront currentFront,
+        const SpecimenComparator& specimenComparator)
+    {
+        ParetoFront candidates;
+        candidates.reserve(
+            archive.size() + currentFront.size());
+
+        appendDistinctByObjectiveValues(
+            candidates,
+            archive,
+            specimenComparator);
+        appendDistinctByObjectiveValues(
+            candidates,
+            currentFront,
+            specimenComparator);
+
+        if (candidates.empty())
+        {
+            return {};
+        }
+
+        return ParetoFrontUtils::firstFront(
+            candidates,
+            specimenComparator);
     }
 
     std::string islandSizesDetails(
@@ -122,6 +233,11 @@ ParetoFrontHistory Algo::run() const
     ParetoFrontHistory history;
     history.reserve(
         generations);
+    ParetoFront archive =
+        ParetoFrontUtils::firstFront(
+            islands |
+            std::views::join,
+            specimenComparator);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
@@ -154,10 +270,17 @@ ParetoFrontHistory Algo::run() const
                 nextIslands);
         }
 
-        ParetoFront paretoFront =
+        ParetoFront currentFront =
             ParetoFrontUtils::firstFront(
                 nextIslands |
                 std::views::join,
+                specimenComparator);
+        archive =
+            updateParetoArchive(
+                std::move(
+                    archive),
+                std::move(
+                    currentFront),
                 specimenComparator);
 
         if (verbose)
@@ -165,12 +288,11 @@ ParetoFrontHistory Algo::run() const
             printGenerationResult(
                 generation,
                 nextIslands,
-                paretoFront);
+                archive);
         }
 
         history.push_back(
-            std::move(
-                paretoFront));
+            archive);
         islands =
             std::move(
                 nextIslands);
@@ -235,7 +357,7 @@ void Algo::sortIslands(
 {
     for (auto& island : islands)
     {
-        sortPopulationByFitness(
+        sortPopulationByParetoRank(
             island,
             specimenComparator);
     }
@@ -263,11 +385,20 @@ auto Algo::createNextIsland(
         std::back_inserter(
             nextIsland));
 
+    const ParetoRankedPopulation rankedIsland =
+        ParetoRanking::rankPopulation(
+            island,
+            specimenComparator);
+    const NSGAIIRankingComparator selectionComparator(
+        island,
+        rankedIsland.ranks,
+        specimenComparator);
+
     appendChildren(
         island,
         nextIsland,
         islandSize,
-        specimenComparator,
+        selectionComparator,
         selection,
         crossover,
         mutation);
@@ -337,7 +468,7 @@ void Algo::migrate(
 
     for (auto& island : islands)
     {
-        sortPopulationByFitness(
+        sortPopulationByParetoRank(
             island,
             specimenComparator);
     }
