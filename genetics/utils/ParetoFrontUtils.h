@@ -66,8 +66,7 @@ public:
 
             if (!dominated)
             {
-                front.push_back(
-                    candidate);
+                front.push_back(candidate);
             }
         }
 
@@ -114,37 +113,21 @@ public:
             }
 
             stats.minDistance =
-                std::min(
-                    stats.minDistance,
-                    fitness.minimumDistance);
+                std::min(stats.minDistance, fitness.minimumDistance);
             stats.maxDistance =
-                std::max(
-                    stats.maxDistance,
-                    fitness.minimumDistance);
+                std::max(stats.maxDistance, fitness.minimumDistance);
             stats.minTime =
-                std::min(
-                    stats.minTime,
-                    fitness.minimumDistanceTime);
+                std::min(stats.minTime, fitness.minimumDistanceTime);
             stats.maxTime =
-                std::max(
-                    stats.maxTime,
-                    fitness.minimumDistanceTime);
+                std::max(stats.maxTime, fitness.minimumDistanceTime);
             stats.minFuel =
-                std::min(
-                    stats.minFuel,
-                    fitness.minimumDistanceFuelMass);
+                std::min(stats.minFuel, fitness.minimumDistanceFuelMass);
             stats.maxFuel =
-                std::max(
-                    stats.maxFuel,
-                    fitness.minimumDistanceFuelMass);
+                std::max(stats.maxFuel, fitness.minimumDistanceFuelMass);
             stats.minFuelViolation =
-                std::min(
-                    stats.minFuelViolation,
-                    fitness.fuelConstraintViolation);
+                std::min(stats.minFuelViolation, fitness.fuelConstraintViolation);
             stats.maxFuelViolation =
-                std::max(
-                    stats.maxFuelViolation,
-                    fitness.fuelConstraintViolation);
+                std::max(stats.maxFuelViolation, fitness.fuelConstraintViolation);
         }
 
         return stats;

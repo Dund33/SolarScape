@@ -1,7 +1,6 @@
 #include "Algo.h"
 
 #include <algorithm>
-#include <iterator>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -42,19 +41,14 @@ namespace
                 specimenComparator);
 
         std::vector<Specimen> sortedPopulation;
-        sortedPopulation.reserve(
-            population.size());
+        sortedPopulation.reserve(population.size());
 
         for (std::size_t specimenIndex : sortedIndices)
         {
-            sortedPopulation.push_back(
-                std::move(
-                    population[specimenIndex]));
+            sortedPopulation.push_back(std::move(population[specimenIndex]));
         }
 
-        population =
-            std::move(
-                sortedPopulation);
+        population = std::move(sortedPopulation);
     }
 
     bool hasSameObjectiveValues(
@@ -113,10 +107,36 @@ namespace
                 continue;
             }
 
-            target.push_back(
-                std::move(
-                    specimen));
+            target.push_back(std::move(specimen));
         }
+    }
+
+    void appendFirstSpecimens(
+        std::vector<Specimen>& target,
+        const std::vector<Specimen>& source,
+        std::size_t requestedCount)
+    {
+        const std::size_t count = std::min(requestedCount, source.size());
+
+        for (const Specimen& specimen : source | std::views::take(count))
+        {
+            target.push_back(specimen);
+        }
+    }
+
+    std::vector<Specimen> copyFirstSpecimens(
+        const std::vector<Specimen>& source,
+        std::size_t requestedCount)
+    {
+        std::vector<Specimen> copiedSpecimens;
+        copiedSpecimens.reserve(std::min(requestedCount, source.size()));
+
+        appendFirstSpecimens(
+            copiedSpecimens,
+            source,
+            requestedCount);
+
+        return copiedSpecimens;
     }
 
     ParetoFront updateParetoArchive(
@@ -125,8 +145,7 @@ namespace
         const SpecimenComparator& specimenComparator)
     {
         ParetoFront candidates;
-        candidates.reserve(
-            archive.size() + currentFront.size());
+        candidates.reserve(archive.size() + currentFront.size());
 
         appendDistinctByObjectiveValues(
             candidates,
@@ -231,8 +250,7 @@ ParetoFrontHistory Algo::run() const
         islands);
 
     ParetoFrontHistory history;
-    history.reserve(
-        generations);
+    history.reserve(generations);
     ParetoFront archive =
         ParetoFrontUtils::firstFront(
             islands |
@@ -242,8 +260,7 @@ ParetoFrontHistory Algo::run() const
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
         Islands nextIslands;
-        nextIslands.reserve(
-            islands.size());
+        nextIslands.reserve(islands.size());
 
         for (const auto& island : islands)
         {
@@ -275,13 +292,10 @@ ParetoFrontHistory Algo::run() const
                 nextIslands |
                 std::views::join,
                 specimenComparator);
-        archive =
-            updateParetoArchive(
-                std::move(
-                    archive),
-                std::move(
-                    currentFront),
-                specimenComparator);
+        archive = updateParetoArchive(
+            std::move(archive),
+            std::move(currentFront),
+            specimenComparator);
 
         if (verbose)
         {
@@ -291,11 +305,8 @@ ParetoFrontHistory Algo::run() const
                 archive);
         }
 
-        history.push_back(
-            archive);
-        islands =
-            std::move(
-                nextIslands);
+        history.push_back(archive);
+        islands = std::move(nextIslands);
     }
 
     return history;
@@ -305,17 +316,14 @@ Algo::Islands Algo::createIslands(
     Initializer& initializer) const
 {
     const std::size_t islandCount =
-        std::min(
-            TARGET_ISLAND_COUNT,
-            populationSize);
+        std::min(TARGET_ISLAND_COUNT, populationSize);
     const std::size_t baseIslandSize =
         populationSize / islandCount;
     const std::size_t largerIslandCount =
         populationSize % islandCount;
 
     Islands islands;
-    islands.reserve(
-        islandCount);
+    islands.reserve(islandCount);
 
     for (std::size_t islandIndex = 0;
          islandIndex < islandCount;
@@ -338,13 +346,11 @@ void Algo::evaluateIslands(
     const FitnessEvaluator& fitnessEvaluator) const
 {
     std::vector<Specimen*> specimens;
-    specimens.reserve(
-        populationSize);
+    specimens.reserve(populationSize);
 
     for (Specimen& specimen : islands | std::views::join)
     {
-        specimens.push_back(
-            &specimen);
+        specimens.push_back(&specimen);
     }
 
     evaluateSpecimensUnsequenced(
@@ -373,17 +379,12 @@ auto Algo::createNextIsland(
     const std::size_t islandSize =
         island.size();
     std::vector<Specimen> nextIsland;
-    nextIsland.reserve(
-        islandSize);
+    nextIsland.reserve(islandSize);
 
-    std::ranges::copy(
-        island |
-        std::views::take(
-            std::min(
-                eliteCount,
-                islandSize)),
-        std::back_inserter(
-            nextIsland));
+    appendFirstSpecimens(
+        nextIsland,
+        island,
+        eliteCount);
 
     const ParetoRankedPopulation rankedIsland =
         ParetoRanking::rankPopulation(
@@ -420,28 +421,13 @@ void Algo::migrate(
         return;
     }
 
-    const std::size_t migrantCount =
-        std::max<std::size_t>(
-            1,
-            eliteCount);
+    const std::size_t migrantCount = std::max<std::size_t>(1, eliteCount);
     Islands migrants;
-    migrants.reserve(
-        islands.size());
+    migrants.reserve(islands.size());
 
     for (const auto& island : islands)
     {
-        std::vector<Specimen> islandMigrants;
-        std::ranges::copy(
-            island |
-            std::views::take(
-                std::min(
-                    migrantCount,
-                    island.size())),
-            std::back_inserter(
-                islandMigrants));
-        migrants.push_back(
-            std::move(
-                islandMigrants));
+        migrants.push_back(copyFirstSpecimens(island, migrantCount));
     }
 
     for (std::size_t islandIndex = 0;
@@ -453,9 +439,7 @@ void Algo::migrate(
         const std::vector<Specimen>& sourceMigrants =
             migrants[islandIndex];
         const std::size_t replacementCount =
-            std::min(
-                sourceMigrants.size(),
-                targetIsland.size());
+            std::min(sourceMigrants.size(), targetIsland.size());
 
         for (std::size_t migrantIndex = 0;
              migrantIndex < replacementCount;
@@ -477,14 +461,9 @@ void Algo::migrate(
 std::size_t Algo::immigrantCountForIsland(
     std::size_t islandSize) const
 {
-    const std::size_t islandEliteCount =
-        std::min(
-            eliteCount,
-            islandSize);
+    const std::size_t islandEliteCount = std::min(eliteCount, islandSize);
     const std::size_t replaceableCount =
         islandSize - islandEliteCount;
 
-    return std::min(
-        replaceableCount,
-        islandSize * immigrantCount / populationSize);
+    return std::min(replaceableCount, islandSize * immigrantCount / populationSize);
 }

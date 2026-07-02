@@ -173,12 +173,8 @@ namespace
                             weightVectors[rhs]);
                 });
 
-            neighbors.resize(
-                std::min(
-                    neighborhoodSize,
-                    neighbors.size()));
-            neighborhoods.push_back(
-                std::move(neighbors));
+            neighbors.resize(std::min(neighborhoodSize, neighbors.size()));
+            neighborhoods.push_back(std::move(neighbors));
         }
 
         return neighborhoods;
@@ -214,13 +210,9 @@ namespace
                         objective);
 
                 bounds.ideal[objective] =
-                    std::min(
-                        bounds.ideal[objective],
-                        objectiveValue);
+                    std::min(bounds.ideal[objective], objectiveValue);
                 bounds.nadir[objective] =
-                    std::max(
-                        bounds.nadir[objective],
-                        objectiveValue);
+                    std::max(bounds.nadir[objective], objectiveValue);
             }
         }
 
@@ -245,13 +237,9 @@ namespace
                     objective);
 
             bounds.ideal[objective] =
-                std::min(
-                    bounds.ideal[objective],
-                    objectiveValue);
+                std::min(bounds.ideal[objective], objectiveValue);
             bounds.nadir[objective] =
-                std::max(
-                    bounds.nadir[objective],
-                    objectiveValue);
+                std::max(bounds.nadir[objective], objectiveValue);
         }
     }
 
@@ -283,14 +271,9 @@ namespace
                         bounds.ideal[objective]) /
                         objectiveRange;
             const Real effectiveWeight =
-                std::max(
-                    weightVector[objective],
-                    1.0e-12L);
+                std::max(weightVector[objective], 1.0e-12L);
 
-            score =
-                std::max(
-                    score,
-                    effectiveWeight * normalizedDifference);
+            score = std::max(score, effectiveWeight * normalizedDifference);
         }
 
         return score;
@@ -468,8 +451,7 @@ ParetoFrontHistory MOEADAlgorithm::run() const
 
     static thread_local std::mt19937 rng(std::random_device{}());
     ParetoFrontHistory history;
-    history.reserve(
-        generations);
+    history.reserve(generations);
 
     for (std::size_t generation = 0;
          generation < generations;
@@ -525,8 +507,7 @@ ParetoFrontHistory MOEADAlgorithm::run() const
                 paretoFront);
         }
 
-        history.push_back(
-            std::move(paretoFront));
+        history.push_back(std::move(paretoFront));
     }
 
     return history;

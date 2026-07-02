@@ -1,7 +1,6 @@
 #include "ParetoFrontUtils.h"
 
 #include <algorithm>
-#include <iterator>
 #include <ranges>
 
 std::vector<Specimen> ParetoFrontUtils::frontFromIndices(
@@ -9,17 +8,20 @@ std::vector<Specimen> ParetoFrontUtils::frontFromIndices(
     const std::vector<std::size_t>& frontIndices)
 {
     std::vector<Specimen> front;
-    front.reserve(
-        frontIndices.size());
+    front.reserve(frontIndices.size());
 
-    std::ranges::transform(
-        frontIndices,
-        std::back_inserter(
-            front),
-        [&population](std::size_t specimenIndex)
-        {
-            return population[specimenIndex];
-        });
+    const auto frontSpecimens =
+        frontIndices |
+        std::views::transform(
+            [&population](std::size_t specimenIndex) -> const Specimen&
+            {
+                return population[specimenIndex];
+            });
+
+    for (const Specimen& specimen : frontSpecimens)
+    {
+        front.push_back(specimen);
+    }
 
     return front;
 }

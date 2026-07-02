@@ -1,7 +1,6 @@
 #include "NSGAIIAlgorithm.h"
 
 #include <algorithm>
-#include <iterator>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -71,6 +70,28 @@ namespace
                 rankedPopulation));
     }
 
+    void appendMovedPopulation(
+        std::vector<Specimen>& target,
+        std::vector<Specimen>& source)
+    {
+        for (Specimen& specimen : source)
+        {
+            target.push_back(std::move(specimen));
+        }
+    }
+
+    void appendMovedSpecimensByIndex(
+        std::vector<Specimen>& target,
+        std::vector<Specimen>& source,
+        const std::vector<std::size_t>& indices,
+        std::size_t maxCount)
+    {
+        for (std::size_t specimenIndex : indices | std::views::take(maxCount))
+        {
+            target.push_back(std::move(source[specimenIndex]));
+        }
+    }
+
     std::vector<Specimen> selectNextGeneration(
         std::vector<Specimen>& combinedPopulation,
         const ParetoRankedPopulation& rankedPopulation,
@@ -84,12 +105,11 @@ namespace
         {
             if (nextPopulation.size() + front.size() <= populationSize)
             {
-                for (std::size_t specimenIndex : front)
-                {
-                    nextPopulation.push_back(
-                        std::move(
-                            combinedPopulation[specimenIndex]));
-                }
+                appendMovedSpecimensByIndex(
+                    nextPopulation,
+                    combinedPopulation,
+                    front,
+                    front.size());
 
                 if (nextPopulation.size() == populationSize)
                 {
@@ -114,17 +134,11 @@ namespace
                         combinedPopulation[rhs]);
                 });
 
-            for (std::size_t specimenIndex : sortedFront)
-            {
-                if (nextPopulation.size() == populationSize)
-                {
-                    break;
-                }
-
-                nextPopulation.push_back(
-                    std::move(
-                        combinedPopulation[specimenIndex]));
-            }
+            appendMovedSpecimensByIndex(
+                nextPopulation,
+                combinedPopulation,
+                sortedFront,
+                populationSize - nextPopulation.size());
 
             break;
         }
@@ -187,8 +201,7 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
         initializer->createPopulation(
             populationSize);
     ParetoFrontHistory history;
-    history.reserve(
-        generations);
+    history.reserve(generations);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
@@ -220,14 +233,13 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
             *fitnessEvaluator);
 
         std::vector<Specimen> combinedPopulation;
-        combinedPopulation.reserve(
-            population.size() + offspring.size());
-        std::ranges::move(
-            population,
-            std::back_inserter(combinedPopulation));
-        std::ranges::move(
-            offspring,
-            std::back_inserter(combinedPopulation));
+        combinedPopulation.reserve(population.size() + offspring.size());
+        appendMovedPopulation(
+            combinedPopulation,
+            population);
+        appendMovedPopulation(
+            combinedPopulation,
+            offspring);
 
         const ParetoRankedPopulation rankedCombined =
             ParetoRanking::rankPopulation(
@@ -277,9 +289,7 @@ std::vector<Specimen> NSGAIIAlgorithm::createOffspringPopulation(
 ) const
 {
     const std::size_t effectiveImmigrantCount =
-        std::min(
-            immigrantCount,
-            populationSize);
+        std::min(immigrantCount, populationSize);
     const std::size_t childrenTarget =
         populationSize - effectiveImmigrantCount;
 

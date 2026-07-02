@@ -1,9 +1,10 @@
 #include "RandomInitializer.h"
 
 #include <algorithm>
-#include <iterator>
 #include <random>
+#include <ranges>
 #include <stdexcept>
+#include <utility>
 
 RandomInitializer::RandomInitializer(
     std::size_t minManeuvers,
@@ -141,13 +142,18 @@ std::vector<Specimen> RandomInitializer::createPopulation(
     std::vector<Specimen> population;
     population.reserve(populationSize);
 
-    std::generate_n(
-        std::back_inserter(population),
-        populationSize,
-        [this]
-        {
-            return create();
-        });
+    const auto createdSpecimens =
+        std::views::iota(std::size_t{0}, populationSize) |
+        std::views::transform(
+            [this](std::size_t)
+            {
+                return create();
+            });
+
+    for (Specimen specimen : createdSpecimens)
+    {
+        population.push_back(std::move(specimen));
+    }
 
     return population;
 }

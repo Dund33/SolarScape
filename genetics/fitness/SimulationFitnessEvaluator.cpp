@@ -74,10 +74,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         simulation->probe();
 
     const Real fuelConstraintViolation =
-        std::max(
-            0.0L,
-            simulation->requestedFuelUse() -
-            simulatedProbe.fuelMass());
+        std::max(0.0L, simulation->requestedFuelUse() - simulatedProbe.fuelMass());
 
     Real minimumDistance =
         distance(

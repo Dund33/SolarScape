@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <execution>
-#include <iterator>
 #include <ranges>
 #include <utility>
 
@@ -70,13 +69,11 @@ void GeneticAlgorithm::appendChildren(
         mutation.mutate(child1);
         mutation.mutate(child2);
 
-        target.push_back(
-            std::move(child1));
+        target.push_back(std::move(child1));
 
         if (target.size() < targetSize)
         {
-            target.push_back(
-                std::move(child2));
+            target.push_back(std::move(child2));
         }
     }
 }
@@ -86,13 +83,18 @@ void GeneticAlgorithm::appendImmigrants(
     std::size_t count,
     Initializer& initializer) const
 {
-    std::ranges::generate_n(
-        std::back_inserter(population),
-        count,
-        [&initializer]
-        {
-            return initializer.create();
-        });
+    const auto immigrants =
+        std::views::iota(std::size_t{0}, count) |
+        std::views::transform(
+            [&initializer](std::size_t)
+            {
+                return initializer.create();
+            });
+
+    for (Specimen immigrant : immigrants)
+    {
+        population.push_back(std::move(immigrant));
+    }
 }
 
 void GeneticAlgorithm::replaceTailWithImmigrants(

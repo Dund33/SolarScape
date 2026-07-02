@@ -41,8 +41,7 @@ ParetoRankedPopulation ParetoRanking::rankPopulation(
 
             if (comparison == std::partial_ordering::less)
             {
-                dominatedBySpecimen[lhs].push_back(
-                    rhs);
+                dominatedBySpecimen[lhs].push_back(rhs);
             }
             else if (comparison == std::partial_ordering::greater)
             {
@@ -53,8 +52,7 @@ ParetoRankedPopulation ParetoRanking::rankPopulation(
         if (dominationCounts[lhs] == 0)
         {
             rankedPopulation.ranks[lhs].rank = 0;
-            rankedPopulation.fronts.front().push_back(
-                lhs);
+            rankedPopulation.fronts.front().push_back(lhs);
         }
     }
 
@@ -78,17 +76,14 @@ ParetoRankedPopulation ParetoRanking::rankPopulation(
                 {
                     rankedPopulation.ranks[dominatedIndex].rank =
                         frontIndex + 1;
-                    nextFront.push_back(
-                        dominatedIndex);
+                    nextFront.push_back(dominatedIndex);
                 }
             }
         }
 
         if (!nextFront.empty())
         {
-            rankedPopulation.fronts.push_back(
-                std::move(
-                    nextFront));
+            rankedPopulation.fronts.push_back(std::move(nextFront));
         }
 
         ++frontIndex;
@@ -111,8 +106,7 @@ std::vector<std::size_t> ParetoRanking::sortedIndices(
     const ParetoRankedPopulation& rankedPopulation,
     const SpecimenComparator& specimenComparator)
 {
-    std::vector<std::size_t> indices(
-        population.size());
+    std::vector<std::size_t> indices(population.size());
     std::iota(
         indices.begin(),
         indices.end(),
@@ -162,8 +156,7 @@ void ParetoRanking::calculateCrowdingDistance(
         return;
     }
 
-    const std::size_t objectiveCount =
-        specimenComparator.objectiveCount();
+    const std::size_t objectiveCount = specimenComparator.objectiveCount();
 
     for (std::size_t objective = 0; objective < objectiveCount; ++objective)
     {

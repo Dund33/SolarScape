@@ -94,12 +94,11 @@ namespace
             return;
         }
 
+        const Real nextInitDelay = maneuvers[nextIndex].getInitDelay();
+        const Real insertedManeuverEnd =
+            maneuver.getInitDelay() + maneuver.getDuration();
         const Real adjustedInitDelay =
-            std::max(
-                0.0L,
-                maneuvers[nextIndex].getInitDelay() -
-                    maneuver.getInitDelay() -
-                    maneuver.getDuration());
+            std::max(0.0L, nextInitDelay - insertedManeuverEnd);
 
         maneuvers[nextIndex] =
             withInitDelay(
@@ -240,9 +239,7 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
     const bool canAdd = specimen.size() < maxManeuvers;
     const bool canRemove =
         specimen.size() >
-        std::max<std::size_t>(
-            minManeuvers,
-            1);
+        std::max<std::size_t>(minManeuvers, 1);
     std::vector<Maneuver> maneuvers = specimen.getManeuvers();
     std::bernoulli_distribution shouldAdd(addProbability);
     std::bernoulli_distribution shouldRemove(removeProbability);
@@ -259,9 +256,7 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
             maxThrustOffset,
             probeProperties);
 
-        specimen = Specimen(
-            std::move(
-                maneuvers));
+        specimen = Specimen(std::move(maneuvers));
         return;
     }
 
@@ -294,7 +289,5 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
         maxThrustOffset,
         probeProperties);
 
-    specimen = Specimen(
-        std::move(
-            maneuvers));
+    specimen = Specimen(std::move(maneuvers));
 }

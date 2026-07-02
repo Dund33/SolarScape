@@ -59,13 +59,11 @@ namespace
         const std::vector<Maneuver>& maneuvers =
             specimen.getManeuvers();
 
-        result.reserve(
-            maneuvers.size());
+        result.reserve(maneuvers.size());
 
         for (const Maneuver& maneuver : maneuvers)
         {
-            result.push_back(
-                maneuverToJson(maneuver));
+            result.push_back(maneuverToJson(maneuver));
         }
 
         return result;
@@ -98,13 +96,11 @@ namespace
         const std::vector<Specimen>& paretoFront) -> json::object
     {
         json::array front;
-        front.reserve(
-            paretoFront.size());
+        front.reserve(paretoFront.size());
 
         for (const Specimen& specimen : paretoFront)
         {
-            front.push_back(
-                specimenToJson(specimen));
+            front.push_back(specimenToJson(specimen));
         }
 
         return {
@@ -128,17 +124,14 @@ namespace
         const ParetoFrontHistory& paretoFrontHistory) -> json::object
     {
         json::array generations;
-        generations.reserve(
-            paretoFrontHistory.size());
+        generations.reserve(paretoFrontHistory.size());
 
         for (std::size_t generation = 0;
              generation < paretoFrontHistory.size();
              ++generation)
         {
             generations.push_back(
-                generationParetoFrontToJson(
-                    generation,
-                    paretoFrontHistory[generation]));
+                generationParetoFrontToJson(generation, paretoFrontHistory[generation]));
         }
 
         return {
