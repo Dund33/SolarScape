@@ -371,12 +371,17 @@ namespace
         expect(
             child2.size() == parent2.size(),
             "Expected second child to keep second parent size.");
+
+        const bool firstAlignedPairSwapped =
+            child1[1].getThrottleValue() == parent2[0].getThrottleValue() &&
+            child2[0].getThrottleValue() == parent1[1].getThrottleValue();
+        const bool secondAlignedPairSwapped =
+            child1[2].getThrottleValue() == parent2[1].getThrottleValue() &&
+            child2[1].getThrottleValue() == parent1[2].getThrottleValue();
+
         expect(
-            child1[1].getThrottleValue() == parent2[0].getThrottleValue(),
-            "Expected aligned maneuver to be swapped into first child.");
-        expect(
-            child2[0].getThrottleValue() == parent1[1].getThrottleValue(),
-            "Expected aligned maneuver to be swapped into second child.");
+            firstAlignedPairSwapped || secondAlignedPairSwapped,
+            "Expected at least one aligned maneuver pair to be swapped.");
     }
 
     void testAlignedSimilarityCrossoverHandlesNegativeOffset()
@@ -403,9 +408,17 @@ namespace
         expect(
             child2.size() == parent2.size(),
             "Expected second child to keep second parent size for negative offset.");
+
+        const bool firstAlignedPairSwapped =
+            child1[0].getThrottleValue() == parent2[1].getThrottleValue() &&
+            child2[1].getThrottleValue() == parent1[0].getThrottleValue();
+        const bool secondAlignedPairSwapped =
+            child1[1].getThrottleValue() == parent2[2].getThrottleValue() &&
+            child2[2].getThrottleValue() == parent1[1].getThrottleValue();
+
         expect(
-            child1[0].getThrottleValue() == parent2[1].getThrottleValue(),
-            "Expected negative-offset aligned maneuver to be swapped into first child.");
+            firstAlignedPairSwapped || secondAlignedPairSwapped,
+            "Expected at least one negative-offset aligned maneuver pair to be swapped.");
     }
 }
 

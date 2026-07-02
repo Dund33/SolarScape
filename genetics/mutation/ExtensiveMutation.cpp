@@ -237,7 +237,11 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
     static thread_local std::mt19937 rng(std::random_device{}());
 
     const bool canAdd = specimen.size() < maxManeuvers;
-    const bool canRemove = specimen.size() > minManeuvers;
+    const bool canRemove =
+        specimen.size() >
+        std::max<std::size_t>(
+            minManeuvers,
+            1);
     std::vector<Maneuver> maneuvers = specimen.getManeuvers();
     std::bernoulli_distribution shouldAdd(addProbability);
     std::bernoulli_distribution shouldRemove(removeProbability);

@@ -98,14 +98,16 @@ Algo::Algo(
     std::size_t eliteCount,
     std::size_t immigrantCount,
     const SpecimenComparator& specimenComparator,
-    Factories factories
+    Factories factories,
+    bool verbose
 )
     : populationSize(populationSize),
       generations(generations),
       eliteCount(eliteCount),
       immigrantCount(immigrantCount),
       specimenComparator(specimenComparator),
-      factories(factories)
+      factories(factories),
+      verbose(verbose)
 {
     if (populationSize == 0)
     {
@@ -180,10 +182,13 @@ ParetoFrontHistory Algo::run() const
                 population,
                 specimenComparator);
 
-        printGenerationResult(
-            generation,
-            nextIslands,
-            paretoFront);
+        if (verbose)
+        {
+            printGenerationResult(
+                generation,
+                nextIslands,
+                paretoFront);
+        }
 
         history.push_back(
             std::move(paretoFront));

@@ -30,16 +30,20 @@ public:
 
     const std::string& outputFilePath() const;
 
+    bool verbose() const;
+
     bool helpRequested() const;
 
 private:
     CommandLineOptions(
         std::string configFilePath,
         std::string outputFilePath,
+        bool verbose,
         bool helpRequested);
 
     std::string configFilePath_;
     std::string outputFilePath_;
+    bool verbose_{};
     bool helpRequested_{};
 };
 

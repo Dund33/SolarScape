@@ -326,7 +326,7 @@ namespace
             child2[parent2Index]);
     }
 
-    void swapRandomGeneGroups(
+    void swapRandomAlignedSubset(
         Specimen& child1,
         Specimen& child2,
         const OrientedGenomes& genomes,
@@ -438,7 +438,7 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
 
     Specimen child1(parent1.getManeuvers());
     Specimen child2(parent2.getManeuvers());
-    swapRandomGeneGroups(
+    swapRandomAlignedSubset(
         child1,
         child2,
         genomes,

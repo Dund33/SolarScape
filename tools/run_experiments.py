@@ -101,6 +101,7 @@ def run_experiment(
         str(experiment.scenario),
         "--output",
         str(experiment.output_file),
+        "-v",
     ]
 
     print(f"[{experiment.index}/{experiment.total}] -> {experiment.output_file.name}")
@@ -113,8 +114,6 @@ def run_experiment(
         command,
         cwd=experiment.executable.parent,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
         timeout=timeout_seconds,
         check=False,
     )

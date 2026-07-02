@@ -30,6 +30,10 @@ namespace
                 "output,o",
                 po::value<std::string>()->default_value(defaultOutputFile),
                 "Pareto front JSON output file"
+            )
+            (
+                "verbose,v",
+                "Print generation progress while the algorithm is running"
             );
 
         return options;
@@ -46,9 +50,11 @@ namespace
 CommandLineOptions::CommandLineOptions(
     std::string configFilePath,
     std::string outputFilePath,
+    bool verbose,
     bool helpRequested)
     : configFilePath_(std::move(configFilePath)),
       outputFilePath_(std::move(outputFilePath)),
+      verbose_(verbose),
       helpRequested_(helpRequested)
 {
 }
@@ -108,6 +114,7 @@ auto CommandLineOptions::parse(
     return {
         std::move(configFilePath),
         std::move(outputFilePath),
+        variables.count("verbose") > 0,
         variables.count("help") > 0};
 }
 
@@ -138,6 +145,11 @@ const std::string& CommandLineOptions::configFilePath() const
 const std::string& CommandLineOptions::outputFilePath() const
 {
     return outputFilePath_;
+}
+
+bool CommandLineOptions::verbose() const
+{
+    return verbose_;
 }
 
 bool CommandLineOptions::helpRequested() const

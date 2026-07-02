@@ -30,7 +30,8 @@ public:
         std::size_t generations,
         std::size_t immigrantCount,
         const SpecimenComparator& specimenComparator,
-        Factories factories
+        Factories factories,
+        bool verbose = false
     );
 
     ParetoFrontHistory run() const override;
@@ -49,6 +50,7 @@ private:
     std::size_t immigrantCount;
     const SpecimenComparator& specimenComparator;
     Factories factories;
+    bool verbose;
 };
 
 #endif

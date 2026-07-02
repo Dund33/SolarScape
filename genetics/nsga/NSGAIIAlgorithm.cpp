@@ -342,13 +342,15 @@ NSGAIIAlgorithm::NSGAIIAlgorithm(
     std::size_t generations,
     std::size_t immigrantCount,
     const SpecimenComparator& specimenComparator,
-    Factories factories
+    Factories factories,
+    bool verbose
 )
     : populationSize(populationSize),
       generations(generations),
       immigrantCount(immigrantCount),
       specimenComparator(specimenComparator),
-      factories(factories)
+      factories(factories),
+      verbose(verbose)
 {
     if (populationSize == 0)
     {
@@ -436,10 +438,13 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
                 population,
                 specimenComparator);
 
-        printGenerationResult(
-            generation,
-            population,
-            rankedPopulation);
+        if (verbose)
+        {
+            printGenerationResult(
+                generation,
+                population,
+                rankedPopulation);
+        }
 
         history.push_back(
             firstParetoFront(

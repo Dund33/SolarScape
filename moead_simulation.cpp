@@ -27,40 +27,10 @@
 
 namespace
 {
-    void printParetoFrontHistory(
-        const ParetoFrontHistory& paretoFrontHistory)
-    {
-        if (paretoFrontHistory.empty())
-        {
-            std::cout
-                << "\nNo Pareto fronts were generated.\n";
-            return;
-        }
-
-        const ParetoFront& paretoFront =
-            paretoFrontHistory.back();
-
-        std::cout
-            << "\nPareto front generations: "
-            << paretoFrontHistory.size()
-            << "\nFinal Pareto front size: "
-            << paretoFront.size()
-            << '\n';
-
-        for (std::size_t i = 0; i < paretoFront.size(); ++i)
-        {
-            std::cout
-                << "Pareto front specimen " << i
-                << " fitness = ";
-            printFitnessValue(
-                paretoFront[i].getFitness().value());
-            std::cout << '\n';
-        }
-    }
-
     auto run(
         const std::string& configFilePath,
-        const std::string& outputFilePath) -> int
+        const std::string& outputFilePath,
+        bool verbose) -> int
     {
         SimulationConfig config =
             SimulationConfig::loadFromFile(
@@ -121,13 +91,11 @@ namespace
             GENERATIONS,
             neighborhoodSize,
             specimenComparator,
-            factories);
+            factories,
+            verbose);
 
         const ParetoFrontHistory paretoFrontHistory =
             algorithm.run();
-
-        printParetoFrontHistory(
-            paretoFrontHistory);
 
         writeParetoFrontJson(
             outputFilePath,
@@ -165,7 +133,8 @@ auto main(
         {
             return run(
                 options.configFilePath(),
-                options.outputFilePath());
+                options.outputFilePath(),
+                options.verbose());
         }
         catch (const YAML::Exception& e)
         {

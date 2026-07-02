@@ -434,13 +434,15 @@ MOEADAlgorithm::MOEADAlgorithm(
     std::size_t generations,
     std::size_t neighborhoodSize,
     const SpecimenComparator& specimenComparator,
-    Factories factories
+    Factories factories,
+    bool verbose
 )
     : populationSize(populationSize),
       generations(generations),
       neighborhoodSize(neighborhoodSize),
       specimenComparator(specimenComparator),
-      factories(factories)
+      factories(factories),
+      verbose(verbose)
 {
     if (populationSize == 0)
     {
@@ -538,9 +540,12 @@ ParetoFrontHistory MOEADAlgorithm::run() const
                 population,
                 specimenComparator);
 
-        printGenerationResult(
-            generation,
-            paretoFront);
+        if (verbose)
+        {
+            printGenerationResult(
+                generation,
+                paretoFront);
+        }
 
         history.push_back(
             std::move(paretoFront));

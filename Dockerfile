@@ -17,21 +17,22 @@ COPY . .
 
 RUN cmake -S . -B /build \
     -DCMAKE_BUILD_TYPE=Release \
+    -DSOLARSCAPE_ENABLE_NATIVE_OPTIMIZATIONS=OFF \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
     && cmake --build /build --target SolarScape SolarScapeNSGAII SolarScapeMOEAD -j "$(nproc)"
 
 
-FROM ubuntu:24.04 AS experiments
+FROM debian:trixie-slim AS experiments
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    libboost-json-dev \
-    libboost-program-options-dev \
+    libboost-json1.83.0 \
+    libboost-program-options1.83.0 \
     libtbb12 \
-    libyaml-cpp-dev \
+    libyaml-cpp0.8 \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -45,9 +46,11 @@ COPY --from=builder /build/SolarScapeMOEAD /opt/solarscape/bin/SolarScapeMOEAD
 
 COPY scenario1.yml scenario2.yml scenario3.yml /opt/solarscape/scenarios/
 COPY tools/run_experiments.py /opt/solarscape/tools/run_experiments.py
+COPY tools/run_experiments_entrypoint.sh /opt/solarscape/tools/run_experiments_entrypoint.sh
 COPY tools/solarscape_tools /opt/solarscape/tools/solarscape_tools
+RUN chmod +x /opt/solarscape/tools/run_experiments_entrypoint.sh
 
 VOLUME ["/data"]
 
-ENTRYPOINT ["python3", "/opt/solarscape/tools/run_experiments.py", "--executables-dir", "/opt/solarscape/bin", "--scenarios-dir", "/opt/solarscape/scenarios", "--output-dir", "/data/experiments"]
-CMD ["--runs", "5", "--jobs", "1"]
+ENTRYPOINT ["/opt/solarscape/tools/run_experiments_entrypoint.sh"]
+CMD ["--runs", "5"]
