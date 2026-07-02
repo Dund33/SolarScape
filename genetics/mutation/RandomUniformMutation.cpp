@@ -1,9 +1,9 @@
 #include "RandomUniformMutation.h"
 
-#include <algorithm>
 #include <random>
 #include <stdexcept>
 
+#include "genetics/mutation/ManeuverMutationUtils.h"
 #include "genetics/Specimen.h"
 
 RandomUniformMutation::RandomUniformMutation(
@@ -38,75 +38,32 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
 
     std::bernoulli_distribution shouldMutate(mutationProbability);
 
-    std::uniform_real_distribution timeDelta(
+    std::uniform_real_distribution<Real> timeDelta(
         -maxTimeOffset,
          maxTimeOffset
     );
 
-    std::uniform_real_distribution durationDelta(
+    std::uniform_real_distribution<Real> durationDelta(
         -maxDurationOffset,
          maxDurationOffset
     );
 
-    std::uniform_real_distribution thrustDelta(
+    std::uniform_real_distribution<Real> thrustDelta(
         -maxThrustOffset,
          maxThrustOffset
     );
 
-    const long double maxPhysicalThrust =
-        probeProperties.fuelFlow() * probeProperties.specificImpulse();
-
     for (std::size_t i = 0; i < specimen.size(); ++i)
     {
-        Maneuver& maneuver = specimen[i];
-        Vector3 throttleVector =
-            maneuver.getThrustDirection() *
-            maneuver.getThrottleValue();
-
-        long double initDelay = maneuver.getInitDelay();
-        long double duration = maneuver.getDuration();
-
-        if (shouldMutate(rng))
-        {
-            initDelay += timeDelta(rng);
-            initDelay = std::max(static_cast<long double>(0.0), initDelay);
-        }
-
-        if (shouldMutate(rng))
-        {
-            duration += durationDelta(rng);
-            duration = std::max(static_cast<long double>(0.0), duration);
-        }
-
-        if (shouldMutate(rng))
-        {
-            const long double thrustScale =
-                maxPhysicalThrust > 0.0L
-                    ? maxPhysicalThrust
-                    : 1.0L;
-
-            throttleVector.x += thrustDelta(rng) / thrustScale;
-            throttleVector.y += thrustDelta(rng) / thrustScale;
-            throttleVector.z += thrustDelta(rng) / thrustScale;
-        }
-
-        const long double throttleNorm =
-            std::clamp(
-                throttleVector.norm(),
-                0.0L,
-                1.0L);
-
-        if (throttleNorm <= 0.0L)
-        {
-            maneuver = Maneuver(Vector3{}, 0.0L, initDelay, duration);
-            continue;
-        }
-
-        maneuver = Maneuver(
-            throttleVector / throttleVector.norm(),
-            throttleNorm,
-            initDelay,
-            duration);
+        specimen[i] =
+            ManeuverMutationUtils::mutateUniformly(
+                specimen[i],
+                shouldMutate,
+                timeDelta,
+                durationDelta,
+                thrustDelta,
+                rng,
+                probeProperties);
     }
 
     specimen.clearFitness();

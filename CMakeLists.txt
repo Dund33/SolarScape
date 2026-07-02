@@ -100,6 +100,8 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/ParetoFrontJsonWriter.h
         genetics/Specimen.cpp
         genetics/Specimen.h
+        genetics/comparison/FitnessObjectiveComparator.cpp
+        genetics/comparison/FitnessObjectiveComparator.h
         genetics/comparison/NSGAIIComparator.cpp
         genetics/comparison/NSGAIIComparator.h
         genetics/comparison/NSGAIIRankingComparator.cpp
@@ -151,6 +153,7 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/mutation/ExtensiveMutation.h
         genetics/mutation/ExtensiveMutationFactory.cpp
         genetics/mutation/ExtensiveMutationFactory.h
+        genetics/mutation/ManeuverMutationUtils.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
         genetics/mutation/RandomUniformMutationFactory.cpp

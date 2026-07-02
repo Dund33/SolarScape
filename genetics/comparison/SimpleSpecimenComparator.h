@@ -1,21 +1,11 @@
 #ifndef SOLARSCAPE_SIMPLESPECIMENCOMPARATOR_H
 #define SOLARSCAPE_SIMPLESPECIMENCOMPARATOR_H
 
-#include "genetics/comparison/SpecimenComparator.h"
+#include "genetics/comparison/FitnessObjectiveComparator.h"
 
-class SimpleSpecimenComparator final : public SpecimenComparator
+class SimpleSpecimenComparator final : public FitnessObjectiveComparator
 {
 public:
-    std::partial_ordering compare(
-        const Specimen& lhs,
-        const Specimen& rhs
-    ) const override;
-
-    bool isLess(
-        const Specimen& lhs,
-        const Specimen& rhs
-    ) const override;
-
     std::size_t objectiveCount() const override;
 
     Real objectiveValue(
