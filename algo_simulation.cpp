@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -59,6 +60,7 @@ namespace
     auto run(
         const std::string& configFilePath,
         const std::string& outputFilePath,
+        const std::string& diversityLogFilePath,
         bool verbose) -> int
     {
         SimulationConfig config =
@@ -94,8 +96,8 @@ namespace
 
         ExtensiveMutationFactory mutationFactory(
             MUTATION_PROBABILITY,
-            0.5,
-            0.5,
+            EXTENSIVE_MUTATION_ADD_PROBABILITY,
+            EXTENSIVE_MUTATION_REMOVE_PROBABILITY,
             MIN_MANEUVERS,
             MAX_MANEUVERS,
             MIN_MANEUVER_TIME,
@@ -122,6 +124,20 @@ namespace
             mutationFactory,
             fitnessEvaluatorFactory};
 
+        std::ofstream diversityLogFile;
+
+        if (!diversityLogFilePath.empty())
+        {
+            diversityLogFile.open(diversityLogFilePath);
+
+            if (!diversityLogFile)
+            {
+                throw std::runtime_error(
+                    "Cannot open diversity diagnostics log file: " +
+                    diversityLogFilePath);
+            }
+        }
+
         Algo algorithm(
             POPULATION_SIZE,
             GENERATIONS,
@@ -129,7 +145,10 @@ namespace
             POPULATION_SIZE / 25,
             specimenComparator,
             factories,
-            verbose);
+            verbose,
+            diversityLogFilePath.empty()
+                ? nullptr
+                : &diversityLogFile);
 
         const ParetoFrontHistory paretoFrontHistory =
             algorithm.run();
@@ -142,6 +161,14 @@ namespace
             << "Saved Pareto front history JSON to: "
             << outputFilePath
             << '\n';
+
+        if (!diversityLogFilePath.empty())
+        {
+            std::cout
+                << "Saved ALGO diversity diagnostics log to: "
+                << diversityLogFilePath
+                << '\n';
+        }
 
         plotRepresentativeTrajectory(
             verletFactory,
@@ -176,6 +203,9 @@ auto main(
             return run(
                 options.configFilePath(),
                 options.outputFilePath(),
+                options.hasDiversityLogFilePath()
+                    ? options.diversityLogFilePath()
+                    : std::string(),
                 options.verbose());
         }
         catch (const YAML::Exception& e)

@@ -9,6 +9,7 @@
 #include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
 #include "genetics/crossing/CrossoverFactory.h"
+#include "genetics/crossing/RandomCutCrossover.h"
 #include "genetics/fitness/FitnessEvaluatorFactory.h"
 #include "genetics/init/InitializerFactory.h"
 #include "genetics/mutation/MutationFactory.h"
@@ -23,6 +24,24 @@ namespace
         Specimen specimen;
         specimen.setFitness(fitness);
         return specimen;
+    }
+
+    Specimen specimenWithManeuverCount(
+        std::size_t maneuverCount)
+    {
+        std::vector<Maneuver> maneuvers;
+        maneuvers.reserve(maneuverCount);
+
+        for (std::size_t i = 0; i < maneuverCount; ++i)
+        {
+            maneuvers.emplace_back(
+                Vector3(1.0L, 0.0L, 0.0L),
+                0.5L,
+                static_cast<Real>(i),
+                10.0L);
+        }
+
+        return Specimen(std::move(maneuvers));
     }
 
     bool sameFitness(
@@ -294,17 +313,20 @@ namespace
             "Expected best time specimen in Pareto front.");
     }
 
-    void testAlignedSimilarityCrossoverSwapsAlignedManeuvers()
+    void testAlignedSimilarityCrossoverExchangesSuffixAfterAlignedRegion()
     {
-        AlignedSimilarityCrossover crossover;
+        AlignedSimilarityCrossover crossover(0.9L);
 
         Specimen parent1({
             Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
             Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 5.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.0L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 0.0L, 1.0L), 0.6L, 5.0L, 10.0L)});
         Specimen parent2({
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.75L, 25.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.95L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 25.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.5L, 5.0L, 10.0L)});
 
         auto [child1, child2] =
             crossover.cross(
@@ -312,36 +334,39 @@ namespace
                 parent2);
 
         expect(
-            child1.size() == parent1.size(),
-            "Expected first child to keep first parent size.");
+            child1.size() == 4,
+            "Expected first child to contain longer prefix and shorter suffix.");
         expect(
-            child2.size() == parent2.size(),
-            "Expected second child to keep second parent size.");
-
-        const bool firstAlignedPairSwapped =
-            child1[1].getThrottleValue() == parent2[0].getThrottleValue() &&
-            child2[0].getThrottleValue() == parent1[1].getThrottleValue();
-        const bool secondAlignedPairSwapped =
-            child1[2].getThrottleValue() == parent2[1].getThrottleValue() &&
-            child2[1].getThrottleValue() == parent1[2].getThrottleValue();
-
+            child2.size() == 4,
+            "Expected second child to contain shorter prefix and longer suffix.");
         expect(
-            firstAlignedPairSwapped || secondAlignedPairSwapped,
-            "Expected at least one aligned maneuver pair to be swapped.");
+            child1[0].getThrottleValue() == parent1[0].getThrottleValue() &&
+            child1[1].getThrottleValue() == parent1[1].getThrottleValue() &&
+            child1[2].getThrottleValue() == parent1[2].getThrottleValue() &&
+            child1[3].getThrottleValue() == parent2[2].getThrottleValue(),
+            "Expected first child to keep aligned longer prefix and receive shorter suffix.");
+        expect(
+            child2[0].getThrottleValue() == parent2[0].getThrottleValue() &&
+            child2[1].getThrottleValue() == parent2[1].getThrottleValue() &&
+            child2[2].getThrottleValue() == parent1[3].getThrottleValue() &&
+            child2[3].getThrottleValue() == parent1[4].getThrottleValue(),
+            "Expected second child to keep aligned shorter prefix and receive longer suffix.");
     }
 
     void testAlignedSimilarityCrossoverHandlesNegativeOffset()
     {
-        AlignedSimilarityCrossover crossover;
+        AlignedSimilarityCrossover crossover(0.9L);
 
         Specimen parent1({
             Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 25.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.5L, 5.0L, 10.0L)});
         Specimen parent2({
             Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.75L, 5.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.95L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.4L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 5.0L, 10.0L),
+            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.0L, 5.0L, 10.0L),
+            Maneuver(Vector3(1.0L, 0.0L, 1.0L), 0.6L, 5.0L, 10.0L)});
 
         auto [child1, child2] =
             crossover.cross(
@@ -349,22 +374,49 @@ namespace
                 parent2);
 
         expect(
-            child1.size() == parent1.size(),
-            "Expected first child to keep first parent size for negative offset.");
+            child1.size() == 4,
+            "Expected first child to contain shorter prefix and longer suffix for negative offset.");
         expect(
-            child2.size() == parent2.size(),
-            "Expected second child to keep second parent size for negative offset.");
-
-        const bool firstAlignedPairSwapped =
-            child1[0].getThrottleValue() == parent2[1].getThrottleValue() &&
-            child2[1].getThrottleValue() == parent1[0].getThrottleValue();
-        const bool secondAlignedPairSwapped =
-            child1[1].getThrottleValue() == parent2[2].getThrottleValue() &&
-            child2[2].getThrottleValue() == parent1[1].getThrottleValue();
-
+            child2.size() == 4,
+            "Expected second child to contain longer prefix and shorter suffix for negative offset.");
         expect(
-            firstAlignedPairSwapped || secondAlignedPairSwapped,
-            "Expected at least one negative-offset aligned maneuver pair to be swapped.");
+            child1[0].getThrottleValue() == parent1[0].getThrottleValue() &&
+            child1[1].getThrottleValue() == parent1[1].getThrottleValue() &&
+            child1[2].getThrottleValue() == parent2[3].getThrottleValue() &&
+            child1[3].getThrottleValue() == parent2[4].getThrottleValue(),
+            "Expected first child to keep aligned shorter prefix and receive longer suffix.");
+        expect(
+            child2[0].getThrottleValue() == parent2[0].getThrottleValue() &&
+            child2[1].getThrottleValue() == parent2[1].getThrottleValue() &&
+            child2[2].getThrottleValue() == parent2[2].getThrottleValue() &&
+            child2[3].getThrottleValue() == parent1[2].getThrottleValue(),
+            "Expected second child to keep aligned longer prefix and receive shorter suffix.");
+    }
+
+    void testRandomCutCrossoverKeepsMinimumManeuverCount()
+    {
+        RandomCutCrossover crossover;
+        const Specimen parent1 =
+            specimenWithManeuverCount(
+                MIN_MANEUVERS);
+        const Specimen parent2 =
+            specimenWithManeuverCount(
+                MIN_MANEUVERS);
+
+        for (std::size_t i = 0; i < 100; ++i)
+        {
+            auto [child1, child2] =
+                crossover.cross(
+                    parent1,
+                    parent2);
+
+            expect(
+                child1.size() >= MIN_MANEUVERS,
+                "Expected random cut crossover to keep first child above minimum maneuver count.");
+            expect(
+                child2.size() >= MIN_MANEUVERS,
+                "Expected random cut crossover to keep second child above minimum maneuver count.");
+        }
     }
 }
 
@@ -374,8 +426,9 @@ auto main() -> int
     {
         testTrajectoryComparatorObjectivesAndTieBreakers();
         testNSGAIIReturnsParetoFrontHistory();
-        testAlignedSimilarityCrossoverSwapsAlignedManeuvers();
+        testAlignedSimilarityCrossoverExchangesSuffixAfterAlignedRegion();
         testAlignedSimilarityCrossoverHandlesNegativeOffset();
+        testRandomCutCrossoverKeepsMinimumManeuverCount();
         std::cout << "NSGA-II smoke tests passed.\n";
         return 0;
     }

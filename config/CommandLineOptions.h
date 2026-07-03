@@ -30,6 +30,10 @@ public:
 
     const std::string& outputFilePath() const;
 
+    const std::string& diversityLogFilePath() const;
+
+    bool hasDiversityLogFilePath() const;
+
     bool verbose() const;
 
     bool helpRequested() const;
@@ -38,11 +42,13 @@ private:
     CommandLineOptions(
         std::string configFilePath,
         std::string outputFilePath,
+        std::string diversityLogFilePath,
         bool verbose,
         bool helpRequested);
 
     std::string configFilePath_;
     std::string outputFilePath_;
+    std::string diversityLogFilePath_;
     bool verbose_{};
     bool helpRequested_{};
 };

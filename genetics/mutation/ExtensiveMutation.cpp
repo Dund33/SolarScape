@@ -106,6 +106,27 @@ namespace
                 adjustedInitDelay);
     }
 
+    void addRandomManeuversUntil(
+        std::vector<Maneuver>& maneuvers,
+        std::size_t targetSize,
+        std::size_t maxManeuvers,
+        Real minInitDelay,
+        Real maxInitDelay,
+        Real minDuration,
+        Real maxDuration)
+    {
+        while (maneuvers.size() < targetSize &&
+               maneuvers.size() < maxManeuvers)
+        {
+            addRandomManeuver(
+                maneuvers,
+                minInitDelay,
+                maxInitDelay,
+                minDuration,
+                maxDuration);
+        }
+    }
+
     void removeRandomManeuver(
         std::vector<Maneuver>& maneuvers)
     {
@@ -236,11 +257,20 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
 {
     static thread_local std::mt19937 rng(std::random_device{}());
 
-    const bool canAdd = specimen.size() < maxManeuvers;
-    const bool canRemove =
-        specimen.size() >
-        std::max<std::size_t>(minManeuvers, 1);
     std::vector<Maneuver> maneuvers = specimen.getManeuvers();
+    addRandomManeuversUntil(
+        maneuvers,
+        minManeuvers,
+        maxManeuvers,
+        minInitDelay,
+        maxInitDelay,
+        minDuration,
+        maxDuration);
+
+    const bool canAdd = maneuvers.size() < maxManeuvers;
+    const bool canRemove =
+        maneuvers.size() >
+        std::max<std::size_t>(minManeuvers, 1);
     std::bernoulli_distribution shouldAdd(addProbability);
     std::bernoulli_distribution shouldRemove(removeProbability);
     bool add = shouldAdd(rng) && canAdd;

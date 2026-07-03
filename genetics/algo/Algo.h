@@ -2,6 +2,7 @@
 #define SOLARSCAPE_ALGO_H
 
 #include <cstddef>
+#include <iosfwd>
 #include <vector>
 
 #include "genetics/GeneticAlgorithm.h"
@@ -32,7 +33,8 @@ public:
         std::size_t immigrantCount,
         const SpecimenComparator& specimenComparator,
         Factories factories,
-        bool verbose = false
+        bool verbose = false,
+        std::ostream* diversityLog = nullptr
     );
 
     ParetoFrontHistory run() const override;
@@ -70,6 +72,7 @@ private:
     const SpecimenComparator& specimenComparator;
     Factories factories;
     bool verbose;
+    std::ostream* diversityLog;
 };
 
 #endif

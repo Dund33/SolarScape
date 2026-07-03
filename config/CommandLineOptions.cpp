@@ -32,6 +32,11 @@ namespace
                 "Pareto front JSON output file"
             )
             (
+                "diversity-log",
+                po::value<std::string>(),
+                "Optional ALGO population diversity diagnostics log file"
+            )
+            (
                 "verbose,v",
                 "Print generation progress while the algorithm is running"
             );
@@ -50,10 +55,12 @@ namespace
 CommandLineOptions::CommandLineOptions(
     std::string configFilePath,
     std::string outputFilePath,
+    std::string diversityLogFilePath,
     bool verbose,
     bool helpRequested)
     : configFilePath_(std::move(configFilePath)),
       outputFilePath_(std::move(outputFilePath)),
+      diversityLogFilePath_(std::move(diversityLogFilePath)),
       verbose_(verbose),
       helpRequested_(helpRequested)
 {
@@ -98,6 +105,13 @@ auto CommandLineOptions::parse(
         variables["config"].as<std::string>();
     std::string outputFilePath =
         variables["output"].as<std::string>();
+    std::string diversityLogFilePath;
+
+    if (variables.count("diversity-log") > 0)
+    {
+        diversityLogFilePath =
+            variables["diversity-log"].as<std::string>();
+    }
 
     if (configFilePath.empty())
     {
@@ -111,9 +125,18 @@ auto CommandLineOptions::parse(
             "Output file path cannot be empty.");
     }
 
+    if (
+        variables.count("diversity-log") > 0 &&
+        diversityLogFilePath.empty())
+    {
+        throw CommandLineParseError(
+            "Diversity log file path cannot be empty.");
+    }
+
     return {
         std::move(configFilePath),
         std::move(outputFilePath),
+        std::move(diversityLogFilePath),
         variables.count("verbose") > 0,
         variables.count("help") > 0};
 }
@@ -132,7 +155,8 @@ void CommandLineOptions::printUsage(
 
     output
         << "Usage: " << displayName << " [config-file] [--output <file>]\n"
-        << "       " << displayName << " --config <file> --output <file>\n"
+        << "       " << displayName
+        << " --config <file> --output <file> [--diversity-log <file>]\n"
         << '\n'
         << options;
 }
@@ -145,6 +169,16 @@ const std::string& CommandLineOptions::configFilePath() const
 const std::string& CommandLineOptions::outputFilePath() const
 {
     return outputFilePath_;
+}
+
+const std::string& CommandLineOptions::diversityLogFilePath() const
+{
+    return diversityLogFilePath_;
+}
+
+bool CommandLineOptions::hasDiversityLogFilePath() const
+{
+    return !diversityLogFilePath_.empty();
 }
 
 bool CommandLineOptions::verbose() const

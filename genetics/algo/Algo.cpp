@@ -1,7 +1,12 @@
 #include "Algo.h"
 
 #include <algorithm>
+#include <cmath>
+#include <iomanip>
+#include <limits>
+#include <ostream>
 #include <ranges>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -19,6 +24,47 @@
 
 namespace
 {
+    struct RunningStats
+    {
+        std::size_t count{};
+        Real min{std::numeric_limits<Real>::max()};
+        Real max{std::numeric_limits<Real>::lowest()};
+        Real sum{};
+        Real sumSquares{};
+
+        void add(Real value)
+        {
+            ++count;
+            min = std::min(min, value);
+            max = std::max(max, value);
+            sum += value;
+            sumSquares += value * value;
+        }
+
+        Real mean() const
+        {
+            return count > 0
+                ? sum / static_cast<Real>(count)
+                : 0.0L;
+        }
+
+        Real stddev() const
+        {
+            if (count < 2)
+            {
+                return 0.0L;
+            }
+
+            const Real avg = mean();
+            const Real variance =
+                std::max(
+                    0.0L,
+                    sumSquares / static_cast<Real>(count) - avg * avg);
+
+            return std::sqrt(variance);
+        }
+    };
+
     void sortPopulationByParetoRank(
         std::vector<Specimen>& population,
         const SpecimenComparator& specimenComparator)
@@ -198,6 +244,229 @@ namespace
             islandSizesDetails(
                 islands));
     }
+
+    Real normalizedDifference(
+        Real lhs,
+        Real rhs)
+    {
+        const Real scale =
+            std::max({
+                1.0L,
+                std::abs(lhs),
+                std::abs(rhs)});
+
+        return std::min(
+            1.0L,
+            std::abs(lhs - rhs) / scale);
+    }
+
+    Real directionDistance(
+        const Vector3& lhs,
+        const Vector3& rhs)
+    {
+        return std::min(
+            1.0L,
+            (lhs - rhs).length() * 0.5L);
+    }
+
+    Real maneuverDistance(
+        const Maneuver& lhs,
+        const Maneuver& rhs)
+    {
+        return (
+            std::abs(
+                lhs.getThrottleValue() -
+                rhs.getThrottleValue()) +
+            directionDistance(
+                lhs.getThrustDirection(),
+                rhs.getThrustDirection()) +
+            normalizedDifference(
+                lhs.getInitDelay(),
+                rhs.getInitDelay()) +
+            normalizedDifference(
+                lhs.getDuration(),
+                rhs.getDuration())) *
+            0.25L;
+    }
+
+    Real specimenDistance(
+        const Specimen& lhs,
+        const Specimen& rhs)
+    {
+        const std::size_t maxSize =
+            std::max(lhs.size(), rhs.size());
+
+        if (maxSize == 0)
+        {
+            return 0.0L;
+        }
+
+        Real distance = 0.0L;
+        const std::size_t commonSize =
+            std::min(lhs.size(), rhs.size());
+
+        for (std::size_t i = 0; i < commonSize; ++i)
+        {
+            distance +=
+                maneuverDistance(
+                    lhs[i],
+                    rhs[i]);
+        }
+
+        distance += static_cast<Real>(maxSize - commonSize);
+
+        return distance / static_cast<Real>(maxSize);
+    }
+
+    Real averagePairwiseSpecimenDistance(
+        const std::vector<const Specimen*>& population)
+    {
+        if (population.size() < 2)
+        {
+            return 0.0L;
+        }
+
+        Real distanceSum = 0.0L;
+        std::size_t pairCount = 0;
+
+        for (std::size_t i = 0; i < population.size(); ++i)
+        {
+            for (std::size_t j = i + 1; j < population.size(); ++j)
+            {
+                distanceSum +=
+                    specimenDistance(
+                        *population[i],
+                        *population[j]);
+                ++pairCount;
+            }
+        }
+
+        return distanceSum / static_cast<Real>(pairCount);
+    }
+
+    std::string specimenKey(
+        const Specimen& specimen)
+    {
+        std::ostringstream key;
+        key << std::setprecision(
+            std::numeric_limits<Real>::max_digits10);
+
+        for (const Maneuver& maneuver : specimen.getManeuvers())
+        {
+            const Vector3& direction =
+                maneuver.getThrustDirection();
+
+            key
+                << direction.x << ','
+                << direction.y << ','
+                << direction.z << ','
+                << maneuver.getThrottleValue() << ','
+                << maneuver.getInitDelay() << ','
+                << maneuver.getDuration() << ';';
+        }
+
+        return key.str();
+    }
+
+    std::vector<const Specimen*> populationView(
+        const std::vector<std::vector<Specimen>>& islands)
+    {
+        std::vector<const Specimen*> population;
+
+        for (const Specimen& specimen : islands | std::views::join)
+        {
+            population.push_back(&specimen);
+        }
+
+        return population;
+    }
+
+    void printDiversityDiagnostics(
+        std::size_t generation,
+        const std::vector<std::vector<Specimen>>& islands,
+        std::ostream& output)
+    {
+        const std::vector<const Specimen*> population =
+            populationView(
+                islands);
+
+        RunningStats maneuverCounts;
+        RunningStats distanceValues;
+        RunningStats timeValues;
+        RunningStats fuelValues;
+        RunningStats fuelViolationValues;
+        std::set<std::string> uniqueGenomes;
+
+        for (const Specimen* specimen : population)
+        {
+            maneuverCounts.add(
+                static_cast<Real>(specimen->size()));
+            uniqueGenomes.insert(
+                specimenKey(
+                    *specimen));
+
+            const FitnessValue& fitness =
+                specimen->getFitness().value();
+            distanceValues.add(
+                fitness.minimumDistance);
+            timeValues.add(
+                fitness.minimumDistanceTime);
+            fuelValues.add(
+                fitness.fuelUsed);
+            fuelViolationValues.add(
+                fitness.fuelConstraintViolation);
+        }
+
+        output
+            << "ALGO diversity generation " << generation
+            << " | population_size=" << population.size()
+            << " | unique_genomes=" << uniqueGenomes.size()
+            << " | unique_ratio="
+            << (
+                population.empty()
+                    ? 0.0L
+                    : static_cast<Real>(uniqueGenomes.size()) /
+                        static_cast<Real>(population.size()))
+            << " | maneuver_count=["
+            << maneuverCounts.min
+            << ", " << maneuverCounts.max
+            << "] avg=" << maneuverCounts.mean()
+            << " stddev=" << maneuverCounts.stddev()
+            << " | objective_stddev=[distance="
+            << distanceValues.stddev()
+            << ", time=" << timeValues.stddev()
+            << ", fuel=" << fuelValues.stddev()
+            << ", fuel_violation=" << fuelViolationValues.stddev()
+            << "] | avg_pairwise_maneuver_distance="
+            << averagePairwiseSpecimenDistance(
+                population)
+            << " | island_best_distance=[";
+
+        for (std::size_t islandIndex = 0;
+             islandIndex < islands.size();
+             ++islandIndex)
+        {
+            if (islandIndex > 0)
+            {
+                output << ", ";
+            }
+
+            if (islands[islandIndex].empty())
+            {
+                output << "nan";
+                continue;
+            }
+
+            output
+                << islands[islandIndex]
+                    .front()
+                    .getFitness()
+                    .value()
+                    .minimumDistance;
+        }
+
+        output << "]\n";
+    }
 }
 
 Algo::Algo(
@@ -207,7 +476,8 @@ Algo::Algo(
     std::size_t immigrantCount,
     const SpecimenComparator& specimenComparator,
     Factories factories,
-    bool verbose
+    bool verbose,
+    std::ostream* diversityLog
 )
     : populationSize(populationSize),
       generations(generations),
@@ -215,7 +485,8 @@ Algo::Algo(
       immigrantCount(immigrantCount),
       specimenComparator(specimenComparator),
       factories(factories),
-      verbose(verbose)
+      verbose(verbose),
+      diversityLog(diversityLog)
 {
     if (populationSize == 0)
     {
@@ -301,6 +572,14 @@ ParetoFrontHistory Algo::run() const
                 generation,
                 nextIslands,
                 archive);
+        }
+
+        if (diversityLog != nullptr)
+        {
+            printDiversityDiagnostics(
+                generation,
+                nextIslands,
+                *diversityLog);
         }
 
         history.push_back(archive);

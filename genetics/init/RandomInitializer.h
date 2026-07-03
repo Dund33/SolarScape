@@ -2,6 +2,8 @@
 #define SOLARSCAPE_RANDOMINITIALIZER_H
 
 #include <cstddef>
+#include <random>
+
 #include "genetics/init/Initializer.h"
 #include "math/ProbeProperties.h"
 
@@ -24,6 +26,8 @@ public:
     ) const override;
 
 private:
+    Specimen createCandidate(std::mt19937& rng) const;
+
     std::size_t minManeuvers;
     std::size_t maxManeuvers;
 

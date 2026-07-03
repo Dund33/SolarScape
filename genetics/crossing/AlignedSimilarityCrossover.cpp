@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
-#include <random>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
@@ -305,72 +304,59 @@ namespace
         return region;
     }
 
-    void swapAlignedPair(
-        Specimen& child1,
-        Specimen& child2,
-        const OrientedGenomes& genomes,
-        const ExchangeRegion& region,
-        std::size_t shorterIndex)
+    template <std::ranges::input_range ManeuverRange>
+    void appendManeuvers(
+        std::vector<Maneuver>& target,
+        ManeuverRange&& maneuvers)
     {
-        const std::size_t parent1Index =
-            genomes.parent1IsShorter
-                ? shorterIndex
-                : region.longerBegin + shorterIndex;
-        const std::size_t parent2Index =
-            genomes.parent1IsShorter
-                ? region.longerBegin + shorterIndex
-                : shorterIndex;
-
-        std::swap(
-            child1[parent1Index],
-            child2[parent2Index]);
+        for (const Maneuver& maneuver : maneuvers)
+        {
+            target.push_back(maneuver);
+        }
     }
 
-    void swapRandomAlignedSubset(
-        Specimen& child1,
-        Specimen& child2,
+    std::pair<Specimen, Specimen> exchangeSuffixesAfterRegion(
         const OrientedGenomes& genomes,
         const ExchangeRegion& region)
     {
-        if (region.length == 0)
+        const std::size_t shorterCut = region.length;
+        const std::size_t longerCut =
+            region.longerBegin + region.length;
+
+        std::vector<Maneuver> shorterChildManeuvers;
+        shorterChildManeuvers.reserve(
+            shorterCut + genomes.longer.size() - longerCut);
+        std::vector<Maneuver> longerChildManeuvers;
+        longerChildManeuvers.reserve(
+            longerCut + genomes.shorter.size() - shorterCut);
+
+        appendManeuvers(
+            shorterChildManeuvers,
+            genomes.shorter.getManeuvers() |
+                std::views::take(shorterCut));
+        appendManeuvers(
+            shorterChildManeuvers,
+            genomes.longer.getManeuvers() |
+                std::views::drop(longerCut));
+        appendManeuvers(
+            longerChildManeuvers,
+            genomes.longer.getManeuvers() |
+                std::views::take(longerCut));
+        appendManeuvers(
+            longerChildManeuvers,
+            genomes.shorter.getManeuvers() |
+                std::views::drop(shorterCut));
+
+        if (genomes.parent1IsShorter)
         {
-            return;
+            return {
+                Specimen(std::move(shorterChildManeuvers)),
+                Specimen(std::move(longerChildManeuvers))};
         }
 
-        static thread_local std::mt19937 rng(std::random_device{}());
-        std::bernoulli_distribution shouldSwap(0.5);
-        bool swappedAny = false;
-
-        for (std::size_t shorterIndex = 0;
-             shorterIndex < region.length;
-             ++shorterIndex)
-        {
-            if (!shouldSwap(rng))
-            {
-                continue;
-            }
-
-            swapAlignedPair(
-                child1,
-                child2,
-                genomes,
-                region,
-                shorterIndex);
-            swappedAny = true;
-        }
-
-        if (!swappedAny)
-        {
-            std::uniform_int_distribution<std::size_t> forcedSwapDist(
-                0,
-                region.length - 1);
-            swapAlignedPair(
-                child1,
-                child2,
-                genomes,
-                region,
-                forcedSwapDist(rng));
-        }
+        return {
+            Specimen(std::move(longerChildManeuvers)),
+            Specimen(std::move(shorterChildManeuvers))};
     }
 }
 
@@ -436,15 +422,7 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
             parent2);
     }
 
-    Specimen child1(parent1.getManeuvers());
-    Specimen child2(parent2.getManeuvers());
-    swapRandomAlignedSubset(
-        child1,
-        child2,
+    return exchangeSuffixesAfterRegion(
         genomes,
         region);
-
-    return {
-        std::move(child1),
-        std::move(child2)};
 }

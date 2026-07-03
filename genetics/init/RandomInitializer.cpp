@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "config/consts.h"
+
 RandomInitializer::RandomInitializer(
     std::size_t minManeuvers,
     std::size_t maxManeuvers,
@@ -40,10 +42,9 @@ RandomInitializer::RandomInitializer(
 
 }
 
-Specimen RandomInitializer::create() const
+Specimen RandomInitializer::createCandidate(
+    std::mt19937& rng) const
 {
-    static thread_local std::mt19937 rng(std::random_device{}());
-
     std::uniform_int_distribution<std::size_t> maneuverCountDist(
         minManeuvers,
         maxManeuvers
@@ -133,6 +134,32 @@ Specimen RandomInitializer::create() const
     }
 
     return specimen;
+}
+
+Specimen RandomInitializer::create() const
+{
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    Specimen bestSpecimen;
+
+    for (std::size_t attempt = 0;
+         attempt < RANDOM_INITIALIZER_MIN_MANEUVERS_RETRY_COUNT;
+         ++attempt)
+    {
+        Specimen specimen = createCandidate(rng);
+
+        if (specimen.size() >= minManeuvers)
+        {
+            return specimen;
+        }
+
+        if (specimen.size() > bestSpecimen.size())
+        {
+            bestSpecimen = std::move(specimen);
+        }
+    }
+
+    return bestSpecimen;
 }
 
 std::vector<Specimen> RandomInitializer::createPopulation(
