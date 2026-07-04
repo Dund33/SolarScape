@@ -42,9 +42,20 @@ namespace
             for (std::size_t cut2 = 0; cut2 <= size2; ++cut2)
             {
                 const CutPoints cutPoints{cut1, cut2};
+                const std::size_t child1Size =
+                    firstChildSize(
+                        size2,
+                        cutPoints);
+                const std::size_t child2Size =
+                    secondChildSize(
+                        size1,
+                        cutPoints);
 
-                if (firstChildSize(size2, cutPoints) >= MIN_MANEUVERS &&
-                    secondChildSize(size1, cutPoints) >= MIN_MANEUVERS)
+                if (
+                    child1Size >= MIN_MANEUVERS &&
+                    child1Size <= MAX_MANEUVERS &&
+                    child2Size >= MIN_MANEUVERS &&
+                    child2Size <= MAX_MANEUVERS)
                 {
                     cuts.push_back(cutPoints);
                 }

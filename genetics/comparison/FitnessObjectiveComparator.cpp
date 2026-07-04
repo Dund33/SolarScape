@@ -6,6 +6,26 @@
 #include "genetics/Specimen.h"
 #include "genetics/fitness/FitnessMetrics.h"
 
+namespace
+{
+    std::partial_ordering compareMinimizedValues(
+        Real lhs,
+        Real rhs)
+    {
+        if (lhs < rhs)
+        {
+            return std::partial_ordering::less;
+        }
+
+        if (rhs < lhs)
+        {
+            return std::partial_ordering::greater;
+        }
+
+        return std::partial_ordering::equivalent;
+    }
+}
+
 std::partial_ordering FitnessObjectiveComparator::compare(
     const Specimen& lhs,
     const Specimen& rhs
@@ -18,34 +38,27 @@ std::partial_ordering FitnessObjectiveComparator::compare(
 
     if (prioritizesFuelConstraintViolation())
     {
-        if (lhsFitness.fuelConstraintViolation <
-            rhsFitness.fuelConstraintViolation)
-        {
-            return std::partial_ordering::less;
-        }
+        const std::partial_ordering comparison =
+            compareMinimizedValues(
+                lhsFitness.fuelConstraintViolation,
+                rhsFitness.fuelConstraintViolation);
 
-        if (rhsFitness.fuelConstraintViolation <
-            lhsFitness.fuelConstraintViolation)
+        if (comparison != std::partial_ordering::equivalent)
         {
-            return std::partial_ordering::greater;
+            return comparison;
         }
     }
 
     if (prioritizesTargetWindowViolation())
     {
-        const Real lhsViolation =
-            targetWindowViolation(lhsFitness);
-        const Real rhsViolation =
-            targetWindowViolation(rhsFitness);
+        const std::partial_ordering comparison =
+            compareMinimizedValues(
+                targetWindowViolation(lhsFitness),
+                targetWindowViolation(rhsFitness));
 
-        if (lhsViolation < rhsViolation)
+        if (comparison != std::partial_ordering::equivalent)
         {
-            return std::partial_ordering::less;
-        }
-
-        if (rhsViolation < lhsViolation)
-        {
-            return std::partial_ordering::greater;
+            return comparison;
         }
     }
 
@@ -62,13 +75,17 @@ std::partial_ordering FitnessObjectiveComparator::compare(
             objectiveValue(
                 rhsFitness,
                 objective);
+        const std::partial_ordering comparison =
+            compareMinimizedValues(
+                lhsValue,
+                rhsValue);
 
-        if (lhsValue < rhsValue)
+        if (comparison == std::partial_ordering::less)
         {
             lhsStrictlyBetter = true;
         }
 
-        if (rhsValue < lhsValue)
+        if (comparison == std::partial_ordering::greater)
         {
             rhsStrictlyBetter = true;
         }
@@ -129,13 +146,17 @@ bool FitnessObjectiveComparator::isLess(
             tieBreakerValue(
                 rhsFitness,
                 tieBreaker);
+        const std::partial_ordering comparison =
+            compareMinimizedValues(
+                lhsValue,
+                rhsValue);
 
-        if (lhsValue < rhsValue)
+        if (comparison == std::partial_ordering::less)
         {
             return true;
         }
 
-        if (rhsValue < lhsValue)
+        if (comparison == std::partial_ordering::greater)
         {
             return false;
         }

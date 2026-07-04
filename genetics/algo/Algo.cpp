@@ -95,6 +95,19 @@ namespace
         population = std::move(sortedPopulation);
     }
 
+    auto specimensIn(
+        auto& islands)
+    {
+        return
+            islands |
+            std::views::transform(
+                [](auto& island) -> decltype(auto)
+                {
+                    return (island.specimens);
+                }) |
+            std::views::join;
+    }
+
     bool hasSameObjectiveValues(
         const Specimen& lhs,
         const Specimen& rhs,
@@ -155,32 +168,22 @@ namespace
         }
     }
 
-    void appendFirstSpecimens(
+    void appendSpecimensBySortedIndices(
         std::vector<Specimen>& target,
         const std::vector<Specimen>& source,
+        const std::vector<std::size_t>& sortedIndices,
         std::size_t requestedCount)
     {
-        const std::size_t count = std::min(requestedCount, source.size());
+        const std::size_t count =
+            std::min(
+                requestedCount,
+                sortedIndices.size());
 
-        for (const Specimen& specimen : source | std::views::take(count))
+        for (std::size_t i = 0; i < count; ++i)
         {
-            target.push_back(specimen);
+            target.push_back(
+                source[sortedIndices[i]]);
         }
-    }
-
-    std::vector<Specimen> copyFirstSpecimens(
-        const std::vector<Specimen>& source,
-        std::size_t requestedCount)
-    {
-        std::vector<Specimen> copiedSpecimens;
-        copiedSpecimens.reserve(std::min(requestedCount, source.size()));
-
-        appendFirstSpecimens(
-            copiedSpecimens,
-            source,
-            requestedCount);
-
-        return copiedSpecimens;
     }
 
     bool shouldReintroduceArchive(
@@ -190,19 +193,6 @@ namespace
             ALGO_ARCHIVE_REINTRODUCTION_INTERVAL > 0 &&
             ALGO_ARCHIVE_REINTRODUCTION_COUNT > 0 &&
             (generation + 1) % ALGO_ARCHIVE_REINTRODUCTION_INTERVAL == 0;
-    }
-
-    ParetoFront sortedArchiveByParetoRank(
-        const ParetoFront& archive,
-        const SpecimenComparator& specimenComparator)
-    {
-        ParetoFront sortedArchive = archive;
-
-        sortPopulationByParetoRank(
-            sortedArchive,
-            specimenComparator);
-
-        return sortedArchive;
     }
 
     void replaceTailWithArchiveSpecimens(
@@ -273,7 +263,7 @@ namespace
     }
 
     std::string islandSizesDetails(
-        const std::vector<std::vector<Specimen>>& islands)
+        const auto& islands)
     {
         std::ostringstream details;
         details << "islands=[";
@@ -285,7 +275,7 @@ namespace
                 details << ", ";
             }
 
-            details << islands[i].size();
+            details << islands[i].specimens.size();
         }
 
         details << ']';
@@ -295,7 +285,7 @@ namespace
 
     void printGenerationResult(
         std::size_t generation,
-        const std::vector<std::vector<Specimen>>& islands,
+        const auto& islands,
         const ParetoFront& paretoFront)
     {
         GenerationProgressLogger::print(
@@ -431,11 +421,11 @@ namespace
     }
 
     std::vector<const Specimen*> populationView(
-        const std::vector<std::vector<Specimen>>& islands)
+        const auto& islands)
     {
         std::vector<const Specimen*> population;
 
-        for (const Specimen& specimen : islands | std::views::join)
+        for (const Specimen& specimen : specimensIn(islands))
         {
             population.push_back(&specimen);
         }
@@ -443,9 +433,26 @@ namespace
         return population;
     }
 
+    Real bestIslandDistance(
+        const std::vector<Specimen>& island)
+    {
+        if (island.empty())
+        {
+            return std::numeric_limits<Real>::quiet_NaN();
+        }
+
+        return std::ranges::min(
+            island |
+            std::views::transform(
+                [](const Specimen& specimen)
+                {
+                    return specimen.getFitness().value().minimumDistance;
+                }));
+    }
+
     void printDiversityDiagnostics(
         std::size_t generation,
-        const std::vector<std::vector<Specimen>>& islands,
+        const auto& islands,
         std::ostream& output)
     {
         const std::vector<const Specimen*> population =
@@ -513,18 +520,9 @@ namespace
                 output << ", ";
             }
 
-            if (islands[islandIndex].empty())
-            {
-                output << "nan";
-                continue;
-            }
-
             output
-                << islands[islandIndex]
-                    .front()
-                    .getFitness()
-                    .value()
-                    .minimumDistance;
+                << bestIslandDistance(
+                    islands[islandIndex].specimens);
         }
 
         output << "]\n";
@@ -577,15 +575,15 @@ ParetoFrontHistory Algo::run() const
     evaluateIslands(
         islands,
         *fitnessEvaluator);
-    sortIslands(
+    finalizeIslands(
         islands);
 
     ParetoFrontHistory history;
     history.reserve(generations);
     ParetoFront archive =
         ParetoFrontUtils::firstFront(
-            islands |
-            std::views::join,
+            specimensIn(
+                islands),
             specimenComparator);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
@@ -607,7 +605,7 @@ ParetoFrontHistory Algo::run() const
         evaluateIslands(
             nextIslands,
             *fitnessEvaluator);
-        sortIslands(
+        finalizeIslands(
             nextIslands);
 
         if (
@@ -620,8 +618,8 @@ ParetoFrontHistory Algo::run() const
 
         ParetoFront currentFront =
             ParetoFrontUtils::firstFront(
-                nextIslands |
-                std::views::join,
+                specimensIn(
+                    nextIslands),
                 specimenComparator);
         archive = updateParetoArchive(
             std::move(archive),
@@ -635,6 +633,9 @@ ParetoFrontHistory Algo::run() const
                 archive,
                 generation);
         }
+
+        finalizeIslands(
+            nextIslands);
 
         if (verbose)
         {
@@ -681,8 +682,11 @@ Algo::Islands Algo::createIslands(
             (islandIndex < largerIslandCount ? 1 : 0);
 
         islands.push_back(
-            initializer.createPopulation(
-                islandSize));
+            RankedIsland{
+                initializer.createPopulation(
+                    islandSize),
+                ParetoRankedPopulation{},
+                {}});
     }
 
     return islands;
@@ -695,7 +699,7 @@ void Algo::evaluateIslands(
     std::vector<Specimen*> specimens;
     specimens.reserve(populationSize);
 
-    for (Specimen& specimen : islands | std::views::join)
+    for (Specimen& specimen : specimensIn(islands))
     {
         specimens.push_back(&specimen);
     }
@@ -705,45 +709,55 @@ void Algo::evaluateIslands(
         fitnessEvaluator);
 }
 
-void Algo::sortIslands(
+void Algo::finalizeIslands(
     Islands& islands) const
 {
-    for (auto& island : islands)
+    for (RankedIsland& island : islands)
     {
-        sortPopulationByParetoRank(
-            island,
-            specimenComparator);
+        finalizeIsland(
+            island);
     }
 }
 
+void Algo::finalizeIsland(
+    RankedIsland& island) const
+{
+    island.ranking =
+        ParetoRanking::rankPopulation(
+            island.specimens,
+            specimenComparator);
+    island.sortedIndices =
+        ParetoRanking::sortedIndices(
+            island.specimens,
+            island.ranking,
+            specimenComparator);
+}
+
 auto Algo::createNextIsland(
-    const std::vector<Specimen>& island,
+    const RankedIsland& island,
     Initializer& initializer,
     Selection& selection,
     Crossover& crossover,
-    Mutation& mutation) const -> std::vector<Specimen>
+    Mutation& mutation) const -> RankedIsland
 {
     const std::size_t islandSize =
-        island.size();
+        island.specimens.size();
     std::vector<Specimen> nextIsland;
     nextIsland.reserve(islandSize);
 
-    appendFirstSpecimens(
+    appendSpecimensBySortedIndices(
         nextIsland,
-        island,
+        island.specimens,
+        island.sortedIndices,
         eliteCount);
 
-    const ParetoRankedPopulation rankedIsland =
-        ParetoRanking::rankPopulation(
-            island,
-            specimenComparator);
     const NSGAIIRankingComparator selectionComparator(
-        island,
-        rankedIsland.ranks,
+        island.specimens,
+        island.ranking.ranks,
         specimenComparator);
 
     appendChildren(
-        island,
+        island.specimens,
         nextIsland,
         islandSize,
         selectionComparator,
@@ -757,7 +771,10 @@ auto Algo::createNextIsland(
             islandSize),
         initializer);
 
-    return nextIsland;
+    return RankedIsland{
+        std::move(nextIsland),
+        ParetoRankedPopulation{},
+        {}};
 }
 
 void Algo::migrate(
@@ -770,12 +787,22 @@ void Algo::migrate(
 
     const std::size_t migrantCount =
         std::max(ALGO_MIN_MIGRANT_COUNT, eliteCount);
-    Islands migrants;
+    std::vector<std::vector<Specimen>> migrants;
     migrants.reserve(islands.size());
 
-    for (const auto& island : islands)
+    for (const RankedIsland& island : islands)
     {
-        migrants.push_back(copyFirstSpecimens(island, migrantCount));
+        std::vector<Specimen>& migrantGroup =
+            migrants.emplace_back();
+        migrantGroup.reserve(
+            std::min(
+                migrantCount,
+                island.specimens.size()));
+        appendSpecimensBySortedIndices(
+            migrantGroup,
+            island.specimens,
+            island.sortedIndices,
+            migrantCount);
     }
 
     for (std::size_t islandIndex = 0;
@@ -783,7 +810,7 @@ void Algo::migrate(
          ++islandIndex)
     {
         std::vector<Specimen>& targetIsland =
-            islands[(islandIndex + 1) % islands.size()];
+            islands[(islandIndex + 1) % islands.size()].specimens;
         const std::vector<Specimen>& sourceMigrants =
             migrants[islandIndex];
         const std::size_t replacementCount =
@@ -798,12 +825,6 @@ void Algo::migrate(
         }
     }
 
-    for (auto& island : islands)
-    {
-        sortPopulationByParetoRank(
-            island,
-            specimenComparator);
-    }
 }
 
 void Algo::reintroduceArchive(
@@ -816,31 +837,27 @@ void Algo::reintroduceArchive(
         return;
     }
 
-    const ParetoFront sortedArchive =
-        sortedArchiveByParetoRank(
-            archive,
-            specimenComparator);
+    ParetoFront sortedArchive = archive;
+    sortPopulationByParetoRank(
+        sortedArchive,
+        specimenComparator);
     std::size_t archiveIndex =
         generation * ALGO_ARCHIVE_REINTRODUCTION_COUNT;
 
-    for (std::vector<Specimen>& island : islands)
+    for (RankedIsland& island : islands)
     {
         const std::size_t replacementCount =
             archiveReintroductionCountForIsland(
-                island.size());
+                island.specimens.size());
 
         replaceTailWithArchiveSpecimens(
-            island,
+            island.specimens,
             sortedArchive,
             replacementCount,
             archiveIndex,
             specimenComparator);
 
         archiveIndex += replacementCount;
-
-        sortPopulationByParetoRank(
-            island,
-            specimenComparator);
     }
 }
 

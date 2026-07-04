@@ -9,6 +9,12 @@ NSGAIIRankingComparator::NSGAIIRankingComparator(
     : ranks(ranks),
       fallbackComparator(fallbackComparator)
 {
+    if (ranks.size() != population.size())
+    {
+        throw std::invalid_argument(
+            "Rank count must match population size.");
+    }
+
     indexBySpecimen.reserve(population.size());
 
     for (std::size_t i = 0; i < population.size(); ++i)

@@ -13,6 +13,7 @@
 #include "genetics/init/InitializerFactory.h"
 #include "genetics/mutation/MutationFactory.h"
 #include "genetics/selection/SelectionFactory.h"
+#include "genetics/utils/ParetoRanking.h"
 
 class Algo final : public GeneticAlgorithm
 {
@@ -40,7 +41,14 @@ public:
     ParetoFrontHistory run() const override;
 
 private:
-    using Islands = std::vector<std::vector<Specimen>>;
+    struct RankedIsland
+    {
+        std::vector<Specimen> specimens;
+        ParetoRankedPopulation ranking;
+        std::vector<std::size_t> sortedIndices;
+    };
+
+    using Islands = std::vector<RankedIsland>;
 
     Islands createIslands(
         Initializer& initializer) const;
@@ -49,15 +57,18 @@ private:
         Islands& islands,
         const FitnessEvaluator& fitnessEvaluator) const;
 
-    void sortIslands(
+    void finalizeIslands(
         Islands& islands) const;
 
+    void finalizeIsland(
+        RankedIsland& island) const;
+
     auto createNextIsland(
-        const std::vector<Specimen>& island,
+        const RankedIsland& island,
         Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
-        Mutation& mutation) const -> std::vector<Specimen>;
+        Mutation& mutation) const -> RankedIsland;
 
     void migrate(
         Islands& islands) const;
