@@ -7,32 +7,28 @@ import sys
 from pathlib import Path
 
 from solarscape_tools.analysis import (
-    best_solutions_by_metric,
+    best_values_by_generation,
     discover_and_validate_experiments,
     load_experiment_frame,
     normalize_filter,
     normalize_scenario_filter,
     parse_criteria,
 )
-from solarscape_tools.pareto import CRITERIA
+from solarscape_tools.display import add_display_columns
+from solarscape_tools.pareto import DEFAULT_CRITERIA
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_INPUT_DIR = SCRIPT_DIR / "out" / "experiments"
-DEFAULT_OUTPUT_PATH = SCRIPT_DIR / "out" / "pareto_front_summary.csv"
-DEFAULT_CRITERIA = (
-    "targetWindowViolation",
-    "fuelUsed",
-    "minimumDistanceTime",
-    "fuelConstraintViolation",
-)
+TOOLS_DIR = SCRIPT_DIR.parent
+DEFAULT_INPUT_DIR = TOOLS_DIR / "out" / "experiments"
+DEFAULT_OUTPUT_PATH = TOOLS_DIR / "out" / "thesis_data" / "convergence_runs.csv"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate a CSV/Markdown list of the best SolarScape solutions "
-            "for each metric, algorithm, and scenario."
+            "Export per-run, per-generation convergence values from SolarScape "
+            "experiment JSON files."
         )
     )
     parser.add_argument(
@@ -41,6 +37,13 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_INPUT_DIR,
         help=f"Directory with scenario_algorithm_runXX.json files. Default: {DEFAULT_INPUT_DIR}",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT_PATH,
+        help=f"Output CSV file. Default: {DEFAULT_OUTPUT_PATH}",
     )
     parser.add_argument(
         "--scenario",
@@ -56,26 +59,30 @@ def parse_args() -> argparse.Namespace:
         "--criteria",
         nargs="+",
         default=list(DEFAULT_CRITERIA),
-        help=(
-            "Metrics to select best solutions for. Default: "
-            + ", ".join(DEFAULT_CRITERIA)
-            + "."
-        ),
+        help="Criteria to export. Default: " + ", ".join(DEFAULT_CRITERIA) + ".",
+    )
+    parser.add_argument(
+        "--include-constraint",
+        action="store_true",
+        help="Also export fuelConstraintViolation.",
     )
     parser.add_argument(
         "--constraint-mode",
-        choices=("feasible-only", "prefer-feasible", "ignore"),
-        default="feasible-only",
-        help=(
-            "How objective metrics handle infeasible specimens. This does not "
-            "filter the fuelConstraintViolation metric itself. Default: feasible-only."
-        ),
+        choices=("prefer-feasible", "feasible-only", "ignore"),
+        default="prefer-feasible",
+        help="How objective values are selected from each Pareto front. Default: prefer-feasible.",
     )
     parser.add_argument(
         "--fuel-tolerance",
         type=float,
         default=0.0,
         help="Maximum fuelConstraintViolation treated as feasible. Default: 0.",
+    )
+    parser.add_argument(
+        "--series",
+        choices=("best-so-far", "current-front"),
+        default="best-so-far",
+        help="Export cumulative best-so-far values or current-front values. Default: best-so-far.",
     )
     parser.add_argument(
         "--expected-runs",
@@ -86,38 +93,37 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--allow-incomplete",
         action="store_true",
-        help="Generate output even when a group has fewer than --expected-runs files.",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=DEFAULT_OUTPUT_PATH,
-        help=f"Output data file. Default: {DEFAULT_OUTPUT_PATH}",
-    )
-    parser.add_argument(
-        "--format",
-        choices=("csv", "markdown"),
-        default="csv",
-        help="Output data format. Default: csv.",
+        help="Export data even when a group has fewer than --expected-runs files.",
     )
     return parser.parse_args()
 
 
-def write_output(frame, output_path: Path, output_format: str) -> None:
+def ordered_output(frame, args: argparse.Namespace):
+    output = frame.copy()
+    output["series"] = args.series
+    output["constraint_mode"] = args.constraint_mode
+    output["fuel_tolerance"] = args.fuel_tolerance
+    output = add_display_columns(output)
+    columns = [
+        "scenario",
+        "scenario_label",
+        "algorithm",
+        "algorithm_label",
+        "run",
+        "generation",
+        "criterion",
+        "criterion_label",
+        "value",
+        "series",
+        "constraint_mode",
+        "fuel_tolerance",
+    ]
+    return output[[column for column in columns if column in output.columns]]
+
+
+def write_csv(frame, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    if output_format == "csv":
-        frame.to_csv(output_path, index=False)
-    elif output_format == "markdown":
-        lines = [
-            "| " + " | ".join(frame.columns) + " |",
-            "| " + " | ".join("---" for _ in frame.columns) + " |",
-        ]
-        for row in frame.itertuples(index=False, name=None):
-            lines.append("| " + " | ".join(str(value) for value in row) + " |")
-        output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    else:
-        raise ValueError(f"Unsupported output format: {output_format}")
+    frame.to_csv(output_path, index=False)
 
 
 def main() -> int:
@@ -128,7 +134,7 @@ def main() -> int:
         return 2
 
     try:
-        criteria = parse_criteria(args.criteria, include_constraint=False)
+        criteria = parse_criteria(args.criteria, args.include_constraint)
         experiments = discover_and_validate_experiments(
             input_dir=args.input_dir,
             scenarios=normalize_scenario_filter(args.scenario),
@@ -137,21 +143,19 @@ def main() -> int:
             allow_incomplete=args.allow_incomplete,
         )
         frame = load_experiment_frame(experiments)
-        best_solutions = best_solutions_by_metric(
+        values = best_values_by_generation(
             frame=frame,
             criteria=criteria,
             constraint_mode=args.constraint_mode,
             fuel_tolerance=args.fuel_tolerance,
+            series_mode=args.series,
         )
-        write_output(best_solutions, args.output, args.format)
     except ValueError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-    except KeyError as error:
-        valid = ", ".join(sorted(CRITERIA))
-        print(f"error: unknown metric {error}. Valid metrics: {valid}", file=sys.stderr)
-        return 2
 
+    output = ordered_output(values, args)
+    write_csv(output, args.output)
     print(f"saved {args.output}")
     return 0
 

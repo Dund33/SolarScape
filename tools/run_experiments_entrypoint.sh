@@ -18,7 +18,7 @@ if [ "$has_jobs" -eq 0 ]; then
     set -- "$@" --jobs "$(nproc)"
 fi
 
-exec python3 /opt/solarscape/tools/run_experiments.py \
+exec python3 /opt/solarscape/tools/analysis/run_experiments.py \
     --executables-dir /opt/solarscape/bin \
     --scenarios-dir /opt/solarscape/scenarios \
     --output-dir /data/experiments \

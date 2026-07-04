@@ -13,7 +13,8 @@ from typing import Any, Iterable
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_INPUT = SCRIPT_DIR / "out" / "experiments"
+TOOLS_DIR = SCRIPT_DIR.parent
+DEFAULT_INPUT = TOOLS_DIR / "out" / "experiments"
 DEFAULT_MIN_REGION_SIMILARITY = 0.01
 DEFAULT_TIME_SCALE_MULTIPLIER = 1.0
 SPECIMEN_LIST_KEYS = ("population", "specimens", "paretoFront")
