@@ -3,12 +3,10 @@
 
 #include <cstddef>
 
-inline constexpr double MAX_IMPULSE = 3000.0;
-inline constexpr double MAX_THRUST = 1000.0;
 inline constexpr double STANDARD_GRAVITY = 9.80665;
 
-inline constexpr std::size_t POPULATION_SIZE = 300;
-inline constexpr std::size_t GENERATIONS = 300;
+inline constexpr std::size_t POPULATION_SIZE = 200;
+inline constexpr std::size_t GENERATIONS = 500;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
 inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 4;
@@ -28,14 +26,14 @@ inline constexpr long double MIN_MANEUVER_TIME = 0.0L;
 inline constexpr long double MIN_MANEUVER_DURATION = 1.0L;
 inline constexpr long double MAX_MANEUVER_DURATION = 10000.0L;
 
-inline constexpr double MUTATION_PROBABILITY = 0.1;
-inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.65;
+inline constexpr double MUTATION_PROBABILITY = 0.15;
+inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.7;
 inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.15;
 inline constexpr long double MUTATION_TIME_RANGE = 10000.0L;
 inline constexpr long double MUTATION_DURATION_RANGE = 5000.0L;
 inline constexpr long double MUTATION_THRUST_RANGE = 1000.0L;
 
-inline constexpr long double ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.5L;
+inline constexpr long double ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.2L;
 
 inline constexpr std::size_t TOURNAMENT_SIZE = 5;
 
