@@ -54,7 +54,7 @@ probe:
     y: 37455.3668522424
     z: 0.0
 
-  emptyMass: 1000.0
-  fuelMass: 1000.0
-  fuelFlow: 1.0
-  specificImpulse: 3600.0
+  emptyMass: 4000.0
+  fuelMass: 6000.0
+  fuelFlow: 1.7
+  specificImpulse: 300.0
