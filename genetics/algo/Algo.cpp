@@ -183,6 +183,68 @@ namespace
         return copiedSpecimens;
     }
 
+    bool shouldReintroduceArchive(
+        std::size_t generation)
+    {
+        return
+            ALGO_ARCHIVE_REINTRODUCTION_INTERVAL > 0 &&
+            ALGO_ARCHIVE_REINTRODUCTION_COUNT > 0 &&
+            (generation + 1) % ALGO_ARCHIVE_REINTRODUCTION_INTERVAL == 0;
+    }
+
+    ParetoFront sortedArchiveByParetoRank(
+        const ParetoFront& archive,
+        const SpecimenComparator& specimenComparator)
+    {
+        ParetoFront sortedArchive = archive;
+
+        sortPopulationByParetoRank(
+            sortedArchive,
+            specimenComparator);
+
+        return sortedArchive;
+    }
+
+    void replaceTailWithArchiveSpecimens(
+        std::vector<Specimen>& target,
+        const ParetoFront& archive,
+        std::size_t requestedCount,
+        std::size_t startIndex,
+        const SpecimenComparator& specimenComparator)
+    {
+        if (target.empty() || archive.empty() || requestedCount == 0)
+        {
+            return;
+        }
+
+        const std::size_t targetCount =
+            std::min(requestedCount, target.size());
+        std::size_t replacedCount = 0;
+        std::size_t scannedCount = 0;
+
+        while (
+            replacedCount < targetCount &&
+            scannedCount < archive.size())
+        {
+            const Specimen& candidate =
+                archive[(startIndex + scannedCount) % archive.size()];
+            ++scannedCount;
+
+            if (
+                containsSameObjectiveValues(
+                    target,
+                    candidate,
+                    specimenComparator))
+            {
+                continue;
+            }
+
+            target[target.size() - 1 - replacedCount] =
+                candidate;
+            ++replacedCount;
+        }
+    }
+
     ParetoFront updateParetoArchive(
         ParetoFront archive,
         ParetoFront currentFront,
@@ -566,6 +628,14 @@ ParetoFrontHistory Algo::run() const
             std::move(currentFront),
             specimenComparator);
 
+        if (shouldReintroduceArchive(generation))
+        {
+            reintroduceArchive(
+                nextIslands,
+                archive,
+                generation);
+        }
+
         if (verbose)
         {
             printGenerationResult(
@@ -736,6 +806,44 @@ void Algo::migrate(
     }
 }
 
+void Algo::reintroduceArchive(
+    Islands& islands,
+    const ParetoFront& archive,
+    std::size_t generation) const
+{
+    if (islands.empty() || archive.empty())
+    {
+        return;
+    }
+
+    const ParetoFront sortedArchive =
+        sortedArchiveByParetoRank(
+            archive,
+            specimenComparator);
+    std::size_t archiveIndex =
+        generation * ALGO_ARCHIVE_REINTRODUCTION_COUNT;
+
+    for (std::vector<Specimen>& island : islands)
+    {
+        const std::size_t replacementCount =
+            archiveReintroductionCountForIsland(
+                island.size());
+
+        replaceTailWithArchiveSpecimens(
+            island,
+            sortedArchive,
+            replacementCount,
+            archiveIndex,
+            specimenComparator);
+
+        archiveIndex += replacementCount;
+
+        sortPopulationByParetoRank(
+            island,
+            specimenComparator);
+    }
+}
+
 std::size_t Algo::immigrantCountForIsland(
     std::size_t islandSize) const
 {
@@ -746,4 +854,16 @@ std::size_t Algo::immigrantCountForIsland(
     return std::min(
         replaceableCount,
         islandSize * immigrantCount / populationSize);
+}
+
+std::size_t Algo::archiveReintroductionCountForIsland(
+    std::size_t islandSize) const
+{
+    const std::size_t islandEliteCount = std::min(eliteCount, islandSize);
+    const std::size_t replaceableCount =
+        islandSize - islandEliteCount;
+
+    return std::min(
+        replaceableCount,
+        islandSize * ALGO_ARCHIVE_REINTRODUCTION_COUNT / populationSize);
 }

@@ -62,7 +62,15 @@ private:
     void migrate(
         Islands& islands) const;
 
+    void reintroduceArchive(
+        Islands& islands,
+        const ParetoFront& archive,
+        std::size_t generation) const;
+
     std::size_t immigrantCountForIsland(
+        std::size_t islandSize) const;
+
+    std::size_t archiveReintroductionCountForIsland(
         std::size_t islandSize) const;
 
     std::size_t populationSize;
