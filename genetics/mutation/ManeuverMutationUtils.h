@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 
+#include "config/consts.h"
 #include "math/ProbeProperties.h"
 #include "simulation/Maneuver.h"
 
@@ -34,7 +35,7 @@ namespace ManeuverMutationUtils
         if (shouldMutate(rng))
         {
             duration += durationDelta(rng);
-            duration = std::max(0.0L, duration);
+            duration = std::max(MIN_MANEUVER_DURATION, duration);
         }
 
         if (shouldMutate(rng))
