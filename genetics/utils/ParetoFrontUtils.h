@@ -80,6 +80,11 @@ public:
         const std::vector<Specimen>& population,
         const std::vector<std::size_t>& frontIndices);
 
+    static std::vector<Specimen> updateArchive(
+        std::vector<Specimen> archive,
+        std::vector<Specimen> newFront,
+        const SpecimenComparator& specimenComparator);
+
     template <std::ranges::forward_range SpecimenRange>
     requires std::is_lvalue_reference_v<
                  std::ranges::range_reference_t<SpecimenRange>> &&

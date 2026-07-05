@@ -202,6 +202,7 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
             populationSize);
     ParetoFrontHistory history;
     history.reserve(generations);
+    ParetoFront archive;
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
@@ -270,10 +271,16 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
                 rankedPopulation);
         }
 
-        history.push_back(
+        ParetoFront currentFront =
             firstParetoFront(
                 population,
-                rankedPopulation));
+                rankedPopulation);
+        archive = ParetoFrontUtils::updateArchive(
+            std::move(archive),
+            std::move(currentFront),
+            specimenComparator);
+
+        history.push_back(archive);
     }
 
     return history;

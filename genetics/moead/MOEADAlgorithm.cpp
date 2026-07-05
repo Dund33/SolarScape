@@ -292,29 +292,17 @@ namespace
         const FitnessValue& currentFitness =
             current.getFitness().value();
 
-        if (candidateFitness.fuelConstraintViolation <
-            currentFitness.fuelConstraintViolation)
+        const std::partial_ordering comparison =
+            specimenComparator.compare(
+                candidate,
+                current);
+
+        if (comparison == std::partial_ordering::less)
         {
             return true;
         }
 
-        if (currentFitness.fuelConstraintViolation <
-            candidateFitness.fuelConstraintViolation)
-        {
-            return false;
-        }
-
-        const Real candidateTargetViolation =
-            targetWindowViolation(candidateFitness);
-        const Real currentTargetViolation =
-            targetWindowViolation(currentFitness);
-
-        if (candidateTargetViolation < currentTargetViolation)
-        {
-            return true;
-        }
-
-        if (currentTargetViolation < candidateTargetViolation)
+        if (comparison == std::partial_ordering::greater)
         {
             return false;
         }
@@ -468,6 +456,7 @@ ParetoFrontHistory MOEADAlgorithm::run() const
     static thread_local std::mt19937 rng(std::random_device{}());
     ParetoFrontHistory history;
     history.reserve(generations);
+    ParetoFront archive;
 
     for (std::size_t generation = 0;
          generation < generations;
@@ -523,7 +512,12 @@ ParetoFrontHistory MOEADAlgorithm::run() const
                 paretoFront);
         }
 
-        history.push_back(std::move(paretoFront));
+        archive = ParetoFrontUtils::updateArchive(
+            std::move(archive),
+            std::move(paretoFront),
+            specimenComparator);
+
+        history.push_back(archive);
     }
 
     return history;
