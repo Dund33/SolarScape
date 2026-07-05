@@ -16,7 +16,8 @@ public:
     NSGAIIRankingComparator(
         const std::vector<Specimen>& population,
         const std::vector<SpecimenRank>& ranks,
-        const SpecimenComparator& fallbackComparator);
+        const SpecimenComparator& objectiveComparator,
+        bool usesFallbackComparator = true);
 
     std::partial_ordering compare(
         const Specimen& lhs,
@@ -40,7 +41,8 @@ private:
 
     std::unordered_map<const Specimen*, std::size_t> indexBySpecimen;
     const std::vector<SpecimenRank>& ranks;
-    const SpecimenComparator& fallbackComparator;
+    const SpecimenComparator& objectiveComparator;
+    bool usesFallbackComparator;
 };
 
 #endif

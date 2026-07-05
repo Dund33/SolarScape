@@ -28,7 +28,6 @@ public:
     NSGAIIAlgorithm(
         std::size_t populationSize,
         std::size_t generations,
-        std::size_t immigrantCount,
         const SpecimenComparator& specimenComparator,
         Factories factories,
         bool verbose = false
@@ -40,14 +39,12 @@ private:
     std::vector<Specimen> createOffspringPopulation(
         const std::vector<Specimen>& population,
         const SpecimenComparator& selectionComparator,
-        Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) const;
 
     std::size_t populationSize;
     std::size_t generations;
-    std::size_t immigrantCount;
     const SpecimenComparator& specimenComparator;
     Factories factories;
     bool verbose;

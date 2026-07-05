@@ -87,7 +87,6 @@ namespace
         NSGAIIAlgorithm algorithm(
             POPULATION_SIZE,
             GENERATIONS,
-            POPULATION_SIZE / 25,
             specimenComparator,
             factories,
             verbose);

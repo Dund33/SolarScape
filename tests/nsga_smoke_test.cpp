@@ -215,8 +215,18 @@ namespace
                 std::partial_ordering::unordered,
             "Expected in-window fuel/time trade-off to be unordered.");
         expect(
-            comparator.isLess(lowerFuelLater, higherFuelEarlier),
-            "Expected trajectory comparator to break ties by fuel, then time.");
+            !comparator.isLess(lowerFuelLater, higherFuelEarlier),
+            "Expected trajectory comparator not to order an in-window fuel/time trade-off.");
+
+        Specimen lowerFuelSameObjectives =
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 2.0L, 1.0L});
+        Specimen higherFuelSameObjectives =
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 1.0L, 10.0L});
+
+        expect(
+            comparator.compare(lowerFuelSameObjectives, higherFuelSameObjectives) ==
+                std::partial_ordering::less,
+            "Expected trajectory comparator to break equivalent objectives by fuel.");
 
         Specimen closerInsideWindow =
             specimenWithFitness({1.0L, 10.0L, 5.0L});
@@ -270,7 +280,6 @@ namespace
         NSGAIIAlgorithm algorithm(
             4,
             1,
-            0,
             comparator,
             {
                 initializerFactory,

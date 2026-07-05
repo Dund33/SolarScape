@@ -21,3 +21,4 @@ __pycache__
 build-*
 cmake-build-*
 tools/out
+.codex-work

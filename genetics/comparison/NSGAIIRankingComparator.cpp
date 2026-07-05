@@ -5,9 +5,11 @@
 NSGAIIRankingComparator::NSGAIIRankingComparator(
     const std::vector<Specimen>& population,
     const std::vector<SpecimenRank>& ranks,
-    const SpecimenComparator& fallbackComparator)
+    const SpecimenComparator& objectiveComparator,
+    bool usesFallbackComparator)
     : ranks(ranks),
-      fallbackComparator(fallbackComparator)
+      objectiveComparator(objectiveComparator),
+      usesFallbackComparator(usesFallbackComparator)
 {
     if (ranks.size() != population.size())
     {
@@ -51,7 +53,14 @@ std::partial_ordering NSGAIIRankingComparator::compare(
         return std::partial_ordering::greater;
     }
 
-    return fallbackComparator.compare(lhs, rhs);
+    if (usesFallbackComparator)
+    {
+        return objectiveComparator.compare(
+            lhs,
+            rhs);
+    }
+
+    return std::partial_ordering::equivalent;
 }
 
 bool NSGAIIRankingComparator::isLess(
@@ -72,19 +81,26 @@ bool NSGAIIRankingComparator::isLess(
         return false;
     }
 
-    return fallbackComparator.isLess(lhs, rhs);
+    if (usesFallbackComparator)
+    {
+        return objectiveComparator.isLess(
+            lhs,
+            rhs);
+    }
+
+    return false;
 }
 
 std::size_t NSGAIIRankingComparator::objectiveCount() const
 {
-    return fallbackComparator.objectiveCount();
+    return objectiveComparator.objectiveCount();
 }
 
 Real NSGAIIRankingComparator::objectiveValue(
     const FitnessValue& fitness,
     std::size_t objective) const
 {
-    return fallbackComparator.objectiveValue(
+    return objectiveComparator.objectiveValue(
         fitness,
         objective);
 }

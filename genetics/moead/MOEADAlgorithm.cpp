@@ -1,7 +1,6 @@
 #include "MOEADAlgorithm.h"
 
 #include <algorithm>
-#include <compare>
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -292,21 +291,6 @@ namespace
         const FitnessValue& currentFitness =
             current.getFitness().value();
 
-        const std::partial_ordering comparison =
-            specimenComparator.compare(
-                candidate,
-                current);
-
-        if (comparison == std::partial_ordering::less)
-        {
-            return true;
-        }
-
-        if (comparison == std::partial_ordering::greater)
-        {
-            return false;
-        }
-
         const Real candidateScore =
             scalarizedFitness(
                 candidateFitness,
@@ -330,9 +314,7 @@ namespace
             return false;
         }
 
-        return specimenComparator.isLess(
-            candidate,
-            current);
+        return false;
     }
 
     const Specimen& selectRandomNeighbor(

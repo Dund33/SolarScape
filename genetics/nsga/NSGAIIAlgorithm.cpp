@@ -123,7 +123,8 @@ namespace
             const NSGAIIRankingComparator comparator(
                 combinedPopulation,
                 rankedPopulation.ranks,
-                specimenComparator);
+                specimenComparator,
+                false);
 
             std::ranges::sort(
                 sortedFront,
@@ -166,14 +167,12 @@ namespace
 NSGAIIAlgorithm::NSGAIIAlgorithm(
     std::size_t populationSize,
     std::size_t generations,
-    std::size_t immigrantCount,
     const SpecimenComparator& specimenComparator,
     Factories factories,
     bool verbose
 )
     : populationSize(populationSize),
       generations(generations),
-      immigrantCount(immigrantCount),
       specimenComparator(specimenComparator),
       factories(factories),
       verbose(verbose)
@@ -218,13 +217,13 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
         const NSGAIIRankingComparator selectionComparator(
             population,
             rankedParents.ranks,
-            specimenComparator);
+            specimenComparator,
+            false);
 
         std::vector<Specimen> offspring =
             createOffspringPopulation(
                 population,
                 selectionComparator,
-                *initializer,
                 *selection,
                 *crossover,
                 *mutation);
@@ -289,33 +288,22 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
 std::vector<Specimen> NSGAIIAlgorithm::createOffspringPopulation(
     const std::vector<Specimen>& population,
     const SpecimenComparator& selectionComparator,
-    Initializer& initializer,
     Selection& selection,
     Crossover& crossover,
     Mutation& mutation
 ) const
 {
-    const std::size_t effectiveImmigrantCount =
-        std::min(immigrantCount, populationSize);
-    const std::size_t childrenTarget =
-        populationSize - effectiveImmigrantCount;
-
     std::vector<Specimen> offspring;
     offspring.reserve(populationSize);
 
     appendChildren(
         population,
         offspring,
-        childrenTarget,
+        populationSize,
         selectionComparator,
         selection,
         crossover,
         mutation);
-
-    appendImmigrants(
-        offspring,
-        effectiveImmigrantCount,
-        initializer);
 
     return offspring;
 }
