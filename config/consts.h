@@ -6,7 +6,7 @@
 inline constexpr double STANDARD_GRAVITY = 9.80665;
 
 inline constexpr std::size_t POPULATION_SIZE = 200;
-inline constexpr std::size_t GENERATIONS = 800;
+inline constexpr std::size_t GENERATIONS = 600;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
 inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 4;
@@ -16,7 +16,7 @@ inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_INTERVAL = 10;
 inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_COUNT =
     POPULATION_SIZE / 40;
 
-inline constexpr long double TARGET_WINDOW_DISTANCE = 100000.0L;
+inline constexpr long double TARGET_WINDOW_DISTANCE = 1000000.0L;
 
 inline constexpr std::size_t MIN_MANEUVERS = 3;
 inline constexpr std::size_t MAX_MANEUVERS = 25;

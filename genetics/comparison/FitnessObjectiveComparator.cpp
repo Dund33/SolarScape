@@ -103,6 +103,29 @@ std::partial_ordering FitnessObjectiveComparator::compare(
 
     if (!lhsStrictlyBetter && !rhsStrictlyBetter)
     {
+        for (std::size_t tieBreaker = 0;
+             tieBreaker < tieBreakerCount();
+             ++tieBreaker)
+        {
+            const Real lhsValue =
+                tieBreakerValue(
+                    lhsFitness,
+                    tieBreaker);
+            const Real rhsValue =
+                tieBreakerValue(
+                    rhsFitness,
+                    tieBreaker);
+            const std::partial_ordering comparison =
+                compareMinimizedValues(
+                    lhsValue,
+                    rhsValue);
+
+            if (comparison != std::partial_ordering::equivalent)
+            {
+                return comparison;
+            }
+        }
+
         return std::partial_ordering::equivalent;
     }
 
@@ -127,39 +150,6 @@ bool FitnessObjectiveComparator::isLess(
     if (result == std::partial_ordering::greater)
     {
         return false;
-    }
-
-    const FitnessValue& lhsFitness =
-        lhs.getFitness().value();
-    const FitnessValue& rhsFitness =
-        rhs.getFitness().value();
-
-    for (std::size_t tieBreaker = 0;
-         tieBreaker < tieBreakerCount();
-         ++tieBreaker)
-    {
-        const Real lhsValue =
-            tieBreakerValue(
-                lhsFitness,
-                tieBreaker);
-        const Real rhsValue =
-            tieBreakerValue(
-                rhsFitness,
-                tieBreaker);
-        const std::partial_ordering comparison =
-            compareMinimizedValues(
-                lhsValue,
-                rhsValue);
-
-        if (comparison == std::partial_ordering::less)
-        {
-            return true;
-        }
-
-        if (comparison == std::partial_ordering::greater)
-        {
-            return false;
-        }
     }
 
     return false;

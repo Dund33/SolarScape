@@ -1,36 +1,23 @@
 #include "ParetoFrontUtils.h"
 
 #include <algorithm>
+#include <compare>
 #include <ranges>
 #include <utility>
 
 namespace
 {
-    bool hasSameObjectiveValues(
+    bool isEquivalent(
         const Specimen& lhs,
         const Specimen& rhs,
         const SpecimenComparator& specimenComparator)
     {
-        for (std::size_t objective = 0;
-             objective < specimenComparator.objectiveCount();
-             ++objective)
-        {
-            if (
-                specimenComparator.objectiveValue(
-                    lhs.getFitness().value(),
-                    objective) !=
-                specimenComparator.objectiveValue(
-                    rhs.getFitness().value(),
-                    objective))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return specimenComparator.compare(
+            lhs,
+            rhs) == std::partial_ordering::equivalent;
     }
 
-    bool containsSameObjectiveValues(
+    bool containsEquivalentSpecimen(
         const std::vector<Specimen>& front,
         const Specimen& specimen,
         const SpecimenComparator& specimenComparator)
@@ -39,14 +26,14 @@ namespace
             front,
             [&](const Specimen& frontSpecimen)
             {
-                return hasSameObjectiveValues(
+                return isEquivalent(
                     frontSpecimen,
                     specimen,
                     specimenComparator);
             });
     }
 
-    void appendDistinctByObjectiveValues(
+    void appendDistinctSpecimens(
         std::vector<Specimen>& target,
         std::vector<Specimen>& source,
         const SpecimenComparator& specimenComparator)
@@ -54,7 +41,7 @@ namespace
         for (Specimen& specimen : source)
         {
             if (
-                containsSameObjectiveValues(
+                containsEquivalentSpecimen(
                     target,
                     specimen,
                     specimenComparator))
@@ -98,11 +85,11 @@ std::vector<Specimen> ParetoFrontUtils::updateArchive(
     std::vector<Specimen> candidates;
     candidates.reserve(archive.size() + newFront.size());
 
-    appendDistinctByObjectiveValues(
+    appendDistinctSpecimens(
         candidates,
         archive,
         specimenComparator);
-    appendDistinctByObjectiveValues(
+    appendDistinctSpecimens(
         candidates,
         newFront,
         specimenComparator);

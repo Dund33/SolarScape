@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <compare>
 #include <iomanip>
 #include <limits>
 #include <ostream>
@@ -108,31 +109,17 @@ namespace
             std::views::join;
     }
 
-    bool hasSameObjectiveValues(
+    bool isEquivalent(
         const Specimen& lhs,
         const Specimen& rhs,
         const SpecimenComparator& specimenComparator)
     {
-        for (std::size_t objective = 0;
-             objective < specimenComparator.objectiveCount();
-             ++objective)
-        {
-            if (
-                specimenComparator.objectiveValue(
-                    lhs.getFitness().value(),
-                    objective) !=
-                specimenComparator.objectiveValue(
-                    rhs.getFitness().value(),
-                    objective))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return specimenComparator.compare(
+            lhs,
+            rhs) == std::partial_ordering::equivalent;
     }
 
-    bool containsSameObjectiveValues(
+    bool containsEquivalentSpecimen(
         const ParetoFront& front,
         const Specimen& specimen,
         const SpecimenComparator& specimenComparator)
@@ -141,14 +128,14 @@ namespace
             front,
             [&](const Specimen& frontSpecimen)
             {
-                return hasSameObjectiveValues(
+                return isEquivalent(
                     frontSpecimen,
                     specimen,
                     specimenComparator);
             });
     }
 
-    void appendDistinctByObjectiveValues(
+    void appendDistinctSpecimens(
         ParetoFront& target,
         ParetoFront& source,
         const SpecimenComparator& specimenComparator)
@@ -156,7 +143,7 @@ namespace
         for (Specimen& specimen : source)
         {
             if (
-                containsSameObjectiveValues(
+                containsEquivalentSpecimen(
                     target,
                     specimen,
                     specimenComparator))
@@ -226,7 +213,7 @@ namespace
             ++scannedCount;
 
             if (
-                containsSameObjectiveValues(
+                containsEquivalentSpecimen(
                     target,
                     candidate,
                     specimenComparator))
@@ -262,11 +249,11 @@ namespace
         ParetoFront candidates;
         candidates.reserve(archive.size() + newFront.size());
 
-        appendDistinctByObjectiveValues(
+        appendDistinctSpecimens(
             candidates,
             archive,
             specimenComparator);
-        appendDistinctByObjectiveValues(
+        appendDistinctSpecimens(
             candidates,
             newFront,
             specimenComparator);

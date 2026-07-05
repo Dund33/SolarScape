@@ -65,7 +65,7 @@ bool TrajectorySpecimenComparator::prioritizesTargetWindowViolation() const
 
 std::size_t TrajectorySpecimenComparator::tieBreakerCount() const
 {
-    return 5;
+    return 2;
 }
 
 Real TrajectorySpecimenComparator::tieBreakerValue(
@@ -75,15 +75,9 @@ Real TrajectorySpecimenComparator::tieBreakerValue(
     switch (tieBreaker)
     {
     case 0:
-        return targetWindowViolation(fitness);
-    case 1:
-        return fitness.minimumDistance;
-    case 2:
-        return fitness.minimumDistanceTime;
-    case 3:
         return fitness.fuelUsed;
-    case 4:
-        return fitness.fuelConstraintViolation;
+    case 1:
+        return fitness.minimumDistanceTime;
     }
 
     throw std::out_of_range(
