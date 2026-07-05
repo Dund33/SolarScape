@@ -57,18 +57,33 @@ private:
         Islands& islands,
         const FitnessEvaluator& fitnessEvaluator) const;
 
-    void finalizeIslands(
+    void evaluateAndRankIslands(
+        Islands& islands,
+        const FitnessEvaluator& fitnessEvaluator) const;
+
+    void rankIslands(
         Islands& islands) const;
 
-    void finalizeIsland(
+    void rankIsland(
         RankedIsland& island) const;
 
-    auto createNextIsland(
+    auto createCandidateIsland(
         const RankedIsland& island,
         Initializer& initializer,
         Selection& selection,
         Crossover& crossover,
         Mutation& mutation) const -> RankedIsland;
+
+    Islands createCandidateIslands(
+        const Islands& islands,
+        Initializer& initializer,
+        Selection& selection,
+        Crossover& crossover,
+        Mutation& mutation) const;
+
+    void selectEnvironmentalSurvivors(
+        Islands& islands,
+        const Islands& previousIslands) const;
 
     void migrate(
         Islands& islands) const;

@@ -158,8 +158,8 @@ namespace
         double mutationProbability,
         Real maxTimeOffset,
         Real maxDurationOffset,
-        Real maxThrustOffset,
-        const ProbeProperties& probeProperties)
+        Real maxDirectionOffset,
+        Real maxThrottleOffset)
     {
         static thread_local std::mt19937 rng(std::random_device{}());
         std::bernoulli_distribution shouldMutate(mutationProbability);
@@ -169,9 +169,12 @@ namespace
         std::uniform_real_distribution<Real> durationDelta(
             -maxDurationOffset,
              maxDurationOffset);
-        std::uniform_real_distribution<Real> thrustDelta(
-            -maxThrustOffset,
-             maxThrustOffset);
+        std::uniform_real_distribution<Real> directionDelta(
+            -maxDirectionOffset,
+             maxDirectionOffset);
+        std::uniform_real_distribution<Real> throttleDelta(
+            -maxThrottleOffset,
+             maxThrottleOffset);
 
         for (Maneuver& maneuver : maneuvers)
         {
@@ -181,9 +184,9 @@ namespace
                     shouldMutate,
                     timeDelta,
                     durationDelta,
-                    thrustDelta,
-                    rng,
-                    probeProperties);
+                    directionDelta,
+                    throttleDelta,
+                    rng);
         }
     }
 }
@@ -200,8 +203,8 @@ ExtensiveMutation::ExtensiveMutation(
     Real maxDuration,
     Real maxTimeOffset,
     Real maxDurationOffset,
-    Real maxThrustOffset,
-    const ProbeProperties& probeProperties)
+    Real maxDirectionOffset,
+    Real maxThrottleOffset)
     : mutationProbability(mutationProbability),
       addProbability(addProbability),
       removeProbability(removeProbability),
@@ -213,8 +216,8 @@ ExtensiveMutation::ExtensiveMutation(
       maxDuration(maxDuration),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
-      maxThrustOffset(maxThrustOffset),
-      probeProperties(probeProperties)
+      maxDirectionOffset(maxDirectionOffset),
+      maxThrottleOffset(maxThrottleOffset)
 {
     if (mutationProbability < 0.0 || mutationProbability > 1.0)
     {
@@ -283,8 +286,8 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
             mutationProbability,
             maxTimeOffset,
             maxDurationOffset,
-            maxThrustOffset,
-            probeProperties);
+            maxDirectionOffset,
+            maxThrottleOffset);
 
         specimen = Specimen(std::move(maneuvers));
         return;
@@ -316,8 +319,8 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
         mutationProbability,
         maxTimeOffset,
         maxDurationOffset,
-        maxThrustOffset,
-        probeProperties);
+        maxDirectionOffset,
+        maxThrottleOffset);
 
     specimen = Specimen(std::move(maneuvers));
 }

@@ -1,6 +1,7 @@
 #include "SimulationFitnessEvaluator.h"
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -20,6 +21,24 @@ namespace
         return targetBody.position() + relativePoint;
     }
 
+    Real minimumDistanceStartTime(
+        const std::vector<Maneuver>& maneuvers,
+        Real simulationTime)
+    {
+        if (maneuvers.empty())
+        {
+            return simulationTime;
+        }
+
+        const Real firstManeuverEndTime =
+            maneuvers.front().getInitDelay() +
+            maneuvers.front().getDuration();
+
+        return std::clamp(
+            firstManeuverEndTime,
+            0.0L,
+            simulationTime);
+    }
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
@@ -62,10 +81,14 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         throw std::invalid_argument("timeStep must be greater than zero");
     }
 
+    const Real distanceEvaluationStartTime =
+        minimumDistanceStartTime(
+            maneuvers,
+            simulationTime);
+
     auto simulation =
         simulationFactory.create(
             std::move(maneuvers));
-
     Real currentTime = 0.0L;
 
     const Body& simulatedTargetBody =
@@ -79,13 +102,10 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         std::max(0.0L, fuelUsed - simulatedProbe.fuelMass());
 
     Real minimumDistance =
-        distance(
-            simulatedProbe.position(),
-            absolutePointForBody(
-                simulatedTargetBody,
-                targetPointFromTargetBody));
+        std::numeric_limits<Real>::max();
+    Real minimumDistanceTime = distanceEvaluationStartTime;
+    bool hasMinimumDistance = false;
 
-    Real minimumDistanceTime = currentTime;
     while (currentTime < simulationTime)
     {
         const Real remainingTime =
@@ -101,6 +121,11 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
 
         currentTime += stepTime;
 
+        if (currentTime < distanceEvaluationStartTime)
+        {
+            continue;
+        }
+
         const Real currentDistance =
             distance(
                 simulatedProbe.position(),
@@ -108,11 +133,23 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
                     simulatedTargetBody,
                     targetPointFromTargetBody));
 
-        if (currentDistance < minimumDistance)
+        if (!hasMinimumDistance || currentDistance < minimumDistance)
         {
             minimumDistance = currentDistance;
             minimumDistanceTime = currentTime;
+            hasMinimumDistance = true;
         }
+    }
+
+    if (!hasMinimumDistance)
+    {
+        minimumDistance =
+            distance(
+                simulatedProbe.position(),
+                absolutePointForBody(
+                    simulatedTargetBody,
+                    targetPointFromTargetBody));
+        minimumDistanceTime = currentTime;
     }
 
     return {

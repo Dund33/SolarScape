@@ -9,10 +9,10 @@ inline constexpr std::size_t POPULATION_SIZE = 200;
 inline constexpr std::size_t GENERATIONS = 500;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
-inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 4;
+inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 2;
 inline constexpr std::size_t ALGO_MIGRATION_INTERVAL = 10;
 inline constexpr std::size_t ALGO_MIN_MIGRANT_COUNT = 1;
-inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_INTERVAL = 1;
+inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_INTERVAL = 5;
 inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_COUNT =
     POPULATION_SIZE / 25;
 
@@ -27,14 +27,15 @@ inline constexpr long double MIN_MANEUVER_DURATION = 1.0L;
 inline constexpr long double MAX_MANEUVER_DURATION = 10000.0L;
 
 inline constexpr double MUTATION_PROBABILITY = 0.15;
-inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.7;
-inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.15;
-inline constexpr long double MUTATION_TIME_RANGE = 10000.0L;
+inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.45;
+inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.20;
+inline constexpr long double MUTATION_TIME_RANGE = 15000.0L;
 inline constexpr long double MUTATION_DURATION_RANGE = 5000.0L;
-inline constexpr long double MUTATION_THRUST_RANGE = 1000.0L;
+inline constexpr long double MUTATION_DIRECTION_RANGE = 0.35L;
+inline constexpr long double MUTATION_THROTTLE_RANGE = 0.25L;
 
-inline constexpr long double ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.2L;
+inline constexpr long double ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.4L;
 
-inline constexpr std::size_t TOURNAMENT_SIZE = 4;
+inline constexpr std::size_t TOURNAMENT_SIZE = 3;
 
 #endif

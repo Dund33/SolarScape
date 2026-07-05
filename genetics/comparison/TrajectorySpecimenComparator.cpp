@@ -5,6 +5,31 @@
 
 #include "genetics/fitness/FitnessMetrics.h"
 
+namespace
+{
+    bool isInsideTargetWindow(
+        const FitnessValue& fitness)
+    {
+        return targetWindowViolation(fitness) <= 0.0L;
+    }
+
+    Real fuelObjective(
+        const FitnessValue& fitness)
+    {
+        return isInsideTargetWindow(fitness)
+            ? fitness.fuelUsed
+            : 0.0L;
+    }
+
+    Real timeObjective(
+        const FitnessValue& fitness)
+    {
+        return isInsideTargetWindow(fitness)
+            ? fitness.minimumDistanceTime
+            : 0.0L;
+    }
+}
+
 std::size_t TrajectorySpecimenComparator::objectiveCount() const
 {
     return 3;
@@ -17,11 +42,11 @@ Real TrajectorySpecimenComparator::objectiveValue(
     switch (objective)
     {
     case 0:
-        return targetWindowViolation(fitness);
+        return fitness.minimumDistance;
     case 1:
-        return fitness.fuelUsed;
+        return fuelObjective(fitness);
     case 2:
-        return fitness.minimumDistanceTime;
+        return timeObjective(fitness);
     }
 
     throw std::out_of_range(
@@ -52,11 +77,11 @@ Real TrajectorySpecimenComparator::tieBreakerValue(
     case 0:
         return targetWindowViolation(fitness);
     case 1:
-        return fitness.fuelUsed;
+        return fitness.minimumDistance;
     case 2:
         return fitness.minimumDistanceTime;
     case 3:
-        return fitness.minimumDistance;
+        return fitness.fuelUsed;
     case 4:
         return fitness.fuelConstraintViolation;
     }

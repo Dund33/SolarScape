@@ -65,7 +65,7 @@ namespace
         }
     };
 
-    void sortPopulationByParetoRank(
+    void sortByRankAndCrowding(
         std::vector<Specimen>& population,
         const SpecimenComparator& specimenComparator)
     {
@@ -168,7 +168,7 @@ namespace
         }
     }
 
-    void appendSpecimensBySortedIndices(
+    void appendTopRankedSpecimens(
         std::vector<Specimen>& target,
         const std::vector<Specimen>& source,
         const std::vector<std::size_t>& sortedIndices,
@@ -195,20 +195,25 @@ namespace
             (generation + 1) % ALGO_ARCHIVE_REINTRODUCTION_INTERVAL == 0;
     }
 
-    void replaceTailWithArchiveSpecimens(
+    void replaceWorstWithArchiveSpecimens(
         std::vector<Specimen>& target,
+        const std::vector<std::size_t>& sortedTargetIndices,
         const ParetoFront& archive,
         std::size_t requestedCount,
         std::size_t startIndex,
         const SpecimenComparator& specimenComparator)
     {
-        if (target.empty() || archive.empty() || requestedCount == 0)
+        if (
+            target.empty() ||
+            sortedTargetIndices.empty() ||
+            archive.empty() ||
+            requestedCount == 0)
         {
             return;
         }
 
         const std::size_t targetCount =
-            std::min(requestedCount, target.size());
+            std::min(requestedCount, sortedTargetIndices.size());
         std::size_t replacedCount = 0;
         std::size_t scannedCount = 0;
 
@@ -229,19 +234,33 @@ namespace
                 continue;
             }
 
-            target[target.size() - 1 - replacedCount] =
+            const std::size_t replacementIndex =
+                sortedTargetIndices[
+                    sortedTargetIndices.size() - 1 - replacedCount];
+
+            target[replacementIndex] =
                 candidate;
             ++replacedCount;
         }
     }
 
+    ParetoFront firstFrontOf(
+        auto& islands,
+        const SpecimenComparator& specimenComparator)
+    {
+        return ParetoFrontUtils::firstFront(
+            specimensIn(
+                islands),
+            specimenComparator);
+    }
+
     ParetoFront updateParetoArchive(
         ParetoFront archive,
-        ParetoFront currentFront,
+        ParetoFront newFront,
         const SpecimenComparator& specimenComparator)
     {
         ParetoFront candidates;
-        candidates.reserve(archive.size() + currentFront.size());
+        candidates.reserve(archive.size() + newFront.size());
 
         appendDistinctByObjectiveValues(
             candidates,
@@ -249,7 +268,7 @@ namespace
             specimenComparator);
         appendDistinctByObjectiveValues(
             candidates,
-            currentFront,
+            newFront,
             specimenComparator);
 
         if (candidates.empty())
@@ -572,40 +591,34 @@ ParetoFrontHistory Algo::run() const
         createIslands(
             *initializer);
 
-    evaluateIslands(
+    evaluateAndRankIslands(
         islands,
         *fitnessEvaluator);
-    finalizeIslands(
-        islands);
 
     ParetoFrontHistory history;
     history.reserve(generations);
     ParetoFront archive =
-        ParetoFrontUtils::firstFront(
-            specimensIn(
-                islands),
+        firstFrontOf(
+            islands,
             specimenComparator);
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
-        Islands nextIslands;
-        nextIslands.reserve(islands.size());
+        Islands nextIslands =
+            createCandidateIslands(
+                islands,
+                *initializer,
+                *selection,
+                *crossover,
+                *mutation);
 
-        for (const auto& island : islands)
-        {
-            nextIslands.push_back(
-                createNextIsland(
-                    island,
-                    *initializer,
-                    *selection,
-                    *crossover,
-                    *mutation));
-        }
-
-        evaluateIslands(
+        evaluateAndRankIslands(
             nextIslands,
             *fitnessEvaluator);
-        finalizeIslands(
+        selectEnvironmentalSurvivors(
+            nextIslands,
+            islands);
+        rankIslands(
             nextIslands);
 
         if (
@@ -614,16 +627,17 @@ ParetoFrontHistory Algo::run() const
         {
             migrate(
                 nextIslands);
+            rankIslands(
+                nextIslands);
         }
 
-        ParetoFront currentFront =
-            ParetoFrontUtils::firstFront(
-                specimensIn(
-                    nextIslands),
+        ParetoFront frontBeforeArchiveReintroduction =
+            firstFrontOf(
+                nextIslands,
                 specimenComparator);
         archive = updateParetoArchive(
             std::move(archive),
-            std::move(currentFront),
+            frontBeforeArchiveReintroduction,
             specimenComparator);
 
         if (shouldReintroduceArchive(generation))
@@ -634,15 +648,20 @@ ParetoFrontHistory Algo::run() const
                 generation);
         }
 
-        finalizeIslands(
+        rankIslands(
             nextIslands);
 
         if (verbose)
         {
+            ParetoFront finalPopulationFront =
+                firstFrontOf(
+                    nextIslands,
+                    specimenComparator);
+
             printGenerationResult(
                 generation,
                 nextIslands,
-                archive);
+                finalPopulationFront);
         }
 
         if (diversityLog != nullptr)
@@ -709,17 +728,28 @@ void Algo::evaluateIslands(
         fitnessEvaluator);
 }
 
-void Algo::finalizeIslands(
+void Algo::evaluateAndRankIslands(
+    Islands& islands,
+    const FitnessEvaluator& fitnessEvaluator) const
+{
+    evaluateIslands(
+        islands,
+        fitnessEvaluator);
+    rankIslands(
+        islands);
+}
+
+void Algo::rankIslands(
     Islands& islands) const
 {
     for (RankedIsland& island : islands)
     {
-        finalizeIsland(
+        rankIsland(
             island);
     }
 }
 
-void Algo::finalizeIsland(
+void Algo::rankIsland(
     RankedIsland& island) const
 {
     island.ranking =
@@ -733,7 +763,7 @@ void Algo::finalizeIsland(
             specimenComparator);
 }
 
-auto Algo::createNextIsland(
+auto Algo::createCandidateIsland(
     const RankedIsland& island,
     Initializer& initializer,
     Selection& selection,
@@ -743,13 +773,16 @@ auto Algo::createNextIsland(
     const std::size_t islandSize =
         island.specimens.size();
     std::vector<Specimen> nextIsland;
-    nextIsland.reserve(islandSize);
+    const std::size_t immigrantCount =
+        immigrantCountForIsland(
+            islandSize);
+    nextIsland.reserve(
+        islandSize * 2 + immigrantCount);
 
-    appendSpecimensBySortedIndices(
-        nextIsland,
-        island.specimens,
-        island.sortedIndices,
-        eliteCount);
+    for (const Specimen& specimen : island.specimens)
+    {
+        nextIsland.push_back(specimen);
+    }
 
     const NSGAIIRankingComparator selectionComparator(
         island.specimens,
@@ -759,22 +792,89 @@ auto Algo::createNextIsland(
     appendChildren(
         island.specimens,
         nextIsland,
-        islandSize,
+        islandSize * 2,
         selectionComparator,
         selection,
         crossover,
         mutation);
 
-    replaceTailWithImmigrants(
+    appendImmigrants(
         nextIsland,
-        immigrantCountForIsland(
-            islandSize),
+        immigrantCount,
         initializer);
 
     return RankedIsland{
         std::move(nextIsland),
         ParetoRankedPopulation{},
         {}};
+}
+
+Algo::Islands Algo::createCandidateIslands(
+    const Islands& islands,
+    Initializer& initializer,
+    Selection& selection,
+    Crossover& crossover,
+    Mutation& mutation) const
+{
+    Islands candidateIslands;
+    candidateIslands.reserve(islands.size());
+
+    for (const RankedIsland& island : islands)
+    {
+        candidateIslands.push_back(
+            createCandidateIsland(
+                island,
+                initializer,
+                selection,
+                crossover,
+                mutation));
+    }
+
+    return candidateIslands;
+}
+
+void Algo::selectEnvironmentalSurvivors(
+    Islands& islands,
+    const Islands& previousIslands) const
+{
+    const std::size_t islandCount =
+        std::min(
+            islands.size(),
+            previousIslands.size());
+
+    for (std::size_t islandIndex = 0;
+         islandIndex < islandCount;
+         ++islandIndex)
+    {
+        RankedIsland& island =
+            islands[islandIndex];
+        const std::size_t targetSize =
+            previousIslands[islandIndex].specimens.size();
+
+        if (island.specimens.size() <= targetSize)
+        {
+            continue;
+        }
+
+        std::vector<Specimen> survivors;
+        survivors.reserve(targetSize);
+
+        const std::size_t survivorCount =
+            std::min(
+                targetSize,
+                island.sortedIndices.size());
+
+        for (std::size_t i = 0; i < survivorCount; ++i)
+        {
+            survivors.push_back(
+                std::move(
+                    island.specimens[island.sortedIndices[i]]));
+        }
+
+        island.specimens = std::move(survivors);
+        island.ranking = ParetoRankedPopulation{};
+        island.sortedIndices.clear();
+    }
 }
 
 void Algo::migrate(
@@ -798,7 +898,7 @@ void Algo::migrate(
             std::min(
                 migrantCount,
                 island.specimens.size()));
-        appendSpecimensBySortedIndices(
+        appendTopRankedSpecimens(
             migrantGroup,
             island.specimens,
             island.sortedIndices,
@@ -838,7 +938,7 @@ void Algo::reintroduceArchive(
     }
 
     ParetoFront sortedArchive = archive;
-    sortPopulationByParetoRank(
+    sortByRankAndCrowding(
         sortedArchive,
         specimenComparator);
     std::size_t archiveIndex =
@@ -850,8 +950,9 @@ void Algo::reintroduceArchive(
             archiveReintroductionCountForIsland(
                 island.specimens.size());
 
-        replaceTailWithArchiveSpecimens(
+        replaceWorstWithArchiveSpecimens(
             island.specimens,
+            island.sortedIndices,
             sortedArchive,
             replacementCount,
             archiveIndex,

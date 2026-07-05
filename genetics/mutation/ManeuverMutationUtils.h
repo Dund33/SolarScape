@@ -5,7 +5,7 @@
 #include <random>
 
 #include "config/consts.h"
-#include "math/ProbeProperties.h"
+#include "math/Vector3.h"
 #include "simulation/Maneuver.h"
 
 namespace ManeuverMutationUtils
@@ -15,14 +15,12 @@ namespace ManeuverMutationUtils
         std::bernoulli_distribution& shouldMutate,
         std::uniform_real_distribution<Real>& timeDelta,
         std::uniform_real_distribution<Real>& durationDelta,
-        std::uniform_real_distribution<Real>& thrustDelta,
-        std::mt19937& rng,
-        const ProbeProperties& probeProperties)
+        std::uniform_real_distribution<Real>& directionDelta,
+        std::uniform_real_distribution<Real>& throttleDelta,
+        std::mt19937& rng)
     {
-        Vector3 throttleVector =
-            maneuver.getThrustDirection() *
-            maneuver.getThrottleValue();
-
+        Vector3 thrustDirection = maneuver.getThrustDirection();
+        Real throttleValue = maneuver.getThrottleValue();
         Real initDelay = maneuver.getInitDelay();
         Real duration = maneuver.getDuration();
 
@@ -40,33 +38,27 @@ namespace ManeuverMutationUtils
 
         if (shouldMutate(rng))
         {
-            const Real maxPhysicalThrust =
-                probeProperties.fuelFlow() *
-                probeProperties.specificImpulse();
-            const Real thrustScale =
-                maxPhysicalThrust > 0.0L
-                    ? maxPhysicalThrust
-                    : 1.0L;
-
-            throttleVector.x += thrustDelta(rng) / thrustScale;
-            throttleVector.y += thrustDelta(rng) / thrustScale;
-            throttleVector.z += thrustDelta(rng) / thrustScale;
+            thrustDirection.x += directionDelta(rng);
+            thrustDirection.y += directionDelta(rng);
+            thrustDirection.z += directionDelta(rng);
         }
 
-        const Real throttleNorm =
-            std::clamp(
-                throttleVector.norm(),
+        if (shouldMutate(rng))
+        {
+            throttleValue = std::clamp(
+                throttleValue + throttleDelta(rng),
                 0.0L,
                 1.0L);
+        }
 
-        if (throttleNorm <= 0.0L)
+        if (throttleValue <= 0.0L || thrustDirection.norm() <= 0.0L)
         {
             return Maneuver(Vector3{}, 0.0L, initDelay, duration);
         }
 
         return Maneuver(
-            throttleVector / throttleVector.norm(),
-            throttleNorm,
+            thrustDirection,
+            throttleValue,
             initDelay,
             duration);
     }

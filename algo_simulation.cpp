@@ -106,8 +106,8 @@ namespace
             MAX_MANEUVER_DURATION,
             MUTATION_TIME_RANGE,
             MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE,
-            state.probeProperties);
+            MUTATION_DIRECTION_RANGE,
+            MUTATION_THROTTLE_RANGE);
 
         SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.timeStep,

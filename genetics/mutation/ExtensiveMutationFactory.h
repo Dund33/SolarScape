@@ -4,7 +4,6 @@
 #include <cstddef>
 
 #include "genetics/mutation/MutationFactory.h"
-#include "math/ProbeProperties.h"
 #include "math/Real.h"
 
 class ExtensiveMutationFactory final : public MutationFactory
@@ -22,8 +21,8 @@ public:
         Real maxDuration,
         Real maxTimeOffset,
         Real maxDurationOffset,
-        Real maxThrustOffset,
-        const ProbeProperties& probeProperties);
+        Real maxDirectionOffset,
+        Real maxThrottleOffset);
 
     std::unique_ptr<Mutation> create() const override;
 
@@ -39,8 +38,8 @@ private:
     Real maxDuration;
     Real maxTimeOffset;
     Real maxDurationOffset;
-    Real maxThrustOffset;
-    ProbeProperties probeProperties;
+    Real maxDirectionOffset;
+    Real maxThrottleOffset;
 };
 
 #endif

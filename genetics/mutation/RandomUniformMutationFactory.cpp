@@ -8,14 +8,14 @@ RandomUniformMutationFactory::RandomUniformMutationFactory(
     double mutationProbability,
     Real maxTimeOffset,
     Real maxDurationOffset,
-    Real maxThrustOffset,
-    const ProbeProperties& probeProperties
+    Real maxDirectionOffset,
+    Real maxThrottleOffset
 )
     : mutationProbability(mutationProbability),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
-      maxThrustOffset(maxThrustOffset),
-      probeProperties(probeProperties)
+      maxDirectionOffset(maxDirectionOffset),
+      maxThrottleOffset(maxThrottleOffset)
 {
 }
 
@@ -25,6 +25,6 @@ std::unique_ptr<Mutation> RandomUniformMutationFactory::create() const
         mutationProbability,
         maxTimeOffset,
         maxDurationOffset,
-        maxThrustOffset,
-        probeProperties);
+        maxDirectionOffset,
+        maxThrottleOffset);
 }

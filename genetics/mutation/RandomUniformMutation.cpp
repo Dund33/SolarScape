@@ -10,14 +10,14 @@ RandomUniformMutation::RandomUniformMutation(
     double mutationProbability,
     long double maxTimeOffset,
     long double maxDurationOffset,
-    long double maxThrustOffset,
-    const ProbeProperties& probeProperties
+    long double maxDirectionOffset,
+    long double maxThrottleOffset
 )
     : mutationProbability(mutationProbability),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
-      maxThrustOffset(maxThrustOffset),
-      probeProperties(probeProperties)
+      maxDirectionOffset(maxDirectionOffset),
+      maxThrottleOffset(maxThrottleOffset)
 {
     if (mutationProbability < 0.0 || mutationProbability > 1.0)
     {
@@ -48,9 +48,14 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
          maxDurationOffset
     );
 
-    std::uniform_real_distribution<Real> thrustDelta(
-        -maxThrustOffset,
-         maxThrustOffset
+    std::uniform_real_distribution<Real> directionDelta(
+        -maxDirectionOffset,
+         maxDirectionOffset
+    );
+
+    std::uniform_real_distribution<Real> throttleDelta(
+        -maxThrottleOffset,
+         maxThrottleOffset
     );
 
     for (std::size_t i = 0; i < specimen.size(); ++i)
@@ -61,9 +66,9 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
                 shouldMutate,
                 timeDelta,
                 durationDelta,
-                thrustDelta,
-                rng,
-                probeProperties);
+                directionDelta,
+                throttleDelta,
+                rng);
     }
 
     specimen.clearFitness();

@@ -16,8 +16,8 @@ ExtensiveMutationFactory::ExtensiveMutationFactory(
     Real maxDuration,
     Real maxTimeOffset,
     Real maxDurationOffset,
-    Real maxThrustOffset,
-    const ProbeProperties& probeProperties)
+    Real maxDirectionOffset,
+    Real maxThrottleOffset)
     : mutationProbability(mutationProbability),
       addProbability(addProbability),
       removeProbability(removeProbability),
@@ -29,8 +29,8 @@ ExtensiveMutationFactory::ExtensiveMutationFactory(
       maxDuration(maxDuration),
       maxTimeOffset(maxTimeOffset),
       maxDurationOffset(maxDurationOffset),
-      maxThrustOffset(maxThrustOffset),
-      probeProperties(probeProperties)
+      maxDirectionOffset(maxDirectionOffset),
+      maxThrottleOffset(maxThrottleOffset)
 {
 }
 
@@ -48,6 +48,6 @@ std::unique_ptr<Mutation> ExtensiveMutationFactory::create() const
         maxDuration,
         maxTimeOffset,
         maxDurationOffset,
-        maxThrustOffset,
-        probeProperties);
+        maxDirectionOffset,
+        maxThrottleOffset);
 }
