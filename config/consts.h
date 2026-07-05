@@ -6,7 +6,7 @@
 inline constexpr double STANDARD_GRAVITY = 9.80665;
 
 inline constexpr std::size_t POPULATION_SIZE = 200;
-inline constexpr std::size_t GENERATIONS = 200;
+inline constexpr std::size_t GENERATIONS = 300;
 inline constexpr std::size_t ELITE_COUNT = 2;
 
 inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 2;
