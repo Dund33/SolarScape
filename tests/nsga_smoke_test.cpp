@@ -173,7 +173,9 @@ namespace
     class NoopMutation final : public Mutation
     {
     public:
-        void mutate(Specimen&) const override
+        void mutate(
+            Specimen&,
+            bool = false) const override
         {
         }
     };
