@@ -22,24 +22,6 @@ namespace
         return targetBody.position() + relativePoint;
     }
 
-    Real minimumDistanceStartTime(
-        const std::vector<Maneuver>& maneuvers,
-        Real simulationTime)
-    {
-        if (maneuvers.empty())
-        {
-            return simulationTime;
-        }
-
-        const Real firstManeuverEndTime =
-            maneuvers.front().getInitDelay() +
-            maneuvers.front().getDuration();
-
-        return std::clamp(
-            firstManeuverEndTime,
-            0.0,
-            simulationTime);
-    }
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
@@ -99,11 +81,6 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         throw std::invalid_argument("timeStep must be greater than zero");
     }
 
-    const Real distanceEvaluationStartTime =
-        minimumDistanceStartTime(
-            maneuvers,
-            simulationTime);
-
     auto simulation =
         simulationFactory.create(
             std::move(maneuvers));
@@ -121,7 +98,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
 
     Real minimumDistance =
         std::numeric_limits<Real>::max();
-    Real minimumDistanceTime = distanceEvaluationStartTime;
+    Real minimumDistanceTime = 0.0;
     bool hasMinimumDistance = false;
 
     while (currentTime < simulationTime)
@@ -138,11 +115,6 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
             stepTime);
 
         currentTime += stepTime;
-
-        if (currentTime < distanceEvaluationStartTime)
-        {
-            continue;
-        }
 
         const Real currentDistance =
             distance(

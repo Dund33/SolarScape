@@ -25,24 +25,6 @@ namespace
         return targetBodyPosition + relativePoint;
     }
 
-    Real minimumDistanceStartTime(
-        const std::vector<Maneuver>& maneuvers,
-        Real simulationTime)
-    {
-        if (maneuvers.empty())
-        {
-            return simulationTime;
-        }
-
-        const Real firstManeuverEndTime =
-            maneuvers.front().getInitDelay() +
-            maneuvers.front().getDuration();
-
-        return std::clamp(
-            firstManeuverEndTime,
-            0.0,
-            simulationTime);
-    }
 }
 
 VectorSimulationFitnessEvaluator::VectorSimulationFitnessEvaluator(
@@ -179,18 +161,6 @@ std::vector<FitnessValue> VectorSimulationFitnessEvaluator::calculateFitnessValu
             "timeStep must be greater than zero");
     }
 
-    std::vector<Real> distanceEvaluationStartTimes;
-    distanceEvaluationStartTimes.reserve(
-        maneuverBatch.size());
-
-    for (const std::vector<Maneuver>& maneuvers : maneuverBatch)
-    {
-        distanceEvaluationStartTimes.push_back(
-            minimumDistanceStartTime(
-                maneuvers,
-                simulationTime));
-    }
-
     auto simulation =
         simulationFactory.create(
             std::move(maneuverBatch));
@@ -202,8 +172,8 @@ std::vector<FitnessValue> VectorSimulationFitnessEvaluator::calculateFitnessValu
         batchSize,
         std::numeric_limits<Real>::max());
     std::vector<Real> minimumDistanceTimes(
-        distanceEvaluationStartTimes.begin(),
-        distanceEvaluationStartTimes.end());
+        batchSize,
+        0.0);
     std::vector<bool> hasMinimumDistance(
         batchSize,
         false);
@@ -229,11 +199,6 @@ std::vector<FitnessValue> VectorSimulationFitnessEvaluator::calculateFitnessValu
              laneIndex < batchSize;
              ++laneIndex)
         {
-            if (currentTime < distanceEvaluationStartTimes[laneIndex])
-            {
-                continue;
-            }
-
             const Real currentDistance =
                 distance(
                     simulation->probePosition(
