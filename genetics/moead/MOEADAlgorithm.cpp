@@ -67,7 +67,7 @@ namespace
         std::size_t divisions)
     {
         std::vector<WeightVector> weightVectors;
-        WeightVector current(objectiveCount, 0.0L);
+        WeightVector current(objectiveCount, 0.0);
 
         appendLatticeWeightVectors(
             weightVectors,
@@ -87,7 +87,7 @@ namespace
         {
             return std::vector<WeightVector>(
                 populationSize,
-                WeightVector{1.0L});
+                WeightVector{1.0});
         }
 
         if (populationSize == 1)
@@ -95,7 +95,7 @@ namespace
             return {
                 WeightVector(
                     objectiveCount,
-                    1.0L / static_cast<Real>(objectiveCount))};
+                    1.0 / static_cast<Real>(objectiveCount))};
         }
 
         std::size_t divisions = 1;
@@ -135,7 +135,7 @@ namespace
         const WeightVector& lhs,
         const WeightVector& rhs)
     {
-        Real distance = 0.0L;
+        Real distance = 0.0;
 
         for (std::size_t i = 0; i < lhs.size(); ++i)
         {
@@ -264,14 +264,14 @@ namespace
                 bounds.nadir[objective] -
                 bounds.ideal[objective];
             const Real normalizedDifference =
-                objectiveRange == 0.0L
-                    ? 0.0L
+                objectiveRange == 0.0
+                    ? 0.0
                     : std::abs(
                         objectiveValue -
                         bounds.ideal[objective]) /
                         objectiveRange;
             const Real effectiveWeight =
-                std::max(weightVector[objective], 1.0e-12L);
+                std::max(weightVector[objective], 1.0e-12);
 
             score = std::max(score, effectiveWeight * normalizedDifference);
         }

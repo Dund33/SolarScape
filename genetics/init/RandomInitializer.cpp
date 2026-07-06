@@ -11,10 +11,10 @@
 RandomInitializer::RandomInitializer(
     std::size_t minManeuvers,
     std::size_t maxManeuvers,
-    long double minInitTime,
-    long double maxInitTime,
-    long double minDuration,
-    long double maxDuration,
+    Real minInitTime,
+    Real maxInitTime,
+    Real minDuration,
+    Real maxDuration,
     const ProbeProperties& probeProperties
 )
     : minManeuvers(minManeuvers),
@@ -50,25 +50,25 @@ Specimen RandomInitializer::createCandidate(
         maxManeuvers
     );
 
-    std::uniform_real_distribution<long double> initTimeDist(
+    std::uniform_real_distribution<Real> initTimeDist(
         minInitTime,
         maxInitTime
     );
 
-    std::uniform_real_distribution<long double> directionDist(
-        -1.0L,
-        1.0L
+    std::uniform_real_distribution<Real> directionDist(
+        -1.0,
+        1.0
     );
 
-    std::uniform_real_distribution<long double> throttleDist(
-        0.0L,
-        1.0L
+    std::uniform_real_distribution<Real> throttleDist(
+        0.0,
+        1.0
     );
 
     const std::size_t maneuverCount = maneuverCountDist(rng);
 
     Specimen specimen;
-    long double usedFuel = 0.0L;
+    Real usedFuel = 0.0;
 
     for (std::size_t i = 0; i < maneuverCount; ++i)
     {
@@ -78,39 +78,39 @@ Specimen RandomInitializer::createCandidate(
             directionDist(rng)
         );
 
-        const long double directionNorm = direction.norm();
+        const Real directionNorm = direction.norm();
 
-        if (directionNorm <= 0.0L)
+        if (directionNorm <= 0.0)
         {
             continue;
         }
 
         direction = direction / directionNorm;
 
-        const long double throttleValue = throttleDist(rng);
+        const Real throttleValue = throttleDist(rng);
 
-        if (throttleValue <= 0.0L)
+        if (throttleValue <= 0.0)
         {
             continue;
         }
 
-        const long double remainingFuel =
+        const Real remainingFuel =
             probeProperties.fuelMass() - usedFuel;
 
-        if (remainingFuel <= 0.0L)
+        if (remainingFuel <= 0.0)
         {
             break;
         }
 
-        const long double fuelUsageRate =
+        const Real fuelUsageRate =
             throttleValue * probeProperties.fuelFlow();
 
-        if (fuelUsageRate <= 0.0L)
+        if (fuelUsageRate <= 0.0)
         {
             continue;
         }
 
-        const long double maxAllowedDuration =
+        const Real maxAllowedDuration =
             remainingFuel / fuelUsageRate;
 
         if (maxAllowedDuration < minDuration)
@@ -118,13 +118,13 @@ Specimen RandomInitializer::createCandidate(
             break;
         }
 
-        std::uniform_real_distribution<long double> durationDist(
+        std::uniform_real_distribution<Real> durationDist(
             minDuration,
             std::min(maxDuration, maxAllowedDuration)
         );
 
-        const long double duration = durationDist(rng);
-        const long double initDelay = initTimeDist(rng);
+        const Real duration = durationDist(rng);
+        const Real initDelay = initTimeDist(rng);
 
         specimen.addManeuver(
             Maneuver(direction, throttleValue, initDelay, duration)

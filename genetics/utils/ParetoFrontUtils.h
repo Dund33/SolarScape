@@ -119,7 +119,7 @@ public:
 
             ++stats.size;
 
-            if (fitness.fuelConstraintViolation <= 0.0L)
+            if (fitness.fuelConstraintViolation <= 0.0)
             {
                 ++stats.fuelFeasibleCount;
             }

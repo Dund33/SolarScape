@@ -38,20 +38,20 @@ namespace
         {
             return count > 0
                 ? sum / static_cast<Real>(count)
-                : 0.0L;
+                : 0.0;
         }
 
         Real stddev() const
         {
             if (count < 2)
             {
-                return 0.0L;
+                return 0.0;
             }
 
             const Real avg = mean();
             const Real variance =
                 std::max(
-                    0.0L,
+                    0.0,
                     sumSquares / static_cast<Real>(count) - avg * avg);
 
             return std::sqrt(variance);
@@ -162,7 +162,7 @@ namespace
             const FitnessValue& fitness =
                 specimen.getFitness().value();
 
-            if (fitness.fuelConstraintViolation <= 0.0L)
+            if (fitness.fuelConstraintViolation <= 0.0)
             {
                 ++stats.fuelFeasibleCount;
             }

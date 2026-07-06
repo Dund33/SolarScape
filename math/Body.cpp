@@ -1,6 +1,6 @@
 #include "Body.h"
 
-Body::Body() : mass_(0.0L)
+Body::Body() : mass_(0.0)
 {
 }
 

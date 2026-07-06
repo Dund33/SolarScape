@@ -142,7 +142,7 @@ void ParetoRanking::calculateCrowdingDistance(
 
     for (std::size_t specimenIndex : front)
     {
-        ranks[specimenIndex].crowdingDistance = 0.0L;
+        ranks[specimenIndex].crowdingDistance = 0.0;
     }
 
     if (front.size() <= 2)
@@ -189,7 +189,7 @@ void ParetoRanking::calculateCrowdingDistance(
                 objective);
         const Real valueRange = maximumValue - minimumValue;
 
-        if (valueRange == 0.0L)
+        if (valueRange == 0.0)
         {
             continue;
         }

@@ -10,7 +10,7 @@ namespace
     bool isInsideTargetWindow(
         const FitnessValue& fitness)
     {
-        return targetWindowViolation(fitness) <= 0.0L;
+        return targetWindowViolation(fitness) <= 0.0;
     }
 
     Real fuelObjective(
@@ -18,7 +18,7 @@ namespace
     {
         return isInsideTargetWindow(fitness)
             ? fitness.fuelUsed
-            : 0.0L;
+            : 0.0;
     }
 
     Real timeObjective(
@@ -26,7 +26,7 @@ namespace
     {
         return isInsideTargetWindow(fitness)
             ? fitness.minimumDistanceTime
-            : 0.0L;
+            : 0.0;
     }
 }
 

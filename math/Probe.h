@@ -37,10 +37,10 @@ public:
     void setSpecificImpulse(Real specificImpulse);
 
 private:
-    Real emptyMass_{0.0L};
-    Real fuelMass_{0.0L};
-    Real fuelFlow_{0.0L};
-    Real specificImpulse_{0.0L};
+    Real emptyMass_{0.0};
+    Real fuelMass_{0.0};
+    Real fuelFlow_{0.0};
+    Real specificImpulse_{0.0};
 };
 
 

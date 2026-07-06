@@ -37,11 +37,11 @@ namespace
             minDuration,
             maxDuration);
         std::uniform_real_distribution<Real> directionDist(
-            -1.0L,
-            1.0L);
+            -1.0,
+            1.0);
         std::uniform_real_distribution<Real> throttleDist(
-            0.0L,
-            1.0L);
+            0.0,
+            1.0);
 
         Vector3 direction;
 
@@ -52,7 +52,7 @@ namespace
                 directionDist(rng),
                 directionDist(rng));
         }
-        while (direction.norm() <= 0.0L);
+        while (direction.norm() <= 0.0);
 
         direction = direction / direction.norm();
 
@@ -98,7 +98,7 @@ namespace
         const Real insertedManeuverEnd =
             maneuver.getInitDelay() + maneuver.getDuration();
         const Real adjustedInitDelay =
-            std::max(0.0L, nextInitDelay - insertedManeuverEnd);
+            std::max(0.0, nextInitDelay - insertedManeuverEnd);
 
         maneuvers[nextIndex] =
             withInitDelay(

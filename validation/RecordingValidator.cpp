@@ -49,7 +49,7 @@ RecordingValidator::RecordingValidator(
 
 std::vector<Status> RecordingValidator::record() const
 {
-    if (timeStep <= 0.0L)
+    if (timeStep <= 0.0)
     {
         throw std::invalid_argument("timeStep must be greater than zero");
     }

@@ -12,7 +12,7 @@ class AlignedSimilarityCrossover final : public Crossover
 public:
     explicit AlignedSimilarityCrossover(
         Real minRegionSimilarity = ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY,
-        Real timeScaleMultiplier = 1.0L);
+        Real timeScaleMultiplier = 1.0);
 
     std::pair<Specimen, Specimen> cross(
         const Specimen& parent1,

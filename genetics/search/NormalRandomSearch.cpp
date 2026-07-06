@@ -19,17 +19,17 @@ NormalRandomSearch::NormalRandomSearch(
       throttleStdDev(throttleStdDev),
       probeProperties(probeProperties)
 {
-    if (initTimeStdDev < 0.0L)
+    if (initTimeStdDev < 0.0)
     {
         throw std::invalid_argument("initTimeStdDev must be non-negative.");
     }
 
-    if (durationStdDev < 0.0L)
+    if (durationStdDev < 0.0)
     {
         throw std::invalid_argument("durationStdDev must be non-negative.");
     }
 
-    if (throttleStdDev < 0.0L)
+    if (throttleStdDev < 0.0)
     {
         throw std::invalid_argument("throttleStdDev must be non-negative.");
     }
@@ -85,13 +85,13 @@ Maneuver NormalRandomSearch::perturbManeuver(
     thread_local std::mt19937 rng(std::random_device{}());
 
     std::normal_distribution<Real> initTimeDelta(
-        0.0L,
+        0.0,
         initTimeStdDev);
     std::normal_distribution<Real> durationDelta(
-        0.0L,
+        0.0,
         durationStdDev);
     std::normal_distribution<Real> throttleDelta(
-        0.0L,
+        0.0,
         throttleStdDev);
 
     Vector3 throttleVector =
@@ -105,18 +105,18 @@ Maneuver NormalRandomSearch::perturbManeuver(
     const Real throttleNorm =
         std::clamp(
             throttleVector.norm(),
-            0.0L,
-            1.0L);
+            0.0,
+            1.0);
 
     const Real initDelay =
-        std::max(0.0L, maneuver.getInitDelay() + initTimeDelta(rng));
+        std::max(0.0, maneuver.getInitDelay() + initTimeDelta(rng));
 
     const Real duration =
-        std::max(0.0L, maneuver.getDuration() + durationDelta(rng));
+        std::max(0.0, maneuver.getDuration() + durationDelta(rng));
 
-    if (throttleNorm <= 0.0L)
+    if (throttleNorm <= 0.0)
     {
-        return Maneuver(Vector3{}, 0.0L, initDelay, duration);
+        return Maneuver(Vector3{}, 0.0, initDelay, duration);
     }
 
     return Maneuver(

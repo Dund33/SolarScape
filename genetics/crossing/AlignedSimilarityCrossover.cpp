@@ -40,7 +40,7 @@ namespace
         std::vector<ManeuverTime> times;
         times.reserve(specimen.size());
 
-        Real previousEndTime = 0.0L;
+        Real previousEndTime = 0.0;
 
         for (const Maneuver& maneuver : specimen.getManeuvers())
         {
@@ -107,30 +107,30 @@ namespace
         const Real rhsLength =
             rhsDirection.length();
 
-        if (lhsLength <= 0.0L && rhsLength <= 0.0L)
+        if (lhsLength <= 0.0 && rhsLength <= 0.0)
         {
-            return 1.0L;
+            return 1.0;
         }
 
-        if (lhsLength <= 0.0L || rhsLength <= 0.0L)
+        if (lhsLength <= 0.0 || rhsLength <= 0.0)
         {
-            return 0.0L;
+            return 0.0;
         }
 
         const Real cosine =
             std::clamp(
                 dot(lhsDirection, rhsDirection) /
                     (lhsLength * rhsLength),
-                -1.0L,
-                1.0L);
+                -1.0,
+                1.0);
 
-        return (cosine + 1.0L) * 0.5L;
+        return (cosine + 1.0) * 0.5;
     }
 
     Real logSimilarity(
         Real similarity)
     {
-        if (similarity <= 0.0L)
+        if (similarity <= 0.0)
         {
             return -std::numeric_limits<Real>::infinity();
         }
@@ -155,16 +155,16 @@ namespace
         Real timeScaleMultiplier)
     {
         const Real throttleSimilarity =
-            1.0L -
+            1.0 -
             std::abs(
                 std::clamp(
                     lhs.getThrottleValue(),
-                    0.0L,
-                    1.0L) -
+                    0.0,
+                    1.0) -
                 std::clamp(
                     rhs.getThrottleValue(),
-                    0.0L,
-                    1.0L));
+                    0.0,
+                    1.0));
         const Real direction =
             directionSimilarity(
                 lhs,
@@ -172,7 +172,7 @@ namespace
 
         const Real timeScale =
             std::max({
-                1.0L,
+                1.0,
                 lhs.getDuration(),
                 rhs.getDuration()}) *
             timeScaleMultiplier;
@@ -210,7 +210,7 @@ namespace
         std::size_t longerBegin,
         Real timeScaleMultiplier)
     {
-        Real logSimilaritySum = 0.0L;
+        Real logSimilaritySum = 0.0;
 
         for (auto&& [
                  shorterManeuver,
@@ -272,7 +272,7 @@ namespace
         ExchangeRegion region{
             longerBegin,
             0};
-        Real cumulativeLogSimilarity = 0.0L;
+        Real cumulativeLogSimilarity = 0.0;
 
         for (auto&& [
                  shorterManeuver,
@@ -363,16 +363,16 @@ namespace
 AlignedSimilarityCrossover::AlignedSimilarityCrossover(
     Real minRegionSimilarity,
     Real timeScaleMultiplier)
-    : minRegionLogSimilarity(0.0L),
+    : minRegionLogSimilarity(0.0),
       timeScaleMultiplier(timeScaleMultiplier)
 {
-    if (minRegionSimilarity <= 0.0L || minRegionSimilarity > 1.0L)
+    if (minRegionSimilarity <= 0.0 || minRegionSimilarity > 1.0)
     {
         throw std::invalid_argument(
             "minRegionSimilarity must be in range (0, 1].");
     }
 
-    if (timeScaleMultiplier <= 0.0L)
+    if (timeScaleMultiplier <= 0.0)
     {
         throw std::invalid_argument(
             "timeScaleMultiplier must be greater than zero.");

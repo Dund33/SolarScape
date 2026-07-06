@@ -46,20 +46,20 @@ namespace
         {
             return count > 0
                 ? sum / static_cast<Real>(count)
-                : 0.0L;
+                : 0.0;
         }
 
         Real stddev() const
         {
             if (count < 2)
             {
-                return 0.0L;
+                return 0.0;
             }
 
             const Real avg = mean();
             const Real variance =
                 std::max(
-                    0.0L,
+                    0.0,
                     sumSquares / static_cast<Real>(count) - avg * avg);
 
             return std::sqrt(variance);
@@ -309,12 +309,12 @@ namespace
     {
         const Real scale =
             std::max({
-                1.0L,
+                1.0,
                 std::abs(lhs),
                 std::abs(rhs)});
 
         return std::min(
-            1.0L,
+            1.0,
             std::abs(lhs - rhs) / scale);
     }
 
@@ -323,8 +323,8 @@ namespace
         const Vector3& rhs)
     {
         return std::min(
-            1.0L,
-            (lhs - rhs).length() * 0.5L);
+            1.0,
+            (lhs - rhs).length() * 0.5);
     }
 
     Real maneuverDistance(
@@ -344,7 +344,7 @@ namespace
             normalizedDifference(
                 lhs.getDuration(),
                 rhs.getDuration())) *
-            0.25L;
+            0.25;
     }
 
     Real specimenDistance(
@@ -356,10 +356,10 @@ namespace
 
         if (maxSize == 0)
         {
-            return 0.0L;
+            return 0.0;
         }
 
-        Real distance = 0.0L;
+        Real distance = 0.0;
         const std::size_t commonSize =
             std::min(lhs.size(), rhs.size());
 
@@ -381,10 +381,10 @@ namespace
     {
         if (population.size() < 2)
         {
-            return 0.0L;
+            return 0.0;
         }
 
-        Real distanceSum = 0.0L;
+        Real distanceSum = 0.0;
         std::size_t pairCount = 0;
 
         for (std::size_t i = 0; i < population.size(); ++i)
@@ -499,7 +499,7 @@ namespace
             << " | unique_ratio="
             << (
                 population.empty()
-                    ? 0.0L
+                    ? 0.0
                     : static_cast<Real>(uniqueGenomes.size()) /
                         static_cast<Real>(population.size()))
             << " | maneuver_count=["

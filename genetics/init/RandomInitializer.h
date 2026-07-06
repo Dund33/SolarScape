@@ -13,10 +13,10 @@ public:
     RandomInitializer(
         std::size_t minManeuvers,
         std::size_t maxManeuvers,
-        long double minInitTime,
-        long double maxInitTime,
-        long double minDuration,
-        long double maxDuration,
+        Real minInitTime,
+        Real maxInitTime,
+        Real minDuration,
+        Real maxDuration,
         const ProbeProperties& probeProperties
     );
 
@@ -31,11 +31,11 @@ private:
     std::size_t minManeuvers;
     std::size_t maxManeuvers;
 
-    long double minInitTime;
-    long double maxInitTime;
+    Real minInitTime;
+    Real maxInitTime;
 
-    long double minDuration;
-    long double maxDuration;
+    Real minDuration;
+    Real maxDuration;
 
     ProbeProperties probeProperties;
 };

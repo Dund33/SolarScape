@@ -24,7 +24,7 @@ public:
     std::size_t size() const;
     bool empty() const;
 
-    long double getTotalFuelUse(
+    Real getTotalFuelUse(
         const ProbeProperties& probeProperties
     ) const;
 

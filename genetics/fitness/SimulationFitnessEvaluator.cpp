@@ -36,7 +36,7 @@ namespace
 
         return std::clamp(
             firstManeuverEndTime,
-            0.0L,
+            0.0,
             simulationTime);
     }
 }
@@ -71,12 +71,12 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
 FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     std::vector<Maneuver> maneuvers) const
 {
-    if (simulationTime < 0.0L)
+    if (simulationTime < 0.0)
     {
         throw std::invalid_argument("simulationTime must be non-negative");
     }
 
-    if (timeStep <= 0.0L)
+    if (timeStep <= 0.0)
     {
         throw std::invalid_argument("timeStep must be greater than zero");
     }
@@ -89,7 +89,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
     auto simulation =
         simulationFactory.create(
             std::move(maneuvers));
-    Real currentTime = 0.0L;
+    Real currentTime = 0.0;
 
     const Body& simulatedTargetBody =
         simulation->targetBody();
@@ -99,7 +99,7 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
         simulation->requestedFuelUse();
 
     const Real fuelConstraintViolation =
-        std::max(0.0L, fuelUsed - simulatedProbe.fuelMass());
+        std::max(0.0, fuelUsed - simulatedProbe.fuelMass());
 
     Real minimumDistance =
         std::numeric_limits<Real>::max();

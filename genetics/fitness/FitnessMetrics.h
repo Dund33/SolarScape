@@ -11,7 +11,7 @@ inline Real targetWindowViolation(
     const FitnessValue& fitness)
 {
     return std::max(
-        0.0L,
+        0.0,
         fitness.minimumDistance - TARGET_WINDOW_DISTANCE);
 }
 

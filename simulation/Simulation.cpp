@@ -44,7 +44,7 @@ Real Simulation::requestedFuelUse() const
     return std::accumulate(
         maneuvers_.begin(),
         maneuvers_.end(),
-        0.0L,
+        0.0,
         [this](Real totalFuelUse, const Maneuver& maneuver)
         {
             return totalFuelUse +

@@ -2,16 +2,17 @@
 #define SOLARSCAPE_RANDOMUNIFORMMUTATION_H
 
 #include "genetics/mutation/Mutation.h"
+#include "math/Real.h"
 
 class RandomUniformMutation final : public Mutation
 {
 public:
     RandomUniformMutation(
         double mutationProbability,
-        long double maxTimeOffset,
-        long double maxDurationOffset,
-        long double maxDirectionOffset,
-        long double maxThrottleOffset
+        Real maxTimeOffset,
+        Real maxDurationOffset,
+        Real maxDirectionOffset,
+        Real maxThrottleOffset
     );
 
     void mutate(Specimen& specimen) const override;
@@ -19,10 +20,10 @@ public:
 private:
     double mutationProbability;
 
-    long double maxTimeOffset;
-    long double maxDurationOffset;
-    long double maxDirectionOffset;
-    long double maxThrottleOffset;
+    Real maxTimeOffset;
+    Real maxDurationOffset;
+    Real maxDirectionOffset;
+    Real maxThrottleOffset;
 };
 
 #endif

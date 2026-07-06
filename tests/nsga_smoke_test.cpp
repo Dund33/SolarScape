@@ -35,10 +35,10 @@ namespace
         for (std::size_t i = 0; i < maneuverCount; ++i)
         {
             maneuvers.emplace_back(
-                Vector3(1.0L, 0.0L, 0.0L),
-                0.5L,
+                Vector3(1.0, 0.0, 0.0),
+                0.5,
                 static_cast<Real>(i),
-                10.0L);
+                10.0);
         }
 
         return Specimen(std::move(maneuvers));
@@ -196,9 +196,9 @@ namespace
     {
         TrajectorySpecimenComparator comparator;
         Specimen betterObjectives =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 10.0L, 100.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0, 10.0, 100.0});
         Specimen worseObjectives =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 2.0L, 1.0L, 1.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 2.0, 1.0, 1.0});
 
         expect(
             comparator.compare(betterObjectives, worseObjectives) ==
@@ -206,9 +206,9 @@ namespace
             "Expected smaller target-window violation to dominate.");
 
         Specimen lowerFuelLater =
-            specimenWithFitness({10.0L, 2.0L, 1.0L});
+            specimenWithFitness({10.0, 2.0, 1.0});
         Specimen higherFuelEarlier =
-            specimenWithFitness({1.0L, 1.0L, 10.0L});
+            specimenWithFitness({1.0, 1.0, 10.0});
 
         expect(
             comparator.compare(lowerFuelLater, higherFuelEarlier) ==
@@ -219,9 +219,9 @@ namespace
             "Expected trajectory comparator not to order an in-window fuel/time trade-off.");
 
         Specimen lowerFuelSameObjectives =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 2.0L, 1.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0, 2.0, 1.0});
         Specimen higherFuelSameObjectives =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0L, 1.0L, 10.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE + 1.0, 1.0, 10.0});
 
         expect(
             comparator.compare(lowerFuelSameObjectives, higherFuelSameObjectives) ==
@@ -229,9 +229,9 @@ namespace
             "Expected trajectory comparator to break equivalent objectives by fuel.");
 
         Specimen closerInsideWindow =
-            specimenWithFitness({1.0L, 10.0L, 5.0L});
+            specimenWithFitness({1.0, 10.0, 5.0});
         Specimen fartherInsideWindow =
-            specimenWithFitness({TARGET_WINDOW_DISTANCE - 1.0L, 10.0L, 5.0L});
+            specimenWithFitness({TARGET_WINDOW_DISTANCE - 1.0, 10.0, 5.0});
 
         expect(
             comparator.compare(closerInsideWindow, fartherInsideWindow) ==
@@ -239,9 +239,9 @@ namespace
             "Expected raw distance to stop dominating inside target window.");
 
         Specimen feasible =
-            specimenWithFitness({2.0L, 10.0L, 5.0L});
+            specimenWithFitness({2.0, 10.0, 5.0});
         Specimen infeasible =
-            specimenWithFitness({1.0L, 1.0L, 100.0L, 1.0L});
+            specimenWithFitness({1.0, 1.0, 100.0, 1.0});
 
         expect(
             comparator.compare(feasible, infeasible) ==
@@ -249,9 +249,9 @@ namespace
             "Expected feasible trajectory specimen to dominate infeasible specimen.");
 
         Specimen smallerViolation =
-            specimenWithFitness({10.0L, 10.0L, 1.0L, 1.0L});
+            specimenWithFitness({10.0, 10.0, 1.0, 1.0});
         Specimen largerViolation =
-            specimenWithFitness({1.0L, 1.0L, 100.0L, 2.0L});
+            specimenWithFitness({1.0, 1.0, 100.0, 2.0});
 
         expect(
             comparator.compare(smallerViolation, largerViolation) ==
@@ -261,10 +261,10 @@ namespace
 
     void testNSGAIIReturnsParetoFrontHistory()
     {
-        const FitnessValue bestFuel{1.0L, 8.0L, 1.0L};
-        const FitnessValue bestTime{2.0L, 1.0L, 5.0L};
-        const FitnessValue dominatedA{3.0L, 9.0L, 6.0L};
-        const FitnessValue dominatedB{4.0L, 10.0L, 10.0L};
+        const FitnessValue bestFuel{1.0, 8.0, 1.0};
+        const FitnessValue bestTime{2.0, 1.0, 5.0};
+        const FitnessValue dominatedA{3.0, 9.0, 6.0};
+        const FitnessValue dominatedB{4.0, 10.0, 10.0};
 
         FixtureInitializerFactory initializerFactory({
             specimenWithFitness(bestFuel),
@@ -324,18 +324,18 @@ namespace
 
     void testAlignedSimilarityCrossoverExchangesSuffixAfterAlignedRegion()
     {
-        AlignedSimilarityCrossover crossover(0.9L);
+        AlignedSimilarityCrossover crossover(0.9);
 
         Specimen parent1({
-            Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 5.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.0L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 0.0L, 1.0L), 0.6L, 5.0L, 10.0L)});
+            Maneuver(Vector3(1.0, 0.0, 0.0), 0.2, 10.0, 10.0),
+            Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 5.0, 10.0),
+            Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 1.0, 0.0), 0.0, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 0.0, 1.0), 0.6, 5.0, 10.0)});
         Specimen parent2({
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 25.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.5L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 25.0, 10.0),
+            Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 1.0, 0.0), 0.5, 5.0, 10.0)});
 
         auto [child1, child2] =
             crossover.cross(
@@ -364,18 +364,18 @@ namespace
 
     void testAlignedSimilarityCrossoverHandlesNegativeOffset()
     {
-        AlignedSimilarityCrossover crossover(0.9L);
+        AlignedSimilarityCrossover crossover(0.9);
 
         Specimen parent1({
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 25.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.5L, 5.0L, 10.0L)});
+            Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 25.0, 10.0),
+            Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 1.0, 0.0), 0.5, 5.0, 10.0)});
         Specimen parent2({
-            Maneuver(Vector3(1.0L, 0.0L, 0.0L), 0.2L, 10.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 1.0L, 0.0L), 0.7L, 5.0L, 10.0L),
-            Maneuver(Vector3(0.0L, 0.0L, 1.0L), 0.9L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 1.0L, 0.0L), 0.0L, 5.0L, 10.0L),
-            Maneuver(Vector3(1.0L, 0.0L, 1.0L), 0.6L, 5.0L, 10.0L)});
+            Maneuver(Vector3(1.0, 0.0, 0.0), 0.2, 10.0, 10.0),
+            Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 5.0, 10.0),
+            Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 1.0, 0.0), 0.0, 5.0, 10.0),
+            Maneuver(Vector3(1.0, 0.0, 1.0), 0.6, 5.0, 10.0)});
 
         auto [child1, child2] =
             crossover.cross(

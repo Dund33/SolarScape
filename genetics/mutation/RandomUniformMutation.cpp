@@ -8,10 +8,10 @@
 
 RandomUniformMutation::RandomUniformMutation(
     double mutationProbability,
-    long double maxTimeOffset,
-    long double maxDurationOffset,
-    long double maxDirectionOffset,
-    long double maxThrottleOffset
+    Real maxTimeOffset,
+    Real maxDurationOffset,
+    Real maxDirectionOffset,
+    Real maxThrottleOffset
 )
     : mutationProbability(mutationProbability),
       maxTimeOffset(maxTimeOffset),

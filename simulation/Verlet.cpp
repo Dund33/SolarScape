@@ -12,7 +12,7 @@ namespace
         const std::vector<Maneuver>& maneuvers,
         Real time)
     {
-        Real previousManeuverEndTime = 0.0L;
+        Real previousManeuverEndTime = 0.0;
 
         for (const Maneuver& maneuver : maneuvers)
         {
@@ -36,7 +36,7 @@ namespace
         const std::optional<Maneuver>& maneuver,
         Real timeStep)
     {
-        if (probe.fuelMass() <= 0.0L || !maneuver.has_value())
+        if (probe.fuelMass() <= 0.0 || !maneuver.has_value())
         {
             return {};
         }
@@ -45,15 +45,15 @@ namespace
         const Real throttleValue =
             std::clamp(
                 activeManeuver.getThrottleValue(),
-                0.0L,
-                1.0L);
+                0.0,
+                1.0);
 
         const Real fuelNeeded =
             probe.fuelFlow() * throttleValue * timeStep;
         const Real fuelScale =
-            fuelNeeded > 0.0L
-                ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
-                : 0.0L;
+            fuelNeeded > 0.0
+                ? std::min(1.0, probe.fuelMass() / fuelNeeded)
+                : 0.0;
         const Real effectiveThrottle = throttleValue * fuelScale;
 
         const Vector3 force =
@@ -107,7 +107,7 @@ auto Verlet::calculateAccelerationForBody(
         const Real distanceSquared =
             direction.lengthSquared();
 
-        if (distanceSquared == 0.0L)
+        if (distanceSquared == 0.0)
         {
             continue;
         }
@@ -176,7 +176,7 @@ void Verlet::step(
 
         const Vector3 accelerationPart =
             previousAccelerations_[i] *
-            (0.5L * timeStepSquared);
+            (0.5 * timeStepSquared);
 
         bodyPointers_[i]->position() +=
             velocityPart + accelerationPart;
@@ -197,7 +197,7 @@ void Verlet::step(
     {
         Vector3 averageAcceleration =
             (previousAccelerations_[i] +
-                nextAccelerations_[i]) * 0.5L;
+                nextAccelerations_[i]) * 0.5;
 
         bodyPointers_[i]->velocity() +=
             averageAcceleration * timeStep;
@@ -210,12 +210,12 @@ void Verlet::step(
         const Real throttleValue =
             std::clamp(
                 maneuver.value().getThrottleValue(),
-                0.0L,
-                1.0L);
+                0.0,
+                1.0);
 
         simulationProbe.setFuelMass(
             std::max(
-                0.0L,
+                0.0,
                 simulationProbe.fuelMass() -
                 simulationProbe.fuelFlow() * throttleValue * timeStep));
     }

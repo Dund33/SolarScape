@@ -27,7 +27,7 @@ namespace ManeuverMutationUtils
         if (shouldMutate(rng))
         {
             initDelay += timeDelta(rng);
-            initDelay = std::max(0.0L, initDelay);
+            initDelay = std::max(0.0, initDelay);
         }
 
         if (shouldMutate(rng))
@@ -47,13 +47,13 @@ namespace ManeuverMutationUtils
         {
             throttleValue = std::clamp(
                 throttleValue + throttleDelta(rng),
-                0.0L,
-                1.0L);
+                0.0,
+                1.0);
         }
 
-        if (throttleValue <= 0.0L || thrustDirection.norm() <= 0.0L)
+        if (throttleValue <= 0.0 || thrustDirection.norm() <= 0.0)
         {
-            return Maneuver(Vector3{}, 0.0L, initDelay, duration);
+            return Maneuver(Vector3{}, 0.0, initDelay, duration);
         }
 
         return Maneuver(

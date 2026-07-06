@@ -39,15 +39,15 @@ bool Specimen::empty() const
     return maneuvers.empty();
 }
 
-long double Specimen::getTotalFuelUse(
+Real Specimen::getTotalFuelUse(
     const ProbeProperties& probeProperties
 ) const
 {
     return std::accumulate(
         maneuvers.begin(),
         maneuvers.end(),
-        0.0L,
-        [&probeProperties](long double totalFuelUse, const Maneuver& maneuver)
+        0.0,
+        [&probeProperties](Real totalFuelUse, const Maneuver& maneuver)
         {
             return totalFuelUse +
             probeProperties.fuelFlow() *
