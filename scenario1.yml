@@ -1,7 +1,7 @@
 simulation:
   gravitationalConstant: 0.000000000066743
   timeStep: 150.0
-  simulationTime: 59353050.0
+  simulationTime: 89251200.0
 
 targetPointFromTargetBody:
   x: 0.0
@@ -95,5 +95,5 @@ probe:
 
   emptyMass: 4000.0
   fuelMass: 6000.0
-  fuelFlow: 1.7
-  specificImpulse: 300.0
+  fuelFlow: 4
+  specificImpulse: 450.0
