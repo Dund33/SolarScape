@@ -10,6 +10,14 @@
 
 namespace ManeuverMutationUtils
 {
+    inline Vector3 validDirectionOrDefault(
+        const Vector3& direction)
+    {
+        return direction.norm() > 0.0
+            ? direction
+            : Vector3(1.0, 0.0, 0.0);
+    }
+
     inline Maneuver mutateUniformly(
         const Maneuver& maneuver,
         std::bernoulli_distribution& shouldMutate,
@@ -47,18 +55,17 @@ namespace ManeuverMutationUtils
         {
             throttleValue = std::clamp(
                 throttleValue + throttleDelta(rng),
-                0.0,
+                MIN_MANEUVER_THROTTLE,
                 1.0);
         }
 
-        if (throttleValue <= 0.0 || thrustDirection.norm() <= 0.0)
-        {
-            return Maneuver(Vector3{}, 0.0, initDelay, duration);
-        }
-
         return Maneuver(
-            thrustDirection,
-            throttleValue,
+            validDirectionOrDefault(
+                thrustDirection),
+            std::clamp(
+                throttleValue,
+                MIN_MANEUVER_THROTTLE,
+                1.0),
             initDelay,
             duration);
     }

@@ -54,14 +54,13 @@ Specimen RandomInitializer::createCandidate(
         minInitTime,
         maxInitTime
     );
-
     std::uniform_real_distribution<Real> directionDist(
         -1.0,
         1.0
     );
 
     std::uniform_real_distribution<Real> throttleDist(
-        0.0,
+        MIN_MANEUVER_THROTTLE,
         1.0
     );
 
@@ -88,11 +87,6 @@ Specimen RandomInitializer::createCandidate(
         direction = direction / directionNorm;
 
         const Real throttleValue = throttleDist(rng);
-
-        if (throttleValue <= 0.0)
-        {
-            continue;
-        }
 
         const Real remainingFuel =
             probeProperties.fuelMass() - usedFuel;
