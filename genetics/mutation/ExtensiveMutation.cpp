@@ -8,6 +8,7 @@
 
 #include "genetics/Specimen.h"
 #include "genetics/mutation/ManeuverMutationUtils.h"
+#include "genetics/utils/Refinement.h"
 
 namespace
 {
@@ -40,7 +41,7 @@ namespace
             -1.0,
             1.0);
         std::uniform_real_distribution<Real> throttleDist(
-            0.0,
+            MIN_MANEUVER_THROTTLE,
             1.0);
 
         Vector3 direction;
@@ -256,11 +257,17 @@ ExtensiveMutation::ExtensiveMutation(
     }
 }
 
-void ExtensiveMutation::mutate(Specimen& specimen) const
+void ExtensiveMutation::mutate(
+    Specimen& specimen,
+    bool closeToTarget) const
 {
     static thread_local std::mt19937 rng(std::random_device{}());
 
     std::vector<Maneuver> maneuvers = specimen.getManeuvers();
+    const Real mutationScale =
+        Refinement::mutationScale(
+            closeToTarget);
+
     addRandomManeuversUntil(
         maneuvers,
         minManeuvers,
@@ -284,10 +291,10 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
         mutateManeuversUniformly(
             maneuvers,
             mutationProbability,
-            maxTimeOffset,
-            maxDurationOffset,
-            maxDirectionOffset,
-            maxThrottleOffset);
+            maxTimeOffset * mutationScale,
+            maxDurationOffset * mutationScale,
+            maxDirectionOffset * mutationScale,
+            maxThrottleOffset * mutationScale);
 
         specimen = Specimen(std::move(maneuvers));
         return;
@@ -317,10 +324,10 @@ void ExtensiveMutation::mutate(Specimen& specimen) const
     mutateManeuversUniformly(
         maneuvers,
         mutationProbability,
-        maxTimeOffset,
-        maxDurationOffset,
-        maxDirectionOffset,
-        maxThrottleOffset);
+        maxTimeOffset * mutationScale,
+        maxDurationOffset * mutationScale,
+        maxDirectionOffset * mutationScale,
+        maxThrottleOffset * mutationScale);
 
     specimen = Specimen(std::move(maneuvers));
 }

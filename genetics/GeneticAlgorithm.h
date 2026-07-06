@@ -32,7 +32,7 @@ protected:
         std::vector<Specimen*>& specimens,
         const FitnessEvaluator& fitnessEvaluator) const;
 
-    void appendChildren(
+    virtual void appendChildren(
         const std::vector<Specimen>& parents,
         std::vector<Specimen>& target,
         std::size_t targetSize,

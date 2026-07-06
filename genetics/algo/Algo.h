@@ -99,6 +99,15 @@ private:
     std::size_t archiveReintroductionCountForIsland(
         std::size_t islandSize) const;
 
+    void appendChildren(
+        const std::vector<Specimen>& parents,
+        std::vector<Specimen>& target,
+        std::size_t targetSize,
+        const SpecimenComparator& selectionComparator,
+        Selection& selection,
+        Crossover& crossover,
+        Mutation& mutation) const override;
+
     std::size_t populationSize;
     std::size_t generations;
     std::size_t eliteCount;

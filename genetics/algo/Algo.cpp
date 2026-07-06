@@ -22,6 +22,7 @@
 #include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
 #include "genetics/utils/ParetoRanking.h"
+#include "genetics/utils/Refinement.h"
 
 namespace
 {
@@ -818,6 +819,58 @@ Algo::Islands Algo::createCandidateIslands(
     }
 
     return candidateIslands;
+}
+
+void Algo::appendChildren(
+    const std::vector<Specimen>& parents,
+    std::vector<Specimen>& target,
+    std::size_t targetSize,
+    const SpecimenComparator& selectionComparator,
+    Selection& selection,
+    Crossover& crossover,
+    Mutation& mutation) const
+{
+    const auto isCloseToTarget =
+        [](const Specimen& specimen)
+        {
+            return specimen.getFitness().has_value() &&
+                Refinement::closeToTarget(
+                    specimen.getFitness().value());
+        };
+
+    while (target.size() < targetSize)
+    {
+        const Specimen& parent1 =
+            selection.select(
+                parents,
+                selectionComparator);
+        const Specimen& parent2 =
+            selection.select(
+                parents,
+                selectionComparator);
+        const bool closeToTarget =
+            isCloseToTarget(parent1) ||
+            isCloseToTarget(parent2);
+
+        auto [child1, child2] =
+            crossover.cross(
+                parent1,
+                parent2);
+
+        mutation.mutate(
+            child1,
+            closeToTarget);
+        mutation.mutate(
+            child2,
+            closeToTarget);
+
+        target.push_back(std::move(child1));
+
+        if (target.size() < targetSize)
+        {
+            target.push_back(std::move(child2));
+        }
+    }
 }
 
 void Algo::selectEnvironmentalSurvivors(

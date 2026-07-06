@@ -15,7 +15,9 @@ public:
         Real maxThrottleOffset
     );
 
-    void mutate(Specimen& specimen) const override;
+    void mutate(
+        Specimen& specimen,
+        bool closeToTarget = false) const override;
 
 private:
     double mutationProbability;

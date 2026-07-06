@@ -5,6 +5,7 @@
 
 #include "genetics/mutation/ManeuverMutationUtils.h"
 #include "genetics/Specimen.h"
+#include "genetics/utils/Refinement.h"
 
 RandomUniformMutation::RandomUniformMutation(
     double mutationProbabilityValue,
@@ -27,7 +28,9 @@ RandomUniformMutation::RandomUniformMutation(
     }
 }
 
-void RandomUniformMutation::mutate(Specimen& specimen) const
+void RandomUniformMutation::mutate(
+    Specimen& specimen,
+    bool closeToTarget) const
 {
     if (specimen.empty())
     {
@@ -37,25 +40,28 @@ void RandomUniformMutation::mutate(Specimen& specimen) const
     thread_local std::mt19937 rng(std::random_device{}());
 
     std::bernoulli_distribution shouldMutate(mutationProbability);
+    const Real mutationScale =
+        Refinement::mutationScale(
+            closeToTarget);
 
     std::uniform_real_distribution<Real> timeDelta(
-        -maxTimeOffset,
-         maxTimeOffset
+        -maxTimeOffset * mutationScale,
+         maxTimeOffset * mutationScale
     );
 
     std::uniform_real_distribution<Real> durationDelta(
-        -maxDurationOffset,
-         maxDurationOffset
+        -maxDurationOffset * mutationScale,
+         maxDurationOffset * mutationScale
     );
 
     std::uniform_real_distribution<Real> directionDelta(
-        -maxDirectionOffset,
-         maxDirectionOffset
+        -maxDirectionOffset * mutationScale,
+         maxDirectionOffset * mutationScale
     );
 
     std::uniform_real_distribution<Real> throttleDelta(
-        -maxThrottleOffset,
-         maxThrottleOffset
+        -maxThrottleOffset * mutationScale,
+         maxThrottleOffset * mutationScale
     );
 
     for (std::size_t i = 0; i < specimen.size(); ++i)
