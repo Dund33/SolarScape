@@ -371,6 +371,15 @@ target_link_libraries(NSGAIISmokeTest
         SolarScape::GeneticNSGAII
 )
 
+add_executable(VectorFitnessConsistencyTest
+        tests/vector_fitness_consistency_test.cpp
+)
+
+target_link_libraries(VectorFitnessConsistencyTest
+        PRIVATE
+        SolarScape::GeneticFitness
+)
+
 add_executable(longDoubleTest
         tools/long_double_test.cpp
 )
