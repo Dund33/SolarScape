@@ -1,7 +1,5 @@
 #include "GeneticAlgorithm.h"
 
-#include <algorithm>
-#include <execution>
 #include <ranges>
 #include <utility>
 
@@ -94,19 +92,4 @@ void GeneticAlgorithm::appendImmigrants(
     {
         population.push_back(std::move(immigrant));
     }
-}
-
-void GeneticAlgorithm::replaceTailWithImmigrants(
-    std::vector<Specimen>& population,
-    std::size_t count,
-    Initializer& initializer) const
-{
-    std::ranges::generate(
-        population |
-        std::views::reverse |
-        std::views::take(count),
-        [&initializer]
-        {
-            return initializer.create();
-        });
 }

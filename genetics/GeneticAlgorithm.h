@@ -45,11 +45,6 @@ protected:
         std::vector<Specimen>& population,
         std::size_t count,
         Initializer& initializer) const;
-
-    void replaceTailWithImmigrants(
-        std::vector<Specimen>& population,
-        std::size_t count,
-        Initializer& initializer) const;
 };
 
 #endif
