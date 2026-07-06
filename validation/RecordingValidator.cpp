@@ -1,5 +1,6 @@
 #include "RecordingValidator.h"
 
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
@@ -15,12 +16,11 @@ namespace
         const std::vector<Body>& bodies =
             simulation.bodies();
 
-        for (std::size_t bodyIndex = 0; bodyIndex < bodies.size(); ++bodyIndex)
+        for (const auto [bodyIndex, body] : std::views::enumerate(bodies))
         {
-            const Body& body = bodies[bodyIndex];
             recording.push_back(
                 Status{
-                    bodyIndex,
+                    static_cast<std::size_t>(bodyIndex),
                     simulation.time(),
                     body.position(),
                     body.velocity()});

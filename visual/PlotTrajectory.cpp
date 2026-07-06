@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <ranges>
 #include <vector>
 
 namespace
@@ -54,13 +55,12 @@ void plotTrajectory(
 
         if (step % 500 == 0)
         {
-            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
+            for (const auto [bodyIndex, body] :
+                 std::views::enumerate(simulationBodies))
             {
-                const Body& body = simulationBodies[i];
-
                 output << step << ','
                     << time << ','
-                    << i << ','
+                    << bodyIndex << ','
                     << body.position().x << ','
                     << body.position().y << ','
                     << body.position().z << ','

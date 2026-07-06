@@ -1,5 +1,6 @@
 #include "NSGAIIRankingComparator.h"
 
+#include <ranges>
 #include <stdexcept>
 
 NSGAIIRankingComparator::NSGAIIRankingComparator(
@@ -19,9 +20,12 @@ NSGAIIRankingComparator::NSGAIIRankingComparator(
 
     indexBySpecimen.reserve(population.size());
 
-    for (std::size_t i = 0; i < population.size(); ++i)
+    for (const auto [specimenIndex, specimen] :
+         std::views::enumerate(population))
     {
-        indexBySpecimen.emplace(&population[i], i);
+        indexBySpecimen.emplace(
+            &specimen,
+            static_cast<std::size_t>(specimenIndex));
     }
 }
 

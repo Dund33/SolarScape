@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <execution>
 #include <limits>
+#include <ranges>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -93,39 +94,32 @@ void VectorSimulationFitnessEvaluator::evaluateBatch(
         }
     }
 
-    std::vector<std::size_t> batchStartIndices;
-    batchStartIndices.reserve(
-        (pendingSpecimens.size() + maxBatchSize - 1) / maxBatchSize);
+    using PendingSpecimensDifference =
+        std::ranges::range_difference_t<decltype(pendingSpecimens)>;
 
-    for (std::size_t firstIndex = 0;
-         firstIndex < pendingSpecimens.size();
-         firstIndex += maxBatchSize)
-    {
-        batchStartIndices.push_back(
-            firstIndex);
-    }
+    const auto specimenBatches =
+        pendingSpecimens |
+        std::views::chunk(
+            static_cast<PendingSpecimensDifference>(maxBatchSize));
 
     std::for_each(
         std::execution::par,
-        batchStartIndices.begin(),
-        batchStartIndices.end(),
-        [&](std::size_t firstIndex)
+        specimenBatches.begin(),
+        specimenBatches.end(),
+        [&](auto specimenBatch)
     {
-        const std::size_t batchSize =
-            std::min(
-                maxBatchSize,
-                pendingSpecimens.size() - firstIndex);
+        std::vector<Specimen*> batchSpecimens(
+            specimenBatch.begin(),
+            specimenBatch.end());
 
         std::vector<std::vector<Maneuver>> maneuverBatch;
         maneuverBatch.reserve(
-            batchSize);
+            batchSpecimens.size());
 
-        for (std::size_t laneIndex = 0;
-             laneIndex < batchSize;
-             ++laneIndex)
+        for (const Specimen* specimen : batchSpecimens)
         {
             maneuverBatch.push_back(
-                pendingSpecimens[firstIndex + laneIndex]->getManeuvers());
+                specimen->getManeuvers());
         }
 
         const std::vector<FitnessValue> fitnessValues =
@@ -136,7 +130,7 @@ void VectorSimulationFitnessEvaluator::evaluateBatch(
              laneIndex < fitnessValues.size();
              ++laneIndex)
         {
-            pendingSpecimens[firstIndex + laneIndex]->setFitness(
+            batchSpecimens[laneIndex]->setFitness(
                 fitnessValues[laneIndex]);
         }
     });
