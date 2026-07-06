@@ -72,7 +72,7 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        VerletFactory trajectorySimulationFactory(
+        VectorVerletFactory simulationFactory(
             state.gravitationalConstant,
             state.initialBodies,
             state.targetBody,
@@ -81,7 +81,7 @@ namespace
                 state.probePosition,
                 state.probeVelocity).create());
 
-        VectorVerletFactory fitnessSimulationFactory(
+        VerletFactory plottingSimulationFactory(
             state.gravitationalConstant,
             state.initialBodies,
             state.targetBody,
@@ -123,7 +123,7 @@ namespace
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,
-            fitnessSimulationFactory);
+            simulationFactory);
 
         TrajectorySpecimenComparator specimenComparator;
 
@@ -181,7 +181,7 @@ namespace
         }
 
         plotRepresentativeTrajectory(
-            trajectorySimulationFactory,
+            plottingSimulationFactory,
             state,
             paretoFrontHistory);
 
