@@ -15,7 +15,7 @@
 #include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
 #include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/fitness/FitnessValue.h"
-#include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
+#include "genetics/fitness/VectorSimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/mutation/ExtensiveMutationFactory.h"
 #include "genetics/selection/TournamentSelectionFactory.h"
@@ -25,6 +25,7 @@
 #include "math/ProbeProperties.h"
 #include "simulation_helper.h"
 #include "simulation/SimulationFactory.h"
+#include "simulation/VectorVerletFactory.h"
 #include "simulation/VerletFactory.h"
 #include "visual/PlotTrajectory.h"
 
@@ -71,7 +72,16 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        VerletFactory verletFactory(
+        VerletFactory trajectorySimulationFactory(
+            state.gravitationalConstant,
+            state.initialBodies,
+            state.targetBody,
+            ProbeFactory(
+                state.probeProperties,
+                state.probePosition,
+                state.probeVelocity).create());
+
+        VectorVerletFactory fitnessSimulationFactory(
             state.gravitationalConstant,
             state.initialBodies,
             state.targetBody,
@@ -109,11 +119,11 @@ namespace
             MUTATION_DIRECTION_RANGE,
             MUTATION_THROTTLE_RANGE);
 
-        SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
+        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,
-            verletFactory);
+            fitnessSimulationFactory);
 
         TrajectorySpecimenComparator specimenComparator;
 
@@ -171,7 +181,7 @@ namespace
         }
 
         plotRepresentativeTrajectory(
-            verletFactory,
+            trajectorySimulationFactory,
             state,
             paretoFrontHistory);
 

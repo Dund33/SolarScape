@@ -15,14 +15,14 @@
 #include "genetics/comparison/TrajectorySpecimenComparator.h"
 #include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
-#include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
+#include "genetics/fitness/VectorSimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/moead/MOEADAlgorithm.h"
 #include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
-#include "simulation/VerletFactory.h"
+#include "simulation/VectorVerletFactory.h"
 #include "simulation_helper.h"
 
 namespace
@@ -40,7 +40,7 @@ namespace
             createSimulationState(
                 std::move(config));
 
-        VerletFactory verletFactory(
+        VectorVerletFactory simulationFactory(
             state.gravitationalConstant,
             state.initialBodies,
             state.targetBody,
@@ -67,11 +67,11 @@ namespace
             MUTATION_DIRECTION_RANGE,
             MUTATION_THROTTLE_RANGE);
 
-        SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
+        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
             state.timeStep,
             state.simulationTime,
             state.targetPointFromTargetBody,
-            verletFactory);
+            simulationFactory);
 
         TrajectorySpecimenComparator specimenComparator;
 
