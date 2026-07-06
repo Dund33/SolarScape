@@ -1,12 +1,13 @@
 #include "genetics/fitness/VectorSimulationFitnessEvaluator.h"
 
 #include <algorithm>
-#include <execution>
 #include <limits>
-#include <ranges>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
 
 namespace
 {
@@ -94,23 +95,35 @@ void VectorSimulationFitnessEvaluator::evaluateBatch(
         }
     }
 
-    using PendingSpecimensDifference =
-        std::ranges::range_difference_t<decltype(pendingSpecimens)>;
-
-    const auto specimenBatches =
-        pendingSpecimens |
-        std::views::chunk(
-            static_cast<PendingSpecimensDifference>(maxBatchSize));
-
-    std::for_each(
-        std::execution::par,
-        specimenBatches.begin(),
-        specimenBatches.end(),
-        [&](auto specimenBatch)
+    if (pendingSpecimens.empty())
     {
-        std::vector<Specimen*> batchSpecimens(
-            specimenBatch.begin(),
-            specimenBatch.end());
+        return;
+    }
+
+    const std::size_t batchCount =
+        (pendingSpecimens.size() + maxBatchSize - 1) / maxBatchSize;
+
+    const auto evaluateBatchAt =
+        [&](std::size_t batchIndex)
+    {
+        const std::size_t batchStart =
+            batchIndex * maxBatchSize;
+        const std::size_t batchEnd =
+            std::min(
+                pendingSpecimens.size(),
+                batchStart + maxBatchSize);
+
+        std::vector<Specimen*> batchSpecimens;
+        batchSpecimens.reserve(
+            batchEnd - batchStart);
+
+        for (std::size_t specimenIndex = batchStart;
+             specimenIndex < batchEnd;
+             ++specimenIndex)
+        {
+            batchSpecimens.push_back(
+                pendingSpecimens[specimenIndex]);
+        }
 
         std::vector<std::vector<Maneuver>> maneuverBatch;
         maneuverBatch.reserve(
@@ -133,7 +146,22 @@ void VectorSimulationFitnessEvaluator::evaluateBatch(
             batchSpecimens[laneIndex]->setFitness(
                 fitnessValues[laneIndex]);
         }
-    });
+    };
+
+    tbb::parallel_for(
+        tbb::blocked_range<std::size_t>(
+            0,
+            batchCount),
+        [&](const tbb::blocked_range<std::size_t>& batchRange)
+        {
+            for (std::size_t batchIndex = batchRange.begin();
+                 batchIndex != batchRange.end();
+                 ++batchIndex)
+            {
+                evaluateBatchAt(
+                    batchIndex);
+            }
+        });
 }
 
 std::vector<FitnessValue> VectorSimulationFitnessEvaluator::calculateFitnessValues(
