@@ -42,7 +42,8 @@ Real TrajectorySpecimenComparator::objectiveValue(
     switch (objective)
     {
     case 0:
-        return fitness.minimumDistance;
+        return targetWindowViolation(
+            fitness);
     case 1:
         return fuelObjective(fitness);
     case 2:
