@@ -11,7 +11,7 @@ struct Vector3
     Real z;
 
     Vector3();
-    Vector3(Real x, Real y, Real z);
+    Vector3(Real xValue, Real yValue, Real zValue);
 
     Real norm() const;
     

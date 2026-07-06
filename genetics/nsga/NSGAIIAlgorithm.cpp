@@ -165,19 +165,19 @@ namespace
 }
 
 NSGAIIAlgorithm::NSGAIIAlgorithm(
-    std::size_t populationSize,
-    std::size_t generations,
-    const SpecimenComparator& specimenComparator,
-    Factories factories,
-    bool verbose
+    std::size_t populationSizeValue,
+    std::size_t generationCount,
+    const SpecimenComparator& specimenComparatorRef,
+    Factories factoriesValue,
+    bool verboseValue
 )
-    : populationSize(populationSize),
-      generations(generations),
-      specimenComparator(specimenComparator),
-      factories(factories),
-      verbose(verbose)
+    : populationSize(populationSizeValue),
+      generations(generationCount),
+      specimenComparator(specimenComparatorRef),
+      factories(factoriesValue),
+      verbose(verboseValue)
 {
-    if (populationSize == 0)
+    if (populationSizeValue == 0)
     {
         throw std::invalid_argument("Population size must be greater than zero.");
     }

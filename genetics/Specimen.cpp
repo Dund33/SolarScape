@@ -9,13 +9,13 @@ Specimen::Specimen()
 {
 }
 
-Specimen::Specimen(const std::vector<Maneuver>& maneuvers)
-    : maneuvers(maneuvers)
+Specimen::Specimen(const std::vector<Maneuver>& maneuverValues)
+    : maneuvers(maneuverValues)
 {
 }
 
-Specimen::Specimen(std::vector<Maneuver>&& maneuvers)
-    : maneuvers(std::move(maneuvers))
+Specimen::Specimen(std::vector<Maneuver>&& maneuverValues)
+    : maneuvers(std::move(maneuverValues))
 {
 }
 
@@ -71,9 +71,9 @@ const std::optional<FitnessValue>& Specimen::getFitness() const
     return fitness;
 }
 
-void Specimen::setFitness(const FitnessValue& fitness)
+void Specimen::setFitness(const FitnessValue& fitnessValue)
 {
-    this->fitness = fitness;
+    fitness = fitnessValue;
 }
 
 void Specimen::clearFitness()

@@ -14,8 +14,8 @@ class Specimen
 {
 public:
     Specimen();
-    explicit Specimen(const std::vector<Maneuver>& maneuvers);
-    explicit Specimen(std::vector<Maneuver>&& maneuvers);
+    explicit Specimen(const std::vector<Maneuver>& maneuverValues);
+    explicit Specimen(std::vector<Maneuver>&& maneuverValues);
 
     void addManeuver(const Maneuver& maneuver);
 

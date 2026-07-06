@@ -46,7 +46,8 @@ void plotTrajectory(
 
     for (std::size_t step = 0; step <= steps; ++step)
     {
-        const Real time = step * timeStep;
+        const Real time =
+            static_cast<Real>(step) * timeStep;
         const Vector3 targetPoint = absolutePointForBody(
             simulatedTargetBody,
             targetPointFromTargetBody);

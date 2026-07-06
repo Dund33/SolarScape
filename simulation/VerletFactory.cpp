@@ -6,14 +6,14 @@
 #include "simulation/Verlet.h"
 
 VerletFactory::VerletFactory(
-    Real gravitationalConstant,
-    std::vector<Body> bodies,
-    Body targetBody,
-    Probe probe)
-    : gravitationalConstant(gravitationalConstant),
-      bodies(std::move(bodies)),
-      targetBody(std::move(targetBody)),
-      probe(std::move(probe))
+    Real gravitationalConstantValue,
+    std::vector<Body> bodyValues,
+    Body targetBodyValue,
+    Probe probeValue)
+    : gravitationalConstant(gravitationalConstantValue),
+      bodies(std::move(bodyValues)),
+      targetBody(std::move(targetBodyValue)),
+      probe(std::move(probeValue))
 {
 }
 

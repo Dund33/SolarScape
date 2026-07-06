@@ -43,15 +43,15 @@ namespace
 }
 
 SimulationFitnessEvaluator::SimulationFitnessEvaluator(
-    Real timeStep,
-    Real simulationTime,
-    Vector3 targetPointFromTargetBody,
-    const SimulationFactory& simulationFactory
+    Real timeStepValue,
+    Real simulationTimeValue,
+    Vector3 targetPointFromTargetBodyValue,
+    const SimulationFactory& simulationFactoryRef
 )
-    : timeStep(timeStep),
-      simulationTime(simulationTime),
-      targetPointFromTargetBody(targetPointFromTargetBody),
-      simulationFactory(simulationFactory)
+    : timeStep(timeStepValue),
+      simulationTime(simulationTimeValue),
+      targetPointFromTargetBody(targetPointFromTargetBodyValue),
+      simulationFactory(simulationFactoryRef)
 {
 }
 

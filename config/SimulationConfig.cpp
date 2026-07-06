@@ -13,7 +13,7 @@ namespace
             throw std::runtime_error("Missing YAML node.");
         }
 
-        return static_cast<Real>(node.as<double>());
+        return node.as<Real>();
     }
 }
 

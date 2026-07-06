@@ -377,26 +377,26 @@ namespace
 }
 
 MOEADAlgorithm::MOEADAlgorithm(
-    std::size_t populationSize,
-    std::size_t generations,
-    std::size_t neighborhoodSize,
-    const SpecimenComparator& specimenComparator,
-    Factories factories,
-    bool verbose
+    std::size_t populationSizeValue,
+    std::size_t generationCount,
+    std::size_t neighborhoodSizeValue,
+    const SpecimenComparator& specimenComparatorRef,
+    Factories factoriesValue,
+    bool verboseValue
 )
-    : populationSize(populationSize),
-      generations(generations),
-      neighborhoodSize(neighborhoodSize),
-      specimenComparator(specimenComparator),
-      factories(factories),
-      verbose(verbose)
+    : populationSize(populationSizeValue),
+      generations(generationCount),
+      neighborhoodSize(neighborhoodSizeValue),
+      specimenComparator(specimenComparatorRef),
+      factories(factoriesValue),
+      verbose(verboseValue)
 {
-    if (populationSize == 0)
+    if (populationSizeValue == 0)
     {
         throw std::invalid_argument("Population size must be greater than zero.");
     }
 
-    if (neighborhoodSize == 0)
+    if (neighborhoodSizeValue == 0)
     {
         throw std::invalid_argument("Neighborhood size must be greater than zero.");
     }

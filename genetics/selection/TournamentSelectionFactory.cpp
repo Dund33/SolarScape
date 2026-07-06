@@ -5,8 +5,8 @@
 #include "genetics/selection/TournamentSelection.h"
 
 TournamentSelectionFactory::TournamentSelectionFactory(
-    std::size_t tournamentSize)
-    : tournamentSize(tournamentSize)
+    std::size_t tournamentSizeValue)
+    : tournamentSize(tournamentSizeValue)
 {
 }
 

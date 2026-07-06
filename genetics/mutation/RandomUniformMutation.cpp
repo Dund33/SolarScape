@@ -7,19 +7,19 @@
 #include "genetics/Specimen.h"
 
 RandomUniformMutation::RandomUniformMutation(
-    double mutationProbability,
-    Real maxTimeOffset,
-    Real maxDurationOffset,
-    Real maxDirectionOffset,
-    Real maxThrottleOffset
+    double mutationProbabilityValue,
+    Real maxTimeOffsetValue,
+    Real maxDurationOffsetValue,
+    Real maxDirectionOffsetValue,
+    Real maxThrottleOffsetValue
 )
-    : mutationProbability(mutationProbability),
-      maxTimeOffset(maxTimeOffset),
-      maxDurationOffset(maxDurationOffset),
-      maxDirectionOffset(maxDirectionOffset),
-      maxThrottleOffset(maxThrottleOffset)
+    : mutationProbability(mutationProbabilityValue),
+      maxTimeOffset(maxTimeOffsetValue),
+      maxDurationOffset(maxDurationOffsetValue),
+      maxDirectionOffset(maxDirectionOffsetValue),
+      maxThrottleOffset(maxThrottleOffsetValue)
 {
-    if (mutationProbability < 0.0 || mutationProbability > 1.0)
+    if (mutationProbabilityValue < 0.0 || mutationProbabilityValue > 1.0)
     {
         throw std::invalid_argument(
             "Mutation probability must be in range [0, 1]."

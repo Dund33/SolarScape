@@ -192,64 +192,64 @@ namespace
 }
 
 ExtensiveMutation::ExtensiveMutation(
-    double mutationProbability,
-    double addProbability,
-    double removeProbability,
-    std::size_t minManeuvers,
-    std::size_t maxManeuvers,
-    Real minInitDelay,
-    Real maxInitDelay,
-    Real minDuration,
-    Real maxDuration,
-    Real maxTimeOffset,
-    Real maxDurationOffset,
-    Real maxDirectionOffset,
-    Real maxThrottleOffset)
-    : mutationProbability(mutationProbability),
-      addProbability(addProbability),
-      removeProbability(removeProbability),
-      minManeuvers(minManeuvers),
-      maxManeuvers(maxManeuvers),
-      minInitDelay(minInitDelay),
-      maxInitDelay(maxInitDelay),
-      minDuration(minDuration),
-      maxDuration(maxDuration),
-      maxTimeOffset(maxTimeOffset),
-      maxDurationOffset(maxDurationOffset),
-      maxDirectionOffset(maxDirectionOffset),
-      maxThrottleOffset(maxThrottleOffset)
+    double mutationProbabilityValue,
+    double addProbabilityValue,
+    double removeProbabilityValue,
+    std::size_t minManeuverCount,
+    std::size_t maxManeuverCount,
+    Real minInitDelayValue,
+    Real maxInitDelayValue,
+    Real minDurationValue,
+    Real maxDurationValue,
+    Real maxTimeOffsetValue,
+    Real maxDurationOffsetValue,
+    Real maxDirectionOffsetValue,
+    Real maxThrottleOffsetValue)
+    : mutationProbability(mutationProbabilityValue),
+      addProbability(addProbabilityValue),
+      removeProbability(removeProbabilityValue),
+      minManeuvers(minManeuverCount),
+      maxManeuvers(maxManeuverCount),
+      minInitDelay(minInitDelayValue),
+      maxInitDelay(maxInitDelayValue),
+      minDuration(minDurationValue),
+      maxDuration(maxDurationValue),
+      maxTimeOffset(maxTimeOffsetValue),
+      maxDurationOffset(maxDurationOffsetValue),
+      maxDirectionOffset(maxDirectionOffsetValue),
+      maxThrottleOffset(maxThrottleOffsetValue)
 {
-    if (mutationProbability < 0.0 || mutationProbability > 1.0)
+    if (mutationProbabilityValue < 0.0 || mutationProbabilityValue > 1.0)
     {
         throw std::invalid_argument(
             "Mutation probability must be in range [0, 1].");
     }
 
-    if (addProbability < 0.0 || addProbability > 1.0)
+    if (addProbabilityValue < 0.0 || addProbabilityValue > 1.0)
     {
         throw std::invalid_argument(
             "Add probability must be in range [0, 1].");
     }
 
-    if (removeProbability < 0.0 || removeProbability > 1.0)
+    if (removeProbabilityValue < 0.0 || removeProbabilityValue > 1.0)
     {
         throw std::invalid_argument(
             "Remove probability must be in range [0, 1].");
     }
 
-    if (minManeuvers > maxManeuvers)
+    if (minManeuverCount > maxManeuverCount)
     {
         throw std::invalid_argument(
             "minManeuvers cannot be greater than maxManeuvers.");
     }
 
-    if (minInitDelay > maxInitDelay)
+    if (minInitDelayValue > maxInitDelayValue)
     {
         throw std::invalid_argument(
             "minInitDelay cannot be greater than maxInitDelay.");
     }
 
-    if (minDuration > maxDuration)
+    if (minDurationValue > maxDurationValue)
     {
         throw std::invalid_argument(
             "minDuration cannot be greater than maxDuration.");

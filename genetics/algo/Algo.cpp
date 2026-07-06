@@ -536,25 +536,25 @@ namespace
 }
 
 Algo::Algo(
-    std::size_t populationSize,
-    std::size_t generations,
-    std::size_t eliteCount,
-    std::size_t immigrantCount,
-    const SpecimenComparator& specimenComparator,
-    Factories factories,
-    bool verbose,
-    std::ostream* diversityLog
+    std::size_t populationSizeValue,
+    std::size_t generationCount,
+    std::size_t eliteCountValue,
+    std::size_t immigrantCountValue,
+    const SpecimenComparator& specimenComparatorRef,
+    Factories factoriesValue,
+    bool verboseValue,
+    std::ostream* diversityLogValue
 )
-    : populationSize(populationSize),
-      generations(generations),
-      eliteCount(eliteCount),
-      immigrantCount(immigrantCount),
-      specimenComparator(specimenComparator),
-      factories(factories),
-      verbose(verbose),
-      diversityLog(diversityLog)
+    : populationSize(populationSizeValue),
+      generations(generationCount),
+      eliteCount(eliteCountValue),
+      immigrantCount(immigrantCountValue),
+      specimenComparator(specimenComparatorRef),
+      factories(factoriesValue),
+      verbose(verboseValue),
+      diversityLog(diversityLogValue)
 {
-    if (populationSize == 0)
+    if (populationSizeValue == 0)
     {
         throw std::invalid_argument(
             "Population size must be greater than zero.");
@@ -760,11 +760,11 @@ auto Algo::createCandidateIsland(
     const std::size_t islandSize =
         island.specimens.size();
     std::vector<Specimen> nextIsland;
-    const std::size_t immigrantCount =
+    const std::size_t islandImmigrantCount =
         immigrantCountForIsland(
             islandSize);
     nextIsland.reserve(
-        islandSize * 2 + immigrantCount);
+        islandSize * 2 + islandImmigrantCount);
 
     for (const Specimen& specimen : island.specimens)
     {
@@ -787,7 +787,7 @@ auto Algo::createCandidateIsland(
 
     appendImmigrants(
         nextIsland,
-        immigrantCount,
+        islandImmigrantCount,
         initializer);
 
     return RankedIsland{

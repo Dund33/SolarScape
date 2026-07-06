@@ -5,21 +5,21 @@
 #include "genetics/init/RandomInitializer.h"
 
 RandomInitializerFactory::RandomInitializerFactory(
-    std::size_t minManeuvers,
-    std::size_t maxManeuvers,
-    Real minInitTime,
-    Real maxInitTime,
-    Real minDuration,
-    Real maxDuration,
-    const ProbeProperties& probeProperties
+    std::size_t minManeuverCount,
+    std::size_t maxManeuverCount,
+    Real minInitTimeValue,
+    Real maxInitTimeValue,
+    Real minDurationValue,
+    Real maxDurationValue,
+    const ProbeProperties& probePropertiesValue
 )
-    : minManeuvers(minManeuvers),
-      maxManeuvers(maxManeuvers),
-      minInitTime(minInitTime),
-      maxInitTime(maxInitTime),
-      minDuration(minDuration),
-      maxDuration(maxDuration),
-      probeProperties(probeProperties)
+    : minManeuvers(minManeuverCount),
+      maxManeuvers(maxManeuverCount),
+      minInitTime(minInitTimeValue),
+      maxInitTime(maxInitTimeValue),
+      minDuration(minDurationValue),
+      maxDuration(maxDurationValue),
+      probeProperties(probePropertiesValue)
 {
 }
 

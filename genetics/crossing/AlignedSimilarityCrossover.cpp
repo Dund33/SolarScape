@@ -362,9 +362,9 @@ namespace
 
 AlignedSimilarityCrossover::AlignedSimilarityCrossover(
     Real minRegionSimilarity,
-    Real timeScaleMultiplier)
+    Real timeScaleMultiplierValue)
     : minRegionLogSimilarity(0.0),
-      timeScaleMultiplier(timeScaleMultiplier)
+      timeScaleMultiplier(timeScaleMultiplierValue)
 {
     if (minRegionSimilarity <= 0.0 || minRegionSimilarity > 1.0)
     {
@@ -372,7 +372,7 @@ AlignedSimilarityCrossover::AlignedSimilarityCrossover(
             "minRegionSimilarity must be in range (0, 1].");
     }
 
-    if (timeScaleMultiplier <= 0.0)
+    if (timeScaleMultiplierValue <= 0.0)
     {
         throw std::invalid_argument(
             "timeScaleMultiplier must be greater than zero.");

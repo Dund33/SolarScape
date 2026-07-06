@@ -7,14 +7,14 @@ class Maneuver
 {
 public:
     Maneuver(
-        const Vector3& thrustDirection,
+        const Vector3& thrustDirectionValue,
         Real thrustValue,
-        Real initDelay,
-        Real duration)
-        : thrustDirection(normalized(thrustDirection)),
+        Real initDelayValue,
+        Real durationValue)
+        : thrustDirection(normalized(thrustDirectionValue)),
           throttleValue(thrustValue),
-          initDelay(initDelay),
-          duration(duration)
+          initDelay(initDelayValue),
+          duration(durationValue)
     {}
 
     const Vector3& getThrustDirection() const { return thrustDirection; }

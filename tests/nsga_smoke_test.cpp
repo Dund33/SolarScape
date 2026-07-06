@@ -59,8 +59,8 @@ namespace
     {
     public:
         explicit FixtureInitializer(
-            std::vector<Specimen> specimens)
-            : specimens(std::move(specimens))
+            std::vector<Specimen> fixtureSpecimens)
+            : specimens(std::move(fixtureSpecimens))
         {
         }
 
@@ -92,8 +92,8 @@ namespace
     {
     public:
         explicit FixtureInitializerFactory(
-            std::vector<Specimen> specimens)
-            : specimens(std::move(specimens))
+            std::vector<Specimen> fixtureSpecimens)
+            : specimens(std::move(fixtureSpecimens))
         {
         }
 

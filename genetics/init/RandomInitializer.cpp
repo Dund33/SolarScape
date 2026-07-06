@@ -9,33 +9,33 @@
 #include "config/consts.h"
 
 RandomInitializer::RandomInitializer(
-    std::size_t minManeuvers,
-    std::size_t maxManeuvers,
-    Real minInitTime,
-    Real maxInitTime,
-    Real minDuration,
-    Real maxDuration,
-    const ProbeProperties& probeProperties
+    std::size_t minManeuverCount,
+    std::size_t maxManeuverCount,
+    Real minInitTimeValue,
+    Real maxInitTimeValue,
+    Real minDurationValue,
+    Real maxDurationValue,
+    const ProbeProperties& probePropertiesValue
 )
-    : minManeuvers(minManeuvers),
-      maxManeuvers(maxManeuvers),
-      minInitTime(minInitTime),
-      maxInitTime(maxInitTime),
-      minDuration(minDuration),
-      maxDuration(maxDuration),
-      probeProperties(probeProperties)
+    : minManeuvers(minManeuverCount),
+      maxManeuvers(maxManeuverCount),
+      minInitTime(minInitTimeValue),
+      maxInitTime(maxInitTimeValue),
+      minDuration(minDurationValue),
+      maxDuration(maxDurationValue),
+      probeProperties(probePropertiesValue)
 {
-    if (minManeuvers > maxManeuvers)
+    if (minManeuverCount > maxManeuverCount)
     {
         throw std::invalid_argument("minManeuvers cannot be greater than maxManeuvers.");
     }
 
-    if (minInitTime > maxInitTime)
+    if (minInitTimeValue > maxInitTimeValue)
     {
         throw std::invalid_argument("minInitTime cannot be greater than maxInitTime.");
     }
 
-    if (minDuration > maxDuration)
+    if (minDurationValue > maxDurationValue)
     {
         throw std::invalid_argument("minDuration cannot be greater than maxDuration.");
     }

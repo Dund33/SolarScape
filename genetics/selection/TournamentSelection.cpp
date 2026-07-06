@@ -5,10 +5,10 @@
 
 #include "genetics/comparison/SpecimenComparator.h"
 
-TournamentSelection::TournamentSelection(std::size_t tournamentSize)
-    : tournamentSize(tournamentSize)
+TournamentSelection::TournamentSelection(std::size_t tournamentSizeValue)
+    : tournamentSize(tournamentSizeValue)
 {
-    if (tournamentSize == 0)
+    if (tournamentSizeValue == 0)
     {
         throw std::invalid_argument("Tournament size must be greater than zero.");
     }

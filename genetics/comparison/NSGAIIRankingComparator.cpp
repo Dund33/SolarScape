@@ -4,14 +4,14 @@
 
 NSGAIIRankingComparator::NSGAIIRankingComparator(
     const std::vector<Specimen>& population,
-    const std::vector<SpecimenRank>& ranks,
-    const SpecimenComparator& objectiveComparator,
-    bool usesFallbackComparator)
-    : ranks(ranks),
-      objectiveComparator(objectiveComparator),
-      usesFallbackComparator(usesFallbackComparator)
+    const std::vector<SpecimenRank>& rankValues,
+    const SpecimenComparator& objectiveComparatorRef,
+    bool useFallbackComparator)
+    : ranks(rankValues),
+      objectiveComparator(objectiveComparatorRef),
+      usesFallbackComparator(useFallbackComparator)
 {
-    if (ranks.size() != population.size())
+    if (rankValues.size() != population.size())
     {
         throw std::invalid_argument(
             "Rank count must match population size.");

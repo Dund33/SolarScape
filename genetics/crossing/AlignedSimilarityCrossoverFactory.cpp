@@ -6,10 +6,10 @@
 #include "genetics/crossing/AlignedSimilarityCrossover.h"
 
 AlignedSimilarityCrossoverFactory::AlignedSimilarityCrossoverFactory(
-    Real minRegionSimilarity,
-    Real timeScaleMultiplier)
-    : minRegionSimilarity(minRegionSimilarity),
-      timeScaleMultiplier(timeScaleMultiplier)
+    Real minRegionSimilarityValue,
+    Real timeScaleMultiplierValue)
+    : minRegionSimilarity(minRegionSimilarityValue),
+      timeScaleMultiplier(timeScaleMultiplierValue)
 {
 }
 
