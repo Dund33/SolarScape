@@ -1,6 +1,7 @@
 #include "SimulationFitnessEvaluator.h"
 
 #include <algorithm>
+#include <execution>
 #include <limits>
 #include <stdexcept>
 #include <utility>
@@ -66,6 +67,23 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
             specimen.getManeuvers());
 
     specimen.setFitness(fitnessValue);
+}
+
+void SimulationFitnessEvaluator::evaluateBatch(
+    std::vector<Specimen*>& specimens) const
+{
+    std::for_each(
+        std::execution::par,
+        specimens.begin(),
+        specimens.end(),
+        [this](Specimen* specimen)
+        {
+            if (specimen != nullptr)
+            {
+                evaluate(
+                    *specimen);
+            }
+        });
 }
 
 FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(

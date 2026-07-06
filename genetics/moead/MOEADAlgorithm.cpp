@@ -422,7 +422,7 @@ ParetoFrontHistory MOEADAlgorithm::run() const
         initializer->createPopulation(
             populationSize);
 
-    evaluatePopulationUnsequenced(
+    evaluatePopulation(
         population,
         *fitnessEvaluator);
 

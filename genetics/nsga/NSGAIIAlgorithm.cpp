@@ -205,7 +205,7 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
-        evaluatePopulationUnsequenced(
+        evaluatePopulation(
             population,
             *fitnessEvaluator);
 
@@ -228,7 +228,7 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
                 *crossover,
                 *mutation);
 
-        evaluatePopulationUnsequenced(
+        evaluatePopulation(
             offspring,
             *fitnessEvaluator);
 
@@ -253,7 +253,7 @@ ParetoFrontHistory NSGAIIAlgorithm::run() const
                 populationSize,
                 specimenComparator);
 
-        evaluatePopulationUnsequenced(
+        evaluatePopulation(
             population,
             *fitnessEvaluator);
 

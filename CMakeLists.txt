@@ -48,6 +48,12 @@ add_library(SolarScapeSimulation STATIC
         simulation/Verlet.h
         simulation/VerletFactory.cpp
         simulation/VerletFactory.h
+        simulation/VectorSimulation.h
+        simulation/VectorSimulationFactory.h
+        simulation/VectorVerlet.cpp
+        simulation/VectorVerlet.h
+        simulation/VectorVerletFactory.cpp
+        simulation/VectorVerletFactory.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -203,6 +209,10 @@ add_library(SolarScapeGeneticFitness STATIC
         genetics/fitness/SimulationFitnessEvaluator.h
         genetics/fitness/SimulationFitnessEvaluatorFactory.cpp
         genetics/fitness/SimulationFitnessEvaluatorFactory.h
+        genetics/fitness/VectorSimulationFitnessEvaluator.cpp
+        genetics/fitness/VectorSimulationFitnessEvaluator.h
+        genetics/fitness/VectorSimulationFitnessEvaluatorFactory.cpp
+        genetics/fitness/VectorSimulationFitnessEvaluatorFactory.h
 )
 
 add_library(SolarScape::GeneticFitness ALIAS SolarScapeGeneticFitness)

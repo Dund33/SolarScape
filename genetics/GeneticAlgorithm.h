@@ -24,11 +24,11 @@ public:
     virtual ParetoFrontHistory run() const = 0;
 
 protected:
-    void evaluatePopulationUnsequenced(
+    void evaluatePopulation(
         std::vector<Specimen>& population,
         const FitnessEvaluator& fitnessEvaluator) const;
 
-    void evaluateSpecimensUnsequenced(
+    void evaluateSpecimens(
         std::vector<Specimen*>& specimens,
         const FitnessEvaluator& fitnessEvaluator) const;
 

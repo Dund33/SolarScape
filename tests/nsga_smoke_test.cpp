@@ -112,6 +112,11 @@ namespace
         void evaluate(Specimen&) const override
         {
         }
+
+        void evaluateBatch(
+            std::vector<Specimen*>&) const override
+        {
+        }
     };
 
     class NoopFitnessEvaluatorFactory final : public FitnessEvaluatorFactory

@@ -13,32 +13,31 @@
 
 GeneticAlgorithm::~GeneticAlgorithm() = default;
 
-void GeneticAlgorithm::evaluatePopulationUnsequenced(
+void GeneticAlgorithm::evaluatePopulation(
     std::vector<Specimen>& population,
     const FitnessEvaluator& fitnessEvaluator) const
 {
-    std::for_each(
-        std::execution::par_unseq,
-        population.begin(),
-        population.end(),
-        [&](Specimen& specimen)
-        {
-            fitnessEvaluator.evaluate(specimen);
-        });
+    std::vector<Specimen*> specimens;
+    specimens.reserve(
+        population.size());
+
+    for (Specimen& specimen : population)
+    {
+        specimens.push_back(
+            &specimen);
+    }
+
+    evaluateSpecimens(
+        specimens,
+        fitnessEvaluator);
 }
 
-void GeneticAlgorithm::evaluateSpecimensUnsequenced(
+void GeneticAlgorithm::evaluateSpecimens(
     std::vector<Specimen*>& specimens,
     const FitnessEvaluator& fitnessEvaluator) const
 {
-    std::for_each(
-        std::execution::par,
-        specimens.begin(),
-        specimens.end(),
-        [&](Specimen* specimen)
-        {
-            fitnessEvaluator.evaluate(*specimen);
-        });
+    fitnessEvaluator.evaluateBatch(
+        specimens);
 }
 
 void GeneticAlgorithm::appendChildren(

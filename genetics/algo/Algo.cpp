@@ -710,7 +710,7 @@ void Algo::evaluateIslands(
         specimens.push_back(&specimen);
     }
 
-    evaluateSpecimensUnsequenced(
+    evaluateSpecimens(
         specimens,
         fitnessEvaluator);
 }
