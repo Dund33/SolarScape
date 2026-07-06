@@ -371,6 +371,15 @@ target_link_libraries(NSGAIISmokeTest
         SolarScape::GeneticNSGAII
 )
 
+add_executable(longDoubleTest
+        tools/long_double_test.cpp
+)
+
+target_include_directories(longDoubleTest
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_executable(validation
         validation.cpp
         validation/RecordingValidator.cpp
