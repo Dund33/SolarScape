@@ -26,7 +26,7 @@ inline constexpr std::size_t RANDOM_INITIALIZER_MIN_MANEUVERS_RETRY_COUNT = 16;
 
 inline constexpr Real MIN_MANEUVER_TIME = 0.0;
 inline constexpr Real MIN_MANEUVER_DURATION = 1.0;
-inline constexpr Real MAX_MANEUVER_DURATION = 10000.0;
+inline constexpr Real MAX_MANEUVER_DURATION = 15000.0;
 
 inline constexpr double MUTATION_PROBABILITY = 0.20;
 inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.50;
