@@ -1,6 +1,8 @@
 #ifndef SOLARSCAPE_SIMULATIONFITNESSEVALUATOR_H
 #define SOLARSCAPE_SIMULATIONFITNESSEVALUATOR_H
 
+#include <vector>
+
 #include "genetics/fitness/FitnessEvaluator.h"
 #include "genetics/fitness/FitnessValue.h"
 #include "math/Real.h"
@@ -11,20 +13,14 @@
 class SimulationFitnessEvaluator final : public FitnessEvaluator
 {
 public:
-    SimulationFitnessEvaluator(
-        Real timeStep,
-        Real simulationTime,
-        Vector3 targetPointFromTargetBody,
-        const SimulationFactory& simulationFactory
-    );
+    SimulationFitnessEvaluator(Real timeStep, Real simulationTime, Vector3 targetPointFromTargetBody,
+                               const SimulationFactory& simulationFactory);
 
     void evaluate(Specimen& specimen) const override;
-    void evaluateBatch(
-        std::vector<Specimen*>& specimens) const override;
+    void evaluateBatch(std::vector<Specimen*>& specimens) const override;
 
 private:
-    FitnessValue calculateFitnessValue(
-        std::vector<Maneuver> maneuvers) const;
+    FitnessValue calculateFitnessValue(std::vector<Maneuver> maneuvers) const;
 
     Real timeStep;
     Real simulationTime;

@@ -3,36 +3,13 @@
 #include <algorithm>
 #include <execution>
 #include <limits>
-#include <stdexcept>
 #include <utility>
 
-namespace
-{
-    Real distance(
-        const Vector3& left,
-        const Vector3& right)
-    {
-        return (left - right).length();
-    }
+#include "genetics/fitness/FitnessEvaluationUtils.h"
 
-    Vector3 absolutePointForBody(
-        const Body& targetBody,
-        const Vector3& relativePoint)
-    {
-        return targetBody.position() + relativePoint;
-    }
-
-}
-
-SimulationFitnessEvaluator::SimulationFitnessEvaluator(
-    Real timeStepValue,
-    Real simulationTimeValue,
-    Vector3 targetPointFromTargetBodyValue,
-    const SimulationFactory& simulationFactoryRef
-)
-    : timeStep(timeStepValue),
-      simulationTime(simulationTimeValue),
-      targetPointFromTargetBody(targetPointFromTargetBodyValue),
+SimulationFitnessEvaluator::SimulationFitnessEvaluator(Real timeStepValue, Real simulationTimeValue, Vector3 targetPointFromTargetBodyValue,
+                                                       const SimulationFactory& simulationFactoryRef)
+    : timeStep(timeStepValue), simulationTime(simulationTimeValue), targetPointFromTargetBody(targetPointFromTargetBodyValue),
       simulationFactory(simulationFactoryRef)
 {
 }
@@ -44,86 +21,48 @@ void SimulationFitnessEvaluator::evaluate(Specimen& specimen) const
         return;
     }
 
-    const FitnessValue fitnessValue =
-        calculateFitnessValue(
-            specimen.getManeuvers());
+    const FitnessValue fitnessValue = calculateFitnessValue(specimen.getManeuvers());
 
     specimen.setFitness(fitnessValue);
 }
 
-void SimulationFitnessEvaluator::evaluateBatch(
-    std::vector<Specimen*>& specimens) const
+void SimulationFitnessEvaluator::evaluateBatch(std::vector<Specimen*>& specimens) const
 {
-    std::for_each(
-        std::execution::par,
-        specimens.begin(),
-        specimens.end(),
-        [this](Specimen* specimen)
+    std::for_each(std::execution::par, specimens.begin(), specimens.end(), [this](Specimen* specimen) {
+        if (specimen != nullptr)
         {
-            if (specimen != nullptr)
-            {
-                evaluate(
-                    *specimen);
-            }
-        });
+            evaluate(*specimen);
+        }
+    });
 }
 
-FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
-    std::vector<Maneuver> maneuvers) const
+FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(std::vector<Maneuver> maneuvers) const
 {
-    if (simulationTime < 0.0)
-    {
-        throw std::invalid_argument("simulationTime must be non-negative");
-    }
+    FitnessEvaluationUtils::validateTiming(simulationTime, timeStep);
 
-    if (timeStep <= 0.0)
-    {
-        throw std::invalid_argument("timeStep must be greater than zero");
-    }
-
-    auto simulation =
-        simulationFactory.create(
-            std::move(maneuvers));
+    auto simulation = simulationFactory.create(std::move(maneuvers));
     Real currentTime = 0.0;
 
-    const Body& simulatedTargetBody =
-        simulation->targetBody();
-    const Probe& simulatedProbe =
-        simulation->probe();
-    const Real fuelUsed =
-        simulation->requestedFuelUse();
+    const Real fuelUsed = simulation->requestedFuelUse();
 
-    const Real fuelConstraintViolation =
-        std::max(0.0, fuelUsed - simulatedProbe.fuelMass());
+    const Real fuelConstraintViolation = FitnessEvaluationUtils::fuelConstraintViolation(fuelUsed, simulation->initialProbeFuelMass());
 
-    Real minimumDistance =
-        std::numeric_limits<Real>::max();
+    Real minimumDistance = std::numeric_limits<Real>::max();
     Real minimumDistanceTime = 0.0;
     bool hasMinimumDistance = false;
 
     while (currentTime < simulationTime)
     {
-        const Real remainingTime =
-            simulationTime - currentTime;
+        const Real stepTime = FitnessEvaluationUtils::nextStepTime(currentTime, simulationTime, timeStep);
 
-        const Real stepTime =
-            remainingTime < timeStep
-                ? remainingTime
-                : timeStep;
-
-        simulation->step(
-            stepTime);
+        simulation->step(stepTime);
 
         currentTime += stepTime;
 
-        const Real currentDistance =
-            distance(
-                simulatedProbe.position(),
-                absolutePointForBody(
-                    simulatedTargetBody,
-                    targetPointFromTargetBody));
+        const Real currentDistance = FitnessEvaluationUtils::distanceToTargetPoint(
+            simulation->probePosition(), simulation->targetBodyPosition(), targetPointFromTargetBody);
 
-        if (!hasMinimumDistance || currentDistance < minimumDistance)
+        if (FitnessEvaluationUtils::isBetterMinimumDistance(currentDistance, hasMinimumDistance, minimumDistance))
         {
             minimumDistance = currentDistance;
             minimumDistanceTime = currentTime;
@@ -133,18 +72,10 @@ FitnessValue SimulationFitnessEvaluator::calculateFitnessValue(
 
     if (!hasMinimumDistance)
     {
-        minimumDistance =
-            distance(
-                simulatedProbe.position(),
-                absolutePointForBody(
-                    simulatedTargetBody,
-                    targetPointFromTargetBody));
+        minimumDistance = FitnessEvaluationUtils::distanceToTargetPoint(simulation->probePosition(), simulation->targetBodyPosition(),
+                                                                        targetPointFromTargetBody);
         minimumDistanceTime = currentTime;
     }
 
-    return {
-        minimumDistance,
-        minimumDistanceTime,
-        fuelUsed,
-        fuelConstraintViolation};
+    return {minimumDistance, minimumDistanceTime, fuelUsed, fuelConstraintViolation};
 }
