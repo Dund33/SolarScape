@@ -17,16 +17,10 @@ public:
     explicit Specimen(const std::vector<Maneuver>& maneuverValues);
     explicit Specimen(std::vector<Maneuver>&& maneuverValues);
 
-    void addManeuver(const Maneuver& maneuver);
-
     const std::vector<Maneuver>& getManeuvers() const;
 
     std::size_t size() const;
     bool empty() const;
-
-    Real getTotalFuelUse(
-        const ProbeProperties& probeProperties
-    ) const;
 
     const Maneuver& operator[](std::size_t index) const;
     Maneuver& operator[](std::size_t index);

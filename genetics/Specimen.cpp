@@ -1,28 +1,12 @@
 #include "Specimen.h"
 
-#include <numeric>
 #include <utility>
 
-#include "math/ProbeProperties.h"
+Specimen::Specimen() {}
 
-Specimen::Specimen()
-{
-}
+Specimen::Specimen(const std::vector<Maneuver>& maneuverValues) : maneuvers(maneuverValues) {}
 
-Specimen::Specimen(const std::vector<Maneuver>& maneuverValues)
-    : maneuvers(maneuverValues)
-{
-}
-
-Specimen::Specimen(std::vector<Maneuver>&& maneuverValues)
-    : maneuvers(std::move(maneuverValues))
-{
-}
-
-void Specimen::addManeuver(const Maneuver& maneuver)
-{
-    maneuvers.push_back(maneuver);
-}
+Specimen::Specimen(std::vector<Maneuver>&& maneuverValues) : maneuvers(std::move(maneuverValues)) {}
 
 const std::vector<Maneuver>& Specimen::getManeuvers() const
 {
@@ -37,23 +21,6 @@ std::size_t Specimen::size() const
 bool Specimen::empty() const
 {
     return maneuvers.empty();
-}
-
-Real Specimen::getTotalFuelUse(
-    const ProbeProperties& probeProperties
-) const
-{
-    return std::accumulate(
-        maneuvers.begin(),
-        maneuvers.end(),
-        0.0,
-        [&probeProperties](Real totalFuelUse, const Maneuver& maneuver)
-        {
-            return totalFuelUse +
-            probeProperties.fuelFlow() *
-            maneuver.getThrottleValue() *
-            maneuver.getDuration();
-        });
 }
 
 const Maneuver& Specimen::operator[](std::size_t index) const

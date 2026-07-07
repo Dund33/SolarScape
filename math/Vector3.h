@@ -13,8 +13,6 @@ struct Vector3
     Vector3();
     Vector3(Real xValue, Real yValue, Real zValue);
 
-    Real norm() const;
-    
     Vector3 operator+(const Vector3& other) const
     {
         return {x + other.x, y + other.y, z + other.z};

@@ -8,22 +8,11 @@
 
 #include "config/consts.h"
 
-RandomInitializer::RandomInitializer(
-    std::size_t minManeuverCount,
-    std::size_t maxManeuverCount,
-    Real minInitTimeValue,
-    Real maxInitTimeValue,
-    Real minDurationValue,
-    Real maxDurationValue,
-    const ProbeProperties& probePropertiesValue
-)
-    : minManeuvers(minManeuverCount),
-      maxManeuvers(maxManeuverCount),
-      minInitTime(minInitTimeValue),
-      maxInitTime(maxInitTimeValue),
-      minDuration(minDurationValue),
-      maxDuration(maxDurationValue),
-      probeProperties(probePropertiesValue)
+RandomInitializer::RandomInitializer(std::size_t minManeuverCount, std::size_t maxManeuverCount, Real minInitTimeValue,
+                                     Real maxInitTimeValue, Real minDurationValue, Real maxDurationValue,
+                                     const ProbeProperties& probePropertiesValue)
+    : minManeuvers(minManeuverCount), maxManeuvers(maxManeuverCount), minInitTime(minInitTimeValue), maxInitTime(maxInitTimeValue),
+      minDuration(minDurationValue), maxDuration(maxDurationValue), probeProperties(probePropertiesValue)
 {
     if (minManeuverCount > maxManeuverCount)
     {
@@ -39,45 +28,28 @@ RandomInitializer::RandomInitializer(
     {
         throw std::invalid_argument("minDuration cannot be greater than maxDuration.");
     }
-
 }
 
-Specimen RandomInitializer::createCandidate(
-    std::mt19937& rng) const
+Specimen RandomInitializer::createCandidate(std::mt19937& rng) const
 {
-    std::uniform_int_distribution<std::size_t> maneuverCountDist(
-        minManeuvers,
-        maxManeuvers
-    );
+    std::uniform_int_distribution<std::size_t> maneuverCountDist(minManeuvers, maxManeuvers);
 
-    std::uniform_real_distribution<Real> initTimeDist(
-        minInitTime,
-        maxInitTime
-    );
-    std::uniform_real_distribution<Real> directionDist(
-        -1.0,
-        1.0
-    );
+    std::uniform_real_distribution<Real> initTimeDist(minInitTime, maxInitTime);
+    std::uniform_real_distribution<Real> directionDist(-1.0, 1.0);
 
-    std::uniform_real_distribution<Real> throttleDist(
-        MIN_MANEUVER_THROTTLE,
-        1.0
-    );
+    std::uniform_real_distribution<Real> throttleDist(MIN_MANEUVER_THROTTLE, 1.0);
 
     const std::size_t maneuverCount = maneuverCountDist(rng);
 
-    Specimen specimen;
+    std::vector<Maneuver> maneuvers;
+    maneuvers.reserve(maneuverCount);
     Real usedFuel = 0.0;
 
     for (std::size_t i = 0; i < maneuverCount; ++i)
     {
-        Vector3 direction(
-            directionDist(rng),
-            directionDist(rng),
-            directionDist(rng)
-        );
+        Vector3 direction(directionDist(rng), directionDist(rng), directionDist(rng));
 
-        const Real directionNorm = direction.norm();
+        const Real directionNorm = direction.length();
 
         if (directionNorm <= 0.0)
         {
@@ -88,46 +60,38 @@ Specimen RandomInitializer::createCandidate(
 
         const Real throttleValue = throttleDist(rng);
 
-        const Real remainingFuel =
-            probeProperties.fuelMass() - usedFuel;
+        const Real remainingFuel = probeProperties.fuelMass() - usedFuel;
 
         if (remainingFuel <= 0.0)
         {
             break;
         }
 
-        const Real fuelUsageRate =
-            throttleValue * probeProperties.fuelFlow();
+        const Real fuelUsageRate = throttleValue * probeProperties.fuelFlow();
 
         if (fuelUsageRate <= 0.0)
         {
             continue;
         }
 
-        const Real maxAllowedDuration =
-            remainingFuel / fuelUsageRate;
+        const Real maxAllowedDuration = remainingFuel / fuelUsageRate;
 
         if (maxAllowedDuration < minDuration)
         {
             break;
         }
 
-        std::uniform_real_distribution<Real> durationDist(
-            minDuration,
-            std::min(maxDuration, maxAllowedDuration)
-        );
+        std::uniform_real_distribution<Real> durationDist(minDuration, std::min(maxDuration, maxAllowedDuration));
 
         const Real duration = durationDist(rng);
         const Real initDelay = initTimeDist(rng);
 
-        specimen.addManeuver(
-            Maneuver(direction, throttleValue, initDelay, duration)
-        );
+        maneuvers.emplace_back(direction, throttleValue, initDelay, duration);
 
         usedFuel += fuelUsageRate * duration;
     }
 
-    return specimen;
+    return Specimen(std::move(maneuvers));
 }
 
 Specimen RandomInitializer::create() const
@@ -136,9 +100,7 @@ Specimen RandomInitializer::create() const
 
     Specimen bestSpecimen;
 
-    for (std::size_t attempt = 0;
-         attempt < RANDOM_INITIALIZER_MIN_MANEUVERS_RETRY_COUNT;
-         ++attempt)
+    for (std::size_t attempt = 0; attempt < RANDOM_INITIALIZER_MIN_MANEUVERS_RETRY_COUNT; ++attempt)
     {
         Specimen specimen = createCandidate(rng);
 
@@ -156,20 +118,13 @@ Specimen RandomInitializer::create() const
     return bestSpecimen;
 }
 
-std::vector<Specimen> RandomInitializer::createPopulation(
-    std::size_t populationSize
-) const
+std::vector<Specimen> RandomInitializer::createPopulation(std::size_t populationSize) const
 {
     std::vector<Specimen> population;
     population.reserve(populationSize);
 
     const auto createdSpecimens =
-        std::views::iota(std::size_t{0}, populationSize) |
-        std::views::transform(
-            [this](std::size_t)
-            {
-                return create();
-            });
+        std::views::iota(std::size_t{0}, populationSize) | std::views::transform([this](std::size_t) { return create(); });
 
     for (Specimen specimen : createdSpecimens)
     {
