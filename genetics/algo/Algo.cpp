@@ -26,6 +26,9 @@
 
 namespace
 {
+    constexpr Real DirectionDistanceScale = 0.5;
+    constexpr Real ManeuverDistanceComponentWeight = 0.25;
+
     struct RunningStats
     {
         std::size_t count{};
@@ -115,11 +118,9 @@ namespace
     void appendTopRankedSpecimens(std::vector<Specimen>& target, const std::vector<Specimen>& source,
                                   const std::vector<std::size_t>& sortedIndices, std::size_t requestedCount)
     {
-        const std::size_t count = std::min(requestedCount, sortedIndices.size());
-
-        for (std::size_t i = 0; i < count; ++i)
+        for (std::size_t specimenIndex : sortedIndices | std::views::take(requestedCount))
         {
-            target.push_back(source[sortedIndices[i]]);
+            target.push_back(source[specimenIndex]);
         }
     }
 
@@ -214,7 +215,7 @@ namespace
 
     Real directionDistance(const Vector3& lhs, const Vector3& rhs)
     {
-        return std::min(1.0, (lhs - rhs).length() * 0.5);
+        return std::min(1.0, (lhs - rhs).length() * DirectionDistanceScale);
     }
 
     Real maneuverDistance(const Maneuver& lhs, const Maneuver& rhs)
@@ -222,7 +223,7 @@ namespace
         return (std::abs(lhs.getThrottleValue() - rhs.getThrottleValue()) +
                 directionDistance(lhs.getThrustDirection(), rhs.getThrustDirection()) +
                 normalizedDifference(lhs.getInitDelay(), rhs.getInitDelay()) + normalizedDifference(lhs.getDuration(), rhs.getDuration())) *
-               0.25;
+               ManeuverDistanceComponentWeight;
     }
 
     Real specimenDistance(const Specimen& lhs, const Specimen& rhs)

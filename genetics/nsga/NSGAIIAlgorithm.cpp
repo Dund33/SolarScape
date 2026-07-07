@@ -1,6 +1,7 @@
 #include "NSGAIIAlgorithm.h"
 
 #include <algorithm>
+#include <iterator>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -14,12 +15,14 @@
 
 namespace
 {
+    constexpr std::size_t PrintedFrontLimit = 5;
+
     std::string frontsDetails(const ParetoRankedPopulation& rankedPopulation)
     {
         std::ostringstream details;
         details << "fronts=" << rankedPopulation.fronts.size() << " [";
 
-        const auto printedFronts = rankedPopulation.fronts | std::views::take(5);
+        const auto printedFronts = rankedPopulation.fronts | std::views::take(PrintedFrontLimit);
 
         bool first = true;
 
@@ -34,7 +37,7 @@ namespace
             first = false;
         }
 
-        if (rankedPopulation.fronts.size() > 5)
+        if (rankedPopulation.fronts.size() > PrintedFrontLimit)
         {
             details << ", ...";
         }
@@ -56,10 +59,7 @@ namespace
 
     void appendMovedPopulation(std::vector<Specimen>& target, std::vector<Specimen>& source)
     {
-        for (Specimen& specimen : source)
-        {
-            target.push_back(std::move(specimen));
-        }
+        std::ranges::move(source, std::back_inserter(target));
     }
 
     void appendMovedSpecimensByIndex(std::vector<Specimen>& target, std::vector<Specimen>& source, const std::vector<std::size_t>& indices,
