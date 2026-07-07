@@ -12,10 +12,7 @@ class Selection
 public:
     virtual ~Selection() = default;
 
-    virtual const Specimen& select(
-        const std::vector<Specimen>& population,
-        const SpecimenComparator& specimenComparator
-    ) const = 0;
+    virtual const Specimen& select(const std::vector<Specimen>& population, const SpecimenComparator& specimenComparator) const = 0;
 };
 
 #endif

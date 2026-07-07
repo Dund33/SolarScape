@@ -20,12 +20,8 @@ class VectorVerlet final : public VectorSimulation
 public:
     static constexpr std::size_t BatchWidth = 4;
 
-    VectorVerlet(
-        std::vector<Body> bodies,
-        Body targetBody,
-        Probe probe,
-        std::vector<std::vector<Maneuver>> maneuverBatch,
-        Real gravitationalConstant);
+    VectorVerlet(std::vector<Body> bodies, Body targetBody, Probe probe, std::vector<std::vector<Maneuver>> maneuverBatch,
+                 Real gravitationalConstant);
 
     std::size_t batchSize() const override;
     void step(Real timeStep) override;
@@ -59,60 +55,39 @@ private:
         LaneValues z;
     };
 
-    using ActiveManeuvers =
-        std::array<std::optional<Maneuver>, BatchWidth>;
+    using ActiveManeuvers = std::array<std::optional<Maneuver>, BatchWidth>;
 
-    void initializeBodyState(
-        std::size_t bodyIndex,
-        const Body& body);
+    void initializeBodyState(std::size_t bodyIndex, const Body& body);
 
-    void initializeProbeState(
-        const Probe& probe);
+    void initializeProbeState(const Probe& probe);
 
-    void validateLaneIndex(
-        std::size_t laneIndex) const;
+    void validateLaneIndex(std::size_t laneIndex) const;
 
-    Vector3 positionFor(
-        std::size_t bodyIndex,
-        std::size_t laneIndex) const;
+    Vector3 positionFor(std::size_t bodyIndex, std::size_t laneIndex) const;
 
     ActiveManeuvers activeManeuvers() const;
 
-    void calculateAccelerations(
-        std::vector<AccelerationState>& accelerations) const;
+    void calculateAccelerations(std::vector<AccelerationState>& accelerations) const;
 
-    AccelerationState calculateAccelerationForBody(
-        std::size_t bodyIndex) const;
+    AccelerationState calculateAccelerationForBody(std::size_t bodyIndex) const;
 
-    AccelerationState calculateAccelerationForBodyScalar(
-        std::size_t bodyIndex) const;
+    AccelerationState calculateAccelerationForBodyScalar(std::size_t bodyIndex) const;
 
 #if defined(__AVX__)
-    static __m256d loadLaneValues(
-        const LaneValues& lanes);
+    static __m256d loadLaneValues(const LaneValues& lanes);
 
-    static void storeLaneValues(
-        LaneValues& lanes,
-        __m256d value);
+    static void storeLaneValues(LaneValues& lanes, __m256d value);
 #endif
 
-    void updatePositions(
-        double timeStep);
+    void updatePositions(double timeStep);
 
-    void updateVelocities(
-        double timeStep);
+    void updateVelocities(double timeStep);
 
-    AccelerationState calculateManeuverAccelerations(
-        const ActiveManeuvers& activeManeuvers,
-        double timeStep) const;
+    AccelerationState calculateManeuverAccelerations(const ActiveManeuvers& activeManeuvers, double timeStep) const;
 
-    void applyManeuverAcceleration(
-        const AccelerationState& maneuverAcceleration,
-        double timeStep);
+    void applyManeuverAcceleration(const AccelerationState& maneuverAcceleration, double timeStep);
 
-    void burnFuel(
-        const ActiveManeuvers& activeManeuvers,
-        double timeStep);
+    void burnFuel(const ActiveManeuvers& activeManeuvers, double timeStep);
 
     std::size_t batchSize_{};
     std::size_t targetBodyIndex_{};

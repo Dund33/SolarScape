@@ -7,11 +7,7 @@ class ProbeProperties
 {
 public:
     ProbeProperties();
-    ProbeProperties(
-        Real emptyMass,
-        Real fuelMass,
-        Real fuelFlow,
-        Real specificImpulse);
+    ProbeProperties(Real emptyMass, Real fuelMass, Real fuelFlow, Real specificImpulse);
 
     auto emptyMass() const -> Real;
     auto fuelMass() const -> Real;

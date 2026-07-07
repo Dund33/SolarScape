@@ -25,8 +25,7 @@ public:
     Vector3 probeVelocity;
     ProbeProperties probeProperties;
 
-    static SimulationConfig loadFromFile(
-        const std::string& filePath);
+    static SimulationConfig loadFromFile(const std::string& filePath);
 
 private:
     static Vector3 loadVector3(const YAML::Node& node);

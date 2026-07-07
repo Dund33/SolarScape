@@ -10,12 +10,8 @@
 class GenerationProgressLogger
 {
 public:
-    static void print(
-        std::string_view algorithmName,
-        std::size_t generation,
-        const ParetoFrontStats& paretoFrontStats,
-        std::string_view details = {},
-        std::ostream& output = defaultOutput());
+    static void print(std::string_view algorithmName, std::size_t generation, const ParetoFrontStats& paretoFrontStats,
+                      std::string_view details = {}, std::ostream& output = defaultOutput());
 
 private:
     static std::ostream& defaultOutput();

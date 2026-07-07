@@ -8,15 +8,11 @@
 #include "math/Vector3.h"
 #include "simulation/VectorSimulationFactory.h"
 
-class VectorSimulationFitnessEvaluatorFactory final :
-    public FitnessEvaluatorFactory
+class VectorSimulationFitnessEvaluatorFactory final : public FitnessEvaluatorFactory
 {
 public:
-    VectorSimulationFitnessEvaluatorFactory(
-        Real timeStep,
-        Real simulationTime,
-        Vector3 targetPointFromTargetBody,
-        const VectorSimulationFactory& simulationFactory);
+    VectorSimulationFitnessEvaluatorFactory(Real timeStep, Real simulationTime, Vector3 targetPointFromTargetBody,
+                                            const VectorSimulationFactory& simulationFactory);
 
     std::unique_ptr<FitnessEvaluator> create() const override;
 

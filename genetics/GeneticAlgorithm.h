@@ -24,27 +24,15 @@ public:
     virtual ParetoFrontHistory run() const = 0;
 
 protected:
-    void evaluatePopulation(
-        std::vector<Specimen>& population,
-        const FitnessEvaluator& fitnessEvaluator) const;
+    void evaluatePopulation(std::vector<Specimen>& population, const FitnessEvaluator& fitnessEvaluator) const;
 
-    void evaluateSpecimens(
-        std::vector<Specimen*>& specimens,
-        const FitnessEvaluator& fitnessEvaluator) const;
+    void evaluateSpecimens(std::vector<Specimen*>& specimens, const FitnessEvaluator& fitnessEvaluator) const;
 
-    virtual void appendChildren(
-        const std::vector<Specimen>& parents,
-        std::vector<Specimen>& target,
-        std::size_t targetSize,
-        const SpecimenComparator& selectionComparator,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const;
+    virtual void appendChildren(const std::vector<Specimen>& parents, std::vector<Specimen>& target, std::size_t targetSize,
+                                const SpecimenComparator& selectionComparator, Selection& selection, Crossover& crossover,
+                                Mutation& mutation) const;
 
-    void appendImmigrants(
-        std::vector<Specimen>& population,
-        std::size_t count,
-        Initializer& initializer) const;
+    void appendImmigrants(std::vector<Specimen>& population, std::size_t count, Initializer& initializer) const;
 };
 
 #endif

@@ -9,17 +9,8 @@ public:
     using Body::Body;
 
     Probe();
-    Probe(
-        const Vector3& position,
-        const Vector3& velocity,
-        Real mass);
-    Probe(
-        const Vector3& position,
-        const Vector3& velocity,
-        Real emptyMass,
-        Real fuelMass,
-        Real fuelFlow,
-        Real specificImpulse);
+    Probe(const Vector3& position, const Vector3& velocity, Real mass);
+    Probe(const Vector3& position, const Vector3& velocity, Real emptyMass, Real fuelMass, Real fuelFlow, Real specificImpulse);
     ~Probe() override;
 
     auto mass() const -> Real override;
@@ -42,6 +33,5 @@ private:
     Real fuelFlow_{0.0};
     Real specificImpulse_{0.0};
 };
-
 
 #endif

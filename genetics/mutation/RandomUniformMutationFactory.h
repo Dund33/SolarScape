@@ -7,13 +7,8 @@
 class RandomUniformMutationFactory final : public MutationFactory
 {
 public:
-    RandomUniformMutationFactory(
-        double mutationProbability,
-        Real maxTimeOffset,
-        Real maxDurationOffset,
-        Real maxDirectionOffset,
-        Real maxThrottleOffset
-    );
+    RandomUniformMutationFactory(double mutationProbability, Real maxTimeOffset, Real maxDurationOffset, Real maxDirectionOffset,
+                                 Real maxThrottleOffset);
 
     std::unique_ptr<Mutation> create() const override;
 

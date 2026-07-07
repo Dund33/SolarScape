@@ -31,108 +31,56 @@
 
 namespace
 {
-    void plotRepresentativeTrajectory(
-        const SimulationFactory& simulationFactory,
-        const SimulationState& state,
-        const ParetoFrontHistory& paretoFrontHistory)
+    void plotRepresentativeTrajectory(const SimulationFactory& simulationFactory, const SimulationState& state,
+                                      const ParetoFrontHistory& paretoFrontHistory)
     {
         if (paretoFrontHistory.empty())
         {
             return;
         }
 
-        const ParetoFront& paretoFront =
-            paretoFrontHistory.back();
+        const ParetoFront& paretoFront = paretoFrontHistory.back();
 
         if (paretoFront.empty())
         {
             return;
         }
 
-        plotTrajectory(
-            simulationFactory,
-            state.timeStep,
-            static_cast<std::size_t>(state.simulationTime / state.timeStep),
-            state.targetPointFromTargetBody,
-            paretoFront.front().getManeuvers()
-        );
+        plotTrajectory(simulationFactory, state.timeStep, static_cast<std::size_t>(state.simulationTime / state.timeStep),
+                       state.targetPointFromTargetBody, paretoFront.front().getManeuvers());
     }
 
-    auto run(
-        const std::string& configFilePath,
-        const std::string& outputFilePath,
-        const std::string& diversityLogFilePath,
-        bool verbose) -> int
+    auto run(const std::string& configFilePath, const std::string& outputFilePath, const std::string& diversityLogFilePath, bool verbose)
+        -> int
     {
-        SimulationConfig config =
-            SimulationConfig::loadFromFile(
-                configFilePath);
+        SimulationConfig config = SimulationConfig::loadFromFile(configFilePath);
 
-        SimulationState state =
-            createSimulationState(
-                std::move(config));
+        SimulationState state = createSimulationState(std::move(config));
 
-        VectorVerletFactory simulationFactory(
-            state.gravitationalConstant,
-            state.initialBodies,
-            state.targetBody,
-            ProbeFactory(
-                state.probeProperties,
-                state.probePosition,
-                state.probeVelocity).create());
+        VectorVerletFactory simulationFactory(state.gravitationalConstant, state.initialBodies, state.targetBody,
+                                              ProbeFactory(state.probeProperties, state.probePosition, state.probeVelocity).create());
 
-        VerletFactory plottingSimulationFactory(
-            state.gravitationalConstant,
-            state.initialBodies,
-            state.targetBody,
-            ProbeFactory(
-                state.probeProperties,
-                state.probePosition,
-                state.probeVelocity).create());
+        VerletFactory plottingSimulationFactory(state.gravitationalConstant, state.initialBodies, state.targetBody,
+                                                ProbeFactory(state.probeProperties, state.probePosition, state.probeVelocity).create());
 
-        RandomInitializerFactory initializerFactory(
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            state.probeProperties);
+        RandomInitializerFactory initializerFactory(MIN_MANEUVERS, MAX_MANEUVERS, MIN_MANEUVER_TIME, state.simulationTime,
+                                                    MIN_MANEUVER_DURATION, MAX_MANEUVER_DURATION, state.probeProperties);
 
-        TournamentSelectionFactory selectionFactory(
-            TOURNAMENT_SIZE);
+        TournamentSelectionFactory selectionFactory(TOURNAMENT_SIZE);
 
         AlignedSimilarityCrossoverFactory crossoverFactory;
 
-        ExtensiveMutationFactory mutationFactory(
-            MUTATION_PROBABILITY,
-            EXTENSIVE_MUTATION_ADD_PROBABILITY,
-            EXTENSIVE_MUTATION_REMOVE_PROBABILITY,
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_DIRECTION_RANGE,
-            MUTATION_THROTTLE_RANGE);
+        ExtensiveMutationFactory mutationFactory(MUTATION_PROBABILITY, EXTENSIVE_MUTATION_ADD_PROBABILITY,
+                                                 EXTENSIVE_MUTATION_REMOVE_PROBABILITY, MIN_MANEUVERS, MAX_MANEUVERS, MIN_MANEUVER_TIME,
+                                                 state.simulationTime, MIN_MANEUVER_DURATION, MAX_MANEUVER_DURATION, MUTATION_TIME_RANGE,
+                                                 MUTATION_DURATION_RANGE, MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
-        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
-            state.timeStep,
-            state.simulationTime,
-            state.targetPointFromTargetBody,
-            simulationFactory);
+        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
+                                                                        state.targetPointFromTargetBody, simulationFactory);
 
         TrajectorySpecimenComparator specimenComparator;
 
-        Algo::Factories factories{
-            initializerFactory,
-            selectionFactory,
-            crossoverFactory,
-            mutationFactory,
-            fitnessEvaluatorFactory};
+        Algo::Factories factories{initializerFactory, selectionFactory, crossoverFactory, mutationFactory, fitnessEvaluatorFactory};
 
         std::ofstream diversityLogFile;
 
@@ -142,81 +90,46 @@ namespace
 
             if (!diversityLogFile)
             {
-                throw std::runtime_error(
-                    "Cannot open diversity diagnostics log file: " +
-                    diversityLogFilePath);
+                throw std::runtime_error("Cannot open diversity diagnostics log file: " + diversityLogFilePath);
             }
         }
 
-        Algo algorithm(
-            POPULATION_SIZE,
-            GENERATIONS,
-            ELITE_COUNT,
-            POPULATION_SIZE / 25,
-            specimenComparator,
-            factories,
-            verbose,
-            diversityLogFilePath.empty()
-                ? nullptr
-                : &diversityLogFile);
+        Algo algorithm(POPULATION_SIZE, GENERATIONS, ELITE_COUNT, POPULATION_SIZE / 25, specimenComparator, factories, verbose,
+                       diversityLogFilePath.empty() ? nullptr : &diversityLogFile);
 
-        const ParetoFrontHistory paretoFrontHistory =
-            algorithm.run();
+        const ParetoFrontHistory paretoFrontHistory = algorithm.run();
 
-        writeParetoFrontJson(
-            outputFilePath,
-            paretoFrontHistory);
+        writeParetoFrontJson(outputFilePath, paretoFrontHistory);
 
-        std::cout
-            << "Saved Pareto front history JSON to: "
-            << outputFilePath
-            << '\n';
+        std::cout << "Saved Pareto front history JSON to: " << outputFilePath << '\n';
 
         if (!diversityLogFilePath.empty())
         {
-            std::cout
-                << "Saved ALGO diversity diagnostics log to: "
-                << diversityLogFilePath
-                << '\n';
+            std::cout << "Saved ALGO diversity diagnostics log to: " << diversityLogFilePath << '\n';
         }
 
-        plotRepresentativeTrajectory(
-            plottingSimulationFactory,
-            state,
-            paretoFrontHistory);
+        plotRepresentativeTrajectory(plottingSimulationFactory, state, paretoFrontHistory);
 
         return 0;
     }
-}
+} // namespace
 
-auto main(
-    int argc,
-    char* argv[]) -> int
+auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        const CommandLineOptions options =
-            CommandLineOptions::parse(
-                argc,
-                argv);
+        const CommandLineOptions options = CommandLineOptions::parse(argc, argv);
 
         if (options.helpRequested())
         {
-            CommandLineOptions::printUsage(
-                std::cout,
-                argc > 0 ? argv[0] : nullptr);
+            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr);
             return 0;
         }
 
         try
         {
-            return run(
-                options.configFilePath(),
-                options.outputFilePath(),
-                options.hasDiversityLogFilePath()
-                    ? options.diversityLogFilePath()
-                    : std::string(),
-                options.verbose());
+            return run(options.configFilePath(), options.outputFilePath(),
+                       options.hasDiversityLogFilePath() ? options.diversityLogFilePath() : std::string(), options.verbose());
         }
         catch (const YAML::Exception& e)
         {
@@ -232,9 +145,7 @@ auto main(
     catch (const CommandLineParseError& e)
     {
         std::cerr << "Argument error: " << e.what() << '\n';
-        CommandLineOptions::printUsage(
-            std::cerr,
-            argc > 0 ? argv[0] : nullptr);
+        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr);
         return 2;
     }
 }

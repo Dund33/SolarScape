@@ -7,44 +7,23 @@
 
 namespace
 {
-    bool isEquivalent(
-        const Specimen& lhs,
-        const Specimen& rhs,
-        const SpecimenComparator& specimenComparator)
+    bool isEquivalent(const Specimen& lhs, const Specimen& rhs, const SpecimenComparator& specimenComparator)
     {
-        return specimenComparator.compare(
-            lhs,
-            rhs) == std::partial_ordering::equivalent;
+        return specimenComparator.compare(lhs, rhs) == std::partial_ordering::equivalent;
     }
 
-    bool containsEquivalentSpecimen(
-        const std::vector<Specimen>& front,
-        const Specimen& specimen,
-        const SpecimenComparator& specimenComparator)
+    bool containsEquivalentSpecimen(const std::vector<Specimen>& front, const Specimen& specimen,
+                                    const SpecimenComparator& specimenComparator)
     {
         return std::ranges::any_of(
-            front,
-            [&](const Specimen& frontSpecimen)
-            {
-                return isEquivalent(
-                    frontSpecimen,
-                    specimen,
-                    specimenComparator);
-            });
+            front, [&](const Specimen& frontSpecimen) { return isEquivalent(frontSpecimen, specimen, specimenComparator); });
     }
 
-    void appendDistinctSpecimens(
-        std::vector<Specimen>& target,
-        std::vector<Specimen>& source,
-        const SpecimenComparator& specimenComparator)
+    void appendDistinctSpecimens(std::vector<Specimen>& target, std::vector<Specimen>& source, const SpecimenComparator& specimenComparator)
     {
         for (Specimen& specimen : source)
         {
-            if (
-                containsEquivalentSpecimen(
-                    target,
-                    specimen,
-                    specimenComparator))
+            if (containsEquivalentSpecimen(target, specimen, specimenComparator))
             {
                 continue;
             }
@@ -52,22 +31,17 @@ namespace
             target.push_back(std::move(specimen));
         }
     }
-}
+} // namespace
 
-std::vector<Specimen> ParetoFrontUtils::frontFromIndices(
-    const std::vector<Specimen>& population,
-    const std::vector<std::size_t>& frontIndices)
+std::vector<Specimen> ParetoFrontUtils::frontFromIndices(const std::vector<Specimen>& population,
+                                                         const std::vector<std::size_t>& frontIndices)
 {
     std::vector<Specimen> front;
     front.reserve(frontIndices.size());
 
-    const auto frontSpecimens =
-        frontIndices |
-        std::views::transform(
-            [&population](std::size_t specimenIndex) -> const Specimen&
-            {
-                return population[specimenIndex];
-            });
+    const auto frontSpecimens = frontIndices | std::views::transform([&population](std::size_t specimenIndex) -> const Specimen& {
+                                    return population[specimenIndex];
+                                });
 
     for (const Specimen& specimen : frontSpecimens)
     {
@@ -77,42 +51,26 @@ std::vector<Specimen> ParetoFrontUtils::frontFromIndices(
     return front;
 }
 
-std::vector<Specimen> ParetoFrontUtils::updateArchive(
-    std::vector<Specimen> archive,
-    std::vector<Specimen> newFront,
-    const SpecimenComparator& specimenComparator)
+std::vector<Specimen> ParetoFrontUtils::updateArchive(std::vector<Specimen> archive, std::vector<Specimen> newFront,
+                                                      const SpecimenComparator& specimenComparator)
 {
     std::vector<Specimen> candidates;
     candidates.reserve(archive.size() + newFront.size());
 
-    appendDistinctSpecimens(
-        candidates,
-        archive,
-        specimenComparator);
-    appendDistinctSpecimens(
-        candidates,
-        newFront,
-        specimenComparator);
+    appendDistinctSpecimens(candidates, archive, specimenComparator);
+    appendDistinctSpecimens(candidates, newFront, specimenComparator);
 
     if (candidates.empty())
     {
         return {};
     }
 
-    return firstFront(
-        candidates,
-        specimenComparator);
+    return firstFront(candidates, specimenComparator);
 }
 
-ParetoFrontStats ParetoFrontUtils::calculateStats(
-    const std::vector<Specimen>& population,
-    const std::vector<std::size_t>& frontIndices)
+ParetoFrontStats ParetoFrontUtils::calculateStats(const std::vector<Specimen>& population, const std::vector<std::size_t>& frontIndices)
 {
-    return calculateStats(
-        frontIndices |
-        std::views::transform(
-            [&population](std::size_t specimenIndex) -> const Specimen&
-            {
-                return population[specimenIndex];
-            }));
+    return calculateStats(frontIndices | std::views::transform([&population](std::size_t specimenIndex) -> const Specimen& {
+                              return population[specimenIndex];
+                          }));
 }

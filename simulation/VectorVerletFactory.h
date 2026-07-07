@@ -13,16 +13,11 @@
 class VectorVerletFactory final : public VectorSimulationFactory
 {
 public:
-    VectorVerletFactory(
-        Real gravitationalConstant,
-        std::vector<Body> bodies,
-        Body targetBody,
-        Probe probe);
+    VectorVerletFactory(Real gravitationalConstant, std::vector<Body> bodies, Body targetBody, Probe probe);
 
     std::size_t maxBatchSize() const override;
 
-    std::unique_ptr<VectorSimulation> create(
-        std::vector<std::vector<Maneuver>> maneuverBatch) const override;
+    std::unique_ptr<VectorSimulation> create(std::vector<std::vector<Maneuver>> maneuverBatch) const override;
 
 private:
     Real gravitationalConstant;

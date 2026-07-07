@@ -12,8 +12,7 @@ public:
 
     virtual void evaluate(Specimen& specimen) const = 0;
 
-    virtual void evaluateBatch(
-        std::vector<Specimen*>& specimens) const = 0;
+    virtual void evaluateBatch(std::vector<Specimen*>& specimens) const = 0;
 };
 
 #endif

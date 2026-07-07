@@ -15,8 +15,7 @@ inline constexpr std::size_t ALGO_TARGET_ISLAND_COUNT = 4;
 inline constexpr std::size_t ALGO_MIGRATION_INTERVAL = 15;
 inline constexpr std::size_t ALGO_MIN_MIGRANT_COUNT = 1;
 inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_INTERVAL = 10;
-inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_COUNT =
-    POPULATION_SIZE / 40;
+inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_COUNT = POPULATION_SIZE / 40;
 
 inline constexpr Real TARGET_WINDOW_DISTANCE = 1000000.0;
 inline constexpr Real ALGO_CLOSE_TO_TARGET_WINDOW_VIOLATION = 300000.0;

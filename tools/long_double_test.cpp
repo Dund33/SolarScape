@@ -4,8 +4,8 @@
 #include <limits>
 #include <type_traits>
 
-template <typename T>
-void printTypeInfo(const char* name) {
+template <typename T> void printTypeInfo(const char* name)
+{
     std::cout << name << '\n'
               << "  sizeof: " << sizeof(T) << " bytes\n"
               << "  digits: " << std::numeric_limits<T>::digits << " binary digits\n"
@@ -14,7 +14,8 @@ void printTypeInfo(const char* name) {
               << "  is_iec559: " << std::numeric_limits<T>::is_iec559 << '\n';
 }
 
-int main() {
+int main()
+{
     printTypeInfo<double>("double");
     printTypeInfo<long double>("long double");
     printTypeInfo<Real>("Real");

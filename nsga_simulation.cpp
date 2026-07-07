@@ -26,112 +26,60 @@
 
 namespace
 {
-    auto run(
-        const std::string& configFilePath,
-        const std::string& outputFilePath,
-        bool verbose) -> int
+    auto run(const std::string& configFilePath, const std::string& outputFilePath, bool verbose) -> int
     {
-        SimulationConfig config =
-            SimulationConfig::loadFromFile(
-                configFilePath);
+        SimulationConfig config = SimulationConfig::loadFromFile(configFilePath);
 
-        SimulationState state =
-            createSimulationState(
-                std::move(config));
+        SimulationState state = createSimulationState(std::move(config));
 
-        VectorVerletFactory simulationFactory(
-            state.gravitationalConstant,
-            state.initialBodies,
-            state.targetBody,
-            ProbeFactory(
-                state.probeProperties,
-                state.probePosition,
-                state.probeVelocity).create());
+        VectorVerletFactory simulationFactory(state.gravitationalConstant, state.initialBodies, state.targetBody,
+                                              ProbeFactory(state.probeProperties, state.probePosition, state.probeVelocity).create());
 
-        RandomInitializerFactory initializerFactory(
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            state.probeProperties);
+        RandomInitializerFactory initializerFactory(MIN_MANEUVERS, MAX_MANEUVERS, MIN_MANEUVER_TIME, state.simulationTime,
+                                                    MIN_MANEUVER_DURATION, MAX_MANEUVER_DURATION, state.probeProperties);
 
-        TournamentSelectionFactory selectionFactory(
-            TOURNAMENT_SIZE);
+        TournamentSelectionFactory selectionFactory(TOURNAMENT_SIZE);
 
         RandomCutCrossoverFactory crossoverFactory;
 
-        RandomUniformMutationFactory mutationFactory(
-            MUTATION_PROBABILITY,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_DIRECTION_RANGE,
-            MUTATION_THROTTLE_RANGE);
+        RandomUniformMutationFactory mutationFactory(MUTATION_PROBABILITY, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
+                                                     MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
-        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
-            state.timeStep,
-            state.simulationTime,
-            state.targetPointFromTargetBody,
-            simulationFactory);
+        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
+                                                                        state.targetPointFromTargetBody, simulationFactory);
 
         TrajectorySpecimenComparator specimenComparator;
 
-        NSGAIIAlgorithm::Factories factories{
-            initializerFactory,
-            selectionFactory,
-            crossoverFactory,
-            mutationFactory,
-            fitnessEvaluatorFactory};
+        NSGAIIAlgorithm::Factories factories{initializerFactory, selectionFactory, crossoverFactory, mutationFactory,
+                                             fitnessEvaluatorFactory};
 
-        NSGAIIAlgorithm algorithm(
-            POPULATION_SIZE,
-            GENERATIONS,
-            specimenComparator,
-            factories,
-            verbose);
+        NSGAIIAlgorithm algorithm(POPULATION_SIZE, GENERATIONS, specimenComparator, factories, verbose);
 
-        const ParetoFrontHistory paretoFrontHistory =
-            algorithm.run();
+        const ParetoFrontHistory paretoFrontHistory = algorithm.run();
 
-        writeParetoFrontJson(
-            outputFilePath,
-            paretoFrontHistory);
+        writeParetoFrontJson(outputFilePath, paretoFrontHistory);
 
-        std::cout
-            << "Saved Pareto front history JSON to: "
-            << outputFilePath
-            << '\n';
+        std::cout << "Saved Pareto front history JSON to: " << outputFilePath << '\n';
 
         return 0;
     }
-}
+} // namespace
 
-auto main(
-    int argc,
-    char* argv[]) -> int
+auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        const CommandLineOptions options =
-            CommandLineOptions::parse(
-                argc,
-                argv);
+        const CommandLineOptions options = CommandLineOptions::parse(argc, argv);
 
         if (options.helpRequested())
         {
-            CommandLineOptions::printUsage(
-                std::cout,
-                argc > 0 ? argv[0] : nullptr);
+            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr);
             return 0;
         }
 
         try
         {
-            return run(
-                options.configFilePath(),
-                options.outputFilePath(),
-                options.verbose());
+            return run(options.configFilePath(), options.outputFilePath(), options.verbose());
         }
         catch (const YAML::Exception& e)
         {
@@ -147,9 +95,7 @@ auto main(
     catch (const CommandLineParseError& e)
     {
         std::cerr << "Argument error: " << e.what() << '\n';
-        CommandLineOptions::printUsage(
-            std::cerr,
-            argc > 0 ? argv[0] : nullptr);
+        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr);
         return 2;
     }
 }

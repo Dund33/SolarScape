@@ -8,9 +8,7 @@
 
 namespace
 {
-    std::partial_ordering compareMinimizedValues(
-        Real lhs,
-        Real rhs)
+    std::partial_ordering compareMinimizedValues(Real lhs, Real rhs)
     {
         if (lhs < rhs)
         {
@@ -24,24 +22,17 @@ namespace
 
         return std::partial_ordering::equivalent;
     }
-}
+} // namespace
 
-std::partial_ordering FitnessObjectiveComparator::compare(
-    const Specimen& lhs,
-    const Specimen& rhs
-) const
+std::partial_ordering FitnessObjectiveComparator::compare(const Specimen& lhs, const Specimen& rhs) const
 {
-    const FitnessValue& lhsFitness =
-        lhs.getFitness().value();
-    const FitnessValue& rhsFitness =
-        rhs.getFitness().value();
+    const FitnessValue& lhsFitness = lhs.getFitness().value();
+    const FitnessValue& rhsFitness = rhs.getFitness().value();
 
     if (prioritizesFuelConstraintViolation())
     {
         const std::partial_ordering comparison =
-            compareMinimizedValues(
-                lhsFitness.fuelConstraintViolation,
-                rhsFitness.fuelConstraintViolation);
+            compareMinimizedValues(lhsFitness.fuelConstraintViolation, rhsFitness.fuelConstraintViolation);
 
         if (comparison != std::partial_ordering::equivalent)
         {
@@ -52,9 +43,7 @@ std::partial_ordering FitnessObjectiveComparator::compare(
     if (prioritizesTargetWindowViolation())
     {
         const std::partial_ordering comparison =
-            compareMinimizedValues(
-                targetWindowViolation(lhsFitness),
-                targetWindowViolation(rhsFitness));
+            compareMinimizedValues(targetWindowViolation(lhsFitness), targetWindowViolation(rhsFitness));
 
         if (comparison != std::partial_ordering::equivalent)
         {
@@ -67,18 +56,9 @@ std::partial_ordering FitnessObjectiveComparator::compare(
 
     for (std::size_t objective = 0; objective < objectiveCount(); ++objective)
     {
-        const Real lhsValue =
-            objectiveValue(
-                lhsFitness,
-                objective);
-        const Real rhsValue =
-            objectiveValue(
-                rhsFitness,
-                objective);
-        const std::partial_ordering comparison =
-            compareMinimizedValues(
-                lhsValue,
-                rhsValue);
+        const Real lhsValue = objectiveValue(lhsFitness, objective);
+        const Real rhsValue = objectiveValue(rhsFitness, objective);
+        const std::partial_ordering comparison = compareMinimizedValues(lhsValue, rhsValue);
 
         if (comparison == std::partial_ordering::less)
         {
@@ -103,22 +83,11 @@ std::partial_ordering FitnessObjectiveComparator::compare(
 
     if (!lhsStrictlyBetter && !rhsStrictlyBetter)
     {
-        for (std::size_t tieBreaker = 0;
-             tieBreaker < tieBreakerCount();
-             ++tieBreaker)
+        for (std::size_t tieBreaker = 0; tieBreaker < tieBreakerCount(); ++tieBreaker)
         {
-            const Real lhsValue =
-                tieBreakerValue(
-                    lhsFitness,
-                    tieBreaker);
-            const Real rhsValue =
-                tieBreakerValue(
-                    rhsFitness,
-                    tieBreaker);
-            const std::partial_ordering comparison =
-                compareMinimizedValues(
-                    lhsValue,
-                    rhsValue);
+            const Real lhsValue = tieBreakerValue(lhsFitness, tieBreaker);
+            const Real rhsValue = tieBreakerValue(rhsFitness, tieBreaker);
+            const std::partial_ordering comparison = compareMinimizedValues(lhsValue, rhsValue);
 
             if (comparison != std::partial_ordering::equivalent)
             {
@@ -132,15 +101,9 @@ std::partial_ordering FitnessObjectiveComparator::compare(
     return std::partial_ordering::unordered;
 }
 
-bool FitnessObjectiveComparator::isLess(
-    const Specimen& lhs,
-    const Specimen& rhs
-) const
+bool FitnessObjectiveComparator::isLess(const Specimen& lhs, const Specimen& rhs) const
 {
-    const std::partial_ordering result =
-        compare(
-            lhs,
-            rhs);
+    const std::partial_ordering result = compare(lhs, rhs);
 
     if (result == std::partial_ordering::less)
     {
@@ -170,11 +133,7 @@ std::size_t FitnessObjectiveComparator::tieBreakerCount() const
     return objectiveCount();
 }
 
-Real FitnessObjectiveComparator::tieBreakerValue(
-    const FitnessValue& fitness,
-    std::size_t tieBreaker) const
+Real FitnessObjectiveComparator::tieBreakerValue(const FitnessValue& fitness, std::size_t tieBreaker) const
 {
-    return objectiveValue(
-        fitness,
-        tieBreaker);
+    return objectiveValue(fitness, tieBreaker);
 }

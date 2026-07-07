@@ -15,8 +15,7 @@ public:
 
     virtual std::size_t maxBatchSize() const = 0;
 
-    virtual std::unique_ptr<VectorSimulation> create(
-        std::vector<std::vector<Maneuver>> maneuverBatch) const = 0;
+    virtual std::unique_ptr<VectorSimulation> create(std::vector<std::vector<Maneuver>> maneuverBatch) const = 0;
 };
 
 #endif

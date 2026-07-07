@@ -2,26 +2,10 @@
 
 Probe::Probe() = default;
 
-Probe::Probe(
-    const Vector3& position,
-    const Vector3& velocity,
-    Real mass)
-    : Body(position, velocity, mass),
-      emptyMass_(mass)
-{
-}
+Probe::Probe(const Vector3& position, const Vector3& velocity, Real mass) : Body(position, velocity, mass), emptyMass_(mass) {}
 
-Probe::Probe(
-    const Vector3& position,
-    const Vector3& velocity,
-    Real emptyMass,
-    Real fuelMass,
-    Real fuelFlow,
-    Real specificImpulse)
-    : Body(position, velocity, emptyMass + fuelMass),
-      emptyMass_(emptyMass),
-      fuelMass_(fuelMass),
-      fuelFlow_(fuelFlow),
+Probe::Probe(const Vector3& position, const Vector3& velocity, Real emptyMass, Real fuelMass, Real fuelFlow, Real specificImpulse)
+    : Body(position, velocity, emptyMass + fuelMass), emptyMass_(emptyMass), fuelMass_(fuelMass), fuelFlow_(fuelFlow),
       specificImpulse_(specificImpulse)
 {
 }

@@ -24,5 +24,4 @@ private:
     Real mass_;
 };
 
-
 #endif

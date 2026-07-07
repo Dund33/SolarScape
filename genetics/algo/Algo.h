@@ -27,16 +27,8 @@ public:
         const FitnessEvaluatorFactory& fitnessEvaluatorFactory;
     };
 
-    Algo(
-        std::size_t populationSize,
-        std::size_t generations,
-        std::size_t eliteCount,
-        std::size_t immigrantCount,
-        const SpecimenComparator& specimenComparator,
-        Factories factories,
-        bool verbose = false,
-        std::ostream* diversityLog = nullptr
-    );
+    Algo(std::size_t populationSize, std::size_t generations, std::size_t eliteCount, std::size_t immigrantCount,
+         const SpecimenComparator& specimenComparator, Factories factories, bool verbose = false, std::ostream* diversityLog = nullptr);
 
     ParetoFrontHistory run() const override;
 
@@ -50,63 +42,35 @@ private:
 
     using Islands = std::vector<RankedIsland>;
 
-    Islands createIslands(
-        Initializer& initializer) const;
+    Islands createIslands(Initializer& initializer) const;
 
-    void evaluateIslands(
-        Islands& islands,
-        const FitnessEvaluator& fitnessEvaluator) const;
+    void evaluateIslands(Islands& islands, const FitnessEvaluator& fitnessEvaluator) const;
 
-    void evaluateAndRankIslands(
-        Islands& islands,
-        const FitnessEvaluator& fitnessEvaluator) const;
+    void evaluateAndRankIslands(Islands& islands, const FitnessEvaluator& fitnessEvaluator) const;
 
-    void rankIslands(
-        Islands& islands) const;
+    void rankIslands(Islands& islands) const;
 
-    void rankIsland(
-        RankedIsland& island) const;
+    void rankIsland(RankedIsland& island) const;
 
-    auto createCandidateIsland(
-        const RankedIsland& island,
-        Initializer& initializer,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const -> RankedIsland;
+    auto createCandidateIsland(const RankedIsland& island, Initializer& initializer, Selection& selection, Crossover& crossover,
+                               Mutation& mutation) const -> RankedIsland;
 
-    Islands createCandidateIslands(
-        const Islands& islands,
-        Initializer& initializer,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const;
+    Islands createCandidateIslands(const Islands& islands, Initializer& initializer, Selection& selection, Crossover& crossover,
+                                   Mutation& mutation) const;
 
-    void selectEnvironmentalSurvivors(
-        Islands& islands,
-        const Islands& previousIslands) const;
+    void selectEnvironmentalSurvivors(Islands& islands, const Islands& previousIslands) const;
 
-    void migrate(
-        Islands& islands) const;
+    void migrate(Islands& islands) const;
 
-    void reintroduceArchive(
-        Islands& islands,
-        const ParetoFront& archive,
-        std::size_t generation) const;
+    void reintroduceArchive(Islands& islands, const ParetoFront& archive, std::size_t generation) const;
 
-    std::size_t immigrantCountForIsland(
-        std::size_t islandSize) const;
+    std::size_t immigrantCountForIsland(std::size_t islandSize) const;
 
-    std::size_t archiveReintroductionCountForIsland(
-        std::size_t islandSize) const;
+    std::size_t archiveReintroductionCountForIsland(std::size_t islandSize) const;
 
-    void appendChildren(
-        const std::vector<Specimen>& parents,
-        std::vector<Specimen>& target,
-        std::size_t targetSize,
-        const SpecimenComparator& selectionComparator,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const override;
+    void appendChildren(const std::vector<Specimen>& parents, std::vector<Specimen>& target, std::size_t targetSize,
+                        const SpecimenComparator& selectionComparator, Selection& selection, Crossover& crossover,
+                        Mutation& mutation) const override;
 
     std::size_t populationSize;
     std::size_t generations;

@@ -8,9 +8,8 @@
 class AlignedSimilarityCrossoverFactory final : public CrossoverFactory
 {
 public:
-    explicit AlignedSimilarityCrossoverFactory(
-        Real minRegionSimilarity = ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY,
-        Real timeScaleMultiplier = 1.0);
+    explicit AlignedSimilarityCrossoverFactory(Real minRegionSimilarity = ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY,
+                                               Real timeScaleMultiplier = 1.0);
 
     std::unique_ptr<Crossover> create() const override;
 

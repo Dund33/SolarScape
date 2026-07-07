@@ -13,19 +13,14 @@
 class VectorSimulationFitnessEvaluator final : public FitnessEvaluator
 {
 public:
-    VectorSimulationFitnessEvaluator(
-        Real timeStep,
-        Real simulationTime,
-        Vector3 targetPointFromTargetBody,
-        const VectorSimulationFactory& simulationFactory);
+    VectorSimulationFitnessEvaluator(Real timeStep, Real simulationTime, Vector3 targetPointFromTargetBody,
+                                     const VectorSimulationFactory& simulationFactory);
 
     void evaluate(Specimen& specimen) const override;
-    void evaluateBatch(
-        std::vector<Specimen*>& specimens) const override;
+    void evaluateBatch(std::vector<Specimen*>& specimens) const override;
 
 private:
-    std::vector<FitnessValue> calculateFitnessValues(
-        std::vector<std::vector<Maneuver>> maneuverBatch) const;
+    std::vector<FitnessValue> calculateFitnessValues(std::vector<std::vector<Maneuver>> maneuverBatch) const;
 
     Real timeStep;
     Real simulationTime;

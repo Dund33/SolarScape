@@ -4,15 +4,8 @@
 
 ProbeProperties::ProbeProperties() = default;
 
-ProbeProperties::ProbeProperties(
-    Real emptyMass,
-    Real fuelMass,
-    Real fuelFlow,
-    Real specificImpulse)
-    : emptyMass_(emptyMass),
-      fuelMass_(fuelMass),
-      fuelFlow_(fuelFlow),
-      specificImpulse_(specificImpulse)
+ProbeProperties::ProbeProperties(Real emptyMass, Real fuelMass, Real fuelFlow, Real specificImpulse)
+    : emptyMass_(emptyMass), fuelMass_(fuelMass), fuelFlow_(fuelFlow), specificImpulse_(specificImpulse)
 {
     if (emptyMass < 0.0)
     {

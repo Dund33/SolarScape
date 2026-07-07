@@ -8,9 +8,7 @@ class TrajectorySpecimenComparator final : public FitnessObjectiveComparator
 public:
     std::size_t objectiveCount() const override;
 
-    Real objectiveValue(
-        const FitnessValue& fitness,
-        std::size_t objective) const override;
+    Real objectiveValue(const FitnessValue& fitness, std::size_t objective) const override;
 
 protected:
     bool prioritizesFuelConstraintViolation() const override;
@@ -18,9 +16,7 @@ protected:
 
     std::size_t tieBreakerCount() const override;
 
-    Real tieBreakerValue(
-        const FitnessValue& fitness,
-        std::size_t tieBreaker) const override;
+    Real tieBreakerValue(const FitnessValue& fitness, std::size_t tieBreaker) const override;
 };
 
 #endif

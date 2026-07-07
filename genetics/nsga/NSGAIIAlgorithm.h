@@ -25,23 +25,14 @@ public:
         const FitnessEvaluatorFactory& fitnessEvaluatorFactory;
     };
 
-    NSGAIIAlgorithm(
-        std::size_t populationSize,
-        std::size_t generations,
-        const SpecimenComparator& specimenComparator,
-        Factories factories,
-        bool verbose = false
-    );
+    NSGAIIAlgorithm(std::size_t populationSize, std::size_t generations, const SpecimenComparator& specimenComparator, Factories factories,
+                    bool verbose = false);
 
     ParetoFrontHistory run() const override;
 
 private:
-    std::vector<Specimen> createOffspringPopulation(
-        const std::vector<Specimen>& population,
-        const SpecimenComparator& selectionComparator,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const;
+    std::vector<Specimen> createOffspringPopulation(const std::vector<Specimen>& population, const SpecimenComparator& selectionComparator,
+                                                    Selection& selection, Crossover& crossover, Mutation& mutation) const;
 
     std::size_t populationSize;
     std::size_t generations;

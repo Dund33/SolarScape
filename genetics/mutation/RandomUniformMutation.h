@@ -7,17 +7,10 @@
 class RandomUniformMutation final : public Mutation
 {
 public:
-    RandomUniformMutation(
-        double mutationProbability,
-        Real maxTimeOffset,
-        Real maxDurationOffset,
-        Real maxDirectionOffset,
-        Real maxThrottleOffset
-    );
+    RandomUniformMutation(double mutationProbability, Real maxTimeOffset, Real maxDurationOffset, Real maxDirectionOffset,
+                          Real maxThrottleOffset);
 
-    void mutate(
-        Specimen& specimen,
-        bool closeToTarget = false) const override;
+    void mutate(Specimen& specimen, bool closeToTarget = false) const override;
 
 private:
     double mutationProbability;

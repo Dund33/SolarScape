@@ -14,17 +14,11 @@ public:
 class CommandLineOptions
 {
 public:
-    static CommandLineOptions parse(
-        int argc,
-        char* argv[],
-        std::string defaultConfigFile = "scenario1.yml",
-        std::string defaultOutputFile = "pareto-front.json");
+    static CommandLineOptions parse(int argc, char* argv[], std::string defaultConfigFile = "scenario1.yml",
+                                    std::string defaultOutputFile = "pareto-front.json");
 
-    static void printUsage(
-        std::ostream& output,
-        const char* programName,
-        const std::string& defaultConfigFile = "scenario1.yml",
-        const std::string& defaultOutputFile = "pareto-front.json");
+    static void printUsage(std::ostream& output, const char* programName, const std::string& defaultConfigFile = "scenario1.yml",
+                           const std::string& defaultOutputFile = "pareto-front.json");
 
     const std::string& configFilePath() const;
 
@@ -39,12 +33,8 @@ public:
     bool helpRequested() const;
 
 private:
-    CommandLineOptions(
-        std::string configFilePath,
-        std::string outputFilePath,
-        std::string diversityLogFilePath,
-        bool verbose,
-        bool helpRequested);
+    CommandLineOptions(std::string configFilePath, std::string outputFilePath, std::string diversityLogFilePath, bool verbose,
+                       bool helpRequested);
 
     std::string configFilePath_;
     std::string outputFilePath_;

@@ -17,21 +17,14 @@ struct ParetoRankedPopulation
 class ParetoRanking final
 {
 public:
-    static ParetoRankedPopulation rankPopulation(
-        const std::vector<Specimen>& population,
-        const SpecimenComparator& specimenComparator);
+    static ParetoRankedPopulation rankPopulation(const std::vector<Specimen>& population, const SpecimenComparator& specimenComparator);
 
-    static std::vector<std::size_t> sortedIndices(
-        const std::vector<Specimen>& population,
-        const ParetoRankedPopulation& rankedPopulation,
-        const SpecimenComparator& specimenComparator);
+    static std::vector<std::size_t> sortedIndices(const std::vector<Specimen>& population, const ParetoRankedPopulation& rankedPopulation,
+                                                  const SpecimenComparator& specimenComparator);
 
 private:
-    static void calculateCrowdingDistance(
-        const std::vector<Specimen>& population,
-        const std::vector<std::size_t>& front,
-        const SpecimenComparator& specimenComparator,
-        std::vector<SpecimenRank>& ranks);
+    static void calculateCrowdingDistance(const std::vector<Specimen>& population, const std::vector<std::size_t>& front,
+                                          const SpecimenComparator& specimenComparator, std::vector<SpecimenRank>& ranks);
 };
 
 #endif

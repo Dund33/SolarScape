@@ -8,20 +8,15 @@
 
 namespace Refinement
 {
-    inline bool closeToTarget(
-        const FitnessValue& fitness)
+    inline bool closeToTarget(const FitnessValue& fitness)
     {
-        return targetWindowViolation(fitness) <=
-            ALGO_CLOSE_TO_TARGET_WINDOW_VIOLATION;
+        return targetWindowViolation(fitness) <= ALGO_CLOSE_TO_TARGET_WINDOW_VIOLATION;
     }
 
-    inline Real mutationScale(
-        bool closeToTargetValue)
+    inline Real mutationScale(bool closeToTargetValue)
     {
-        return closeToTargetValue
-            ? ALGO_CLOSE_TO_TARGET_MUTATION_SCALE
-            : 1.0;
+        return closeToTargetValue ? ALGO_CLOSE_TO_TARGET_MUTATION_SCALE : 1.0;
     }
-}
+} // namespace Refinement
 
 #endif

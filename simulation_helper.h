@@ -25,30 +25,19 @@ struct SimulationState
     ProbeProperties probeProperties;
 };
 
-inline auto createSimulationState(
-    SimulationConfig&& config) -> SimulationState
+inline auto createSimulationState(SimulationConfig&& config) -> SimulationState
 {
-    return {
-        config.gravitationalConstant,
-        config.timeStep,
-        config.simulationTime,
-        config.targetPointFromTargetBody,
-        std::move(config.bodies),
-        std::move(config.targetBody),
-        config.probePosition,
-        config.probeVelocity,
-        config.probeProperties};
+    return {config.gravitationalConstant, config.timeStep,
+            config.simulationTime,        config.targetPointFromTargetBody,
+            std::move(config.bodies),     std::move(config.targetBody),
+            config.probePosition,         config.probeVelocity,
+            config.probeProperties};
 }
 
-inline void printFitnessValue(
-    const FitnessValue& fitness)
+inline void printFitnessValue(const FitnessValue& fitness)
 {
-    std::cout
-        << "[minimumDistance=" << fitness.minimumDistance
-        << ", minimumDistanceTime=" << fitness.minimumDistanceTime
-        << ", fuelUsed=" << fitness.fuelUsed
-        << ", fuelConstraintViolation=" << fitness.fuelConstraintViolation
-        << ']';
+    std::cout << "[minimumDistance=" << fitness.minimumDistance << ", minimumDistanceTime=" << fitness.minimumDistanceTime
+              << ", fuelUsed=" << fitness.fuelUsed << ", fuelConstraintViolation=" << fitness.fuelConstraintViolation << ']';
 }
 
 #endif

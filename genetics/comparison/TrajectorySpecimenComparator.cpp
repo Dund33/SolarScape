@@ -7,51 +7,40 @@
 
 namespace
 {
-    bool isInsideTargetWindow(
-        const FitnessValue& fitness)
+    bool isInsideTargetWindow(const FitnessValue& fitness)
     {
         return targetWindowViolation(fitness) <= 0.0;
     }
 
-    Real fuelObjective(
-        const FitnessValue& fitness)
+    Real fuelObjective(const FitnessValue& fitness)
     {
-        return isInsideTargetWindow(fitness)
-            ? fitness.fuelUsed
-            : 0.0;
+        return isInsideTargetWindow(fitness) ? fitness.fuelUsed : 0.0;
     }
 
-    Real timeObjective(
-        const FitnessValue& fitness)
+    Real timeObjective(const FitnessValue& fitness)
     {
-        return isInsideTargetWindow(fitness)
-            ? fitness.minimumDistanceTime
-            : 0.0;
+        return isInsideTargetWindow(fitness) ? fitness.minimumDistanceTime : 0.0;
     }
-}
+} // namespace
 
 std::size_t TrajectorySpecimenComparator::objectiveCount() const
 {
     return 3;
 }
 
-Real TrajectorySpecimenComparator::objectiveValue(
-    const FitnessValue& fitness,
-    std::size_t objective) const
+Real TrajectorySpecimenComparator::objectiveValue(const FitnessValue& fitness, std::size_t objective) const
 {
     switch (objective)
     {
     case 0:
-        return targetWindowViolation(
-            fitness);
+        return targetWindowViolation(fitness);
     case 1:
         return fuelObjective(fitness);
     case 2:
         return timeObjective(fitness);
     }
 
-    throw std::out_of_range(
-        "Invalid trajectory comparator objective index.");
+    throw std::out_of_range("Invalid trajectory comparator objective index.");
 }
 
 bool TrajectorySpecimenComparator::prioritizesFuelConstraintViolation() const
@@ -69,9 +58,7 @@ std::size_t TrajectorySpecimenComparator::tieBreakerCount() const
     return 2;
 }
 
-Real TrajectorySpecimenComparator::tieBreakerValue(
-    const FitnessValue& fitness,
-    std::size_t tieBreaker) const
+Real TrajectorySpecimenComparator::tieBreakerValue(const FitnessValue& fitness, std::size_t tieBreaker) const
 {
     switch (tieBreaker)
     {
@@ -81,6 +68,5 @@ Real TrajectorySpecimenComparator::tieBreakerValue(
         return fitness.minimumDistanceTime;
     }
 
-    throw std::out_of_range(
-        "Invalid trajectory comparator tie-breaker index.");
+    throw std::out_of_range("Invalid trajectory comparator tie-breaker index.");
 }
