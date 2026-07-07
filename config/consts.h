@@ -19,7 +19,7 @@ inline constexpr std::size_t ALGO_ARCHIVE_REINTRODUCTION_COUNT = POPULATION_SIZE
 
 inline constexpr Real TARGET_WINDOW_DISTANCE = 1000000.0;
 inline constexpr Real ALGO_CLOSE_TO_TARGET_WINDOW_VIOLATION = 300000.0;
-inline constexpr Real ALGO_CLOSE_TO_TARGET_MUTATION_SCALE = 0.1;
+inline constexpr Real ALGO_CLOSE_TO_TARGET_MUTATION_SCALE = 0.05;
 
 inline constexpr std::size_t MIN_MANEUVERS = 3;
 inline constexpr std::size_t MAX_MANEUVERS = 25;
@@ -31,14 +31,14 @@ inline constexpr Real MAX_MANEUVER_DURATION = 600.0;
 inline constexpr Real MIN_MANEUVER_THROTTLE = 0.1;
 
 inline constexpr double MUTATION_PROBABILITY = 0.15;
-inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.5;
-inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.25;
+inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.15;
+inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.075;
 inline constexpr Real MUTATION_TIME_RANGE = 5000.0;
 inline constexpr Real MUTATION_DURATION_RANGE = 300.0;
 inline constexpr Real MUTATION_DIRECTION_RANGE = 0.5;
 inline constexpr Real MUTATION_THROTTLE_RANGE = 0.5;
 
-inline constexpr Real ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.4;
+inline constexpr Real ALIGNED_SIMILARITY_CROSSOVER_MIN_REGION_SIMILARITY = 0.25;
 
 inline constexpr std::size_t TOURNAMENT_SIZE = 3;
 

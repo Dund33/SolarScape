@@ -21,7 +21,6 @@ namespace
 
     struct ExchangeRegion
     {
-        std::size_t longerBegin{};
         std::size_t length{};
     };
 
@@ -122,54 +121,26 @@ namespace
                logTimeSimilarity(lhsTime.endTime, rhsTime.endTime, timeScale);
     }
 
-    auto alignedManeuvers(const OrientedGenomes& genomes, std::size_t longerBegin)
+    auto alignedManeuvers(const OrientedGenomes& genomes)
     {
         return std::views::zip(genomes.shorter.getManeuvers(),
-                               genomes.longer.getManeuvers() | std::views::drop(longerBegin) | std::views::take(genomes.shorter.size()),
-                               genomes.shorterTimes,
-                               genomes.longerTimes | std::views::drop(longerBegin) | std::views::take(genomes.shorter.size()));
+                               genomes.longer.getManeuvers() | std::views::take(genomes.shorter.size()), genomes.shorterTimes,
+                               genomes.longerTimes | std::views::take(genomes.shorter.size()));
     }
 
-    Real alignmentLogSimilaritySum(const OrientedGenomes& genomes, std::size_t longerBegin, Real timeScaleMultiplier)
+    ExchangeRegion exchangeRegion(const OrientedGenomes& genomes, Real minRegionLogSimilarity, Real timeScaleMultiplier)
     {
-        Real logSimilaritySum = 0.0;
-
-        for (auto&& [shorterManeuver, longerManeuver, shorterTime, longerTime] : alignedManeuvers(genomes, longerBegin))
-        {
-            logSimilaritySum += maneuverLogSimilarity(shorterManeuver, longerManeuver, shorterTime, longerTime, timeScaleMultiplier);
-        }
-
-        return logSimilaritySum;
-    }
-
-    std::size_t bestAlignmentBegin(const OrientedGenomes& genomes, Real timeScaleMultiplier)
-    {
-        std::size_t bestBegin = 0;
-        Real bestScore = -std::numeric_limits<Real>::infinity();
-        const std::size_t maxLongerBegin = genomes.longer.size() - genomes.shorter.size();
-
-        for (std::size_t longerBegin = 0; longerBegin <= maxLongerBegin; ++longerBegin)
-        {
-            const Real score = alignmentLogSimilaritySum(genomes, longerBegin, timeScaleMultiplier);
-
-            if (score > bestScore)
-            {
-                bestBegin = longerBegin;
-                bestScore = score;
-            }
-        }
-
-        return bestBegin;
-    }
-
-    ExchangeRegion exchangeRegionForAlignment(const OrientedGenomes& genomes, std::size_t longerBegin, Real minRegionLogSimilarity,
-                                              Real timeScaleMultiplier)
-    {
-        ExchangeRegion region{longerBegin, 0};
+        ExchangeRegion region{};
         Real cumulativeLogSimilarity = 0.0;
+        const std::size_t maxRegionLength = genomes.shorter.size() - 1;
 
-        for (auto&& [shorterManeuver, longerManeuver, shorterTime, longerTime] : alignedManeuvers(genomes, longerBegin))
+        for (auto&& [shorterManeuver, longerManeuver, shorterTime, longerTime] : alignedManeuvers(genomes))
         {
+            if (region.length >= maxRegionLength)
+            {
+                break;
+            }
+
             const Real nextLogSimilarity = cumulativeLogSimilarity + maneuverLogSimilarity(shorterManeuver, longerManeuver, shorterTime,
                                                                                            longerTime, timeScaleMultiplier);
 
@@ -196,7 +167,7 @@ namespace
     std::pair<Specimen, Specimen> exchangeSuffixesAfterRegion(const OrientedGenomes& genomes, const ExchangeRegion& region)
     {
         const std::size_t shorterCut = region.length;
-        const std::size_t longerCut = region.longerBegin + region.length;
+        const std::size_t longerCut = region.length;
 
         std::vector<Maneuver> shorterChildManeuvers;
         shorterChildManeuvers.reserve(shorterCut + genomes.longer.size() - longerCut);
@@ -243,8 +214,7 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(const Specimen& 
     const std::vector<ManeuverTime> parent1Times = absoluteManeuverTimes(parent1);
     const std::vector<ManeuverTime> parent2Times = absoluteManeuverTimes(parent2);
     const OrientedGenomes genomes = orientGenomes(parent1, parent2, parent1Times, parent2Times);
-    const std::size_t longerBegin = bestAlignmentBegin(genomes, timeScaleMultiplier);
-    const ExchangeRegion region = exchangeRegionForAlignment(genomes, longerBegin, minRegionLogSimilarity, timeScaleMultiplier);
+    const ExchangeRegion region = exchangeRegion(genomes, minRegionLogSimilarity, timeScaleMultiplier);
 
     if (region.length == 0)
     {
