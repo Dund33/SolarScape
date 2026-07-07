@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <limits>
 #include <ranges>
+#include <random>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -19,8 +20,14 @@ namespace
         Real endTime{};
     };
 
-    struct ExchangeRegion
+    struct SimilarPrefix
     {
+        std::size_t length{};
+    };
+
+    struct ExchangeBlock
+    {
+        std::size_t begin{};
         std::size_t length{};
     };
 
@@ -128,15 +135,15 @@ namespace
                                genomes.longerTimes | std::views::take(genomes.shorter.size()));
     }
 
-    ExchangeRegion exchangeRegion(const OrientedGenomes& genomes, Real minRegionLogSimilarity, Real timeScaleMultiplier)
+    SimilarPrefix similarPrefix(const OrientedGenomes& genomes, Real minRegionLogSimilarity, Real timeScaleMultiplier)
     {
-        ExchangeRegion region{};
+        SimilarPrefix prefix{};
         Real cumulativeLogSimilarity = 0.0;
-        const std::size_t maxRegionLength = genomes.shorter.size() - 1;
+        const std::size_t maxPrefixLength = genomes.shorter.size() - 1;
 
         for (auto&& [shorterManeuver, longerManeuver, shorterTime, longerTime] : alignedManeuvers(genomes))
         {
-            if (region.length >= maxRegionLength)
+            if (prefix.length >= maxPrefixLength)
             {
                 break;
             }
@@ -150,10 +157,20 @@ namespace
             }
 
             cumulativeLogSimilarity = nextLogSimilarity;
-            ++region.length;
+            ++prefix.length;
         }
 
-        return region;
+        return prefix;
+    }
+
+    ExchangeBlock randomExchangeBlock(const SimilarPrefix& prefix, const OrientedGenomes& genomes, std::mt19937& rng)
+    {
+        std::uniform_int_distribution<std::size_t> beginDist(0, prefix.length - 1);
+        const std::size_t begin = beginDist(rng);
+        const std::size_t maxLength = genomes.shorter.size() - begin;
+        std::uniform_int_distribution<std::size_t> lengthDist(1, maxLength);
+
+        return {begin, lengthDist(rng)};
     }
 
     template <std::ranges::input_range ManeuverRange> void appendManeuvers(std::vector<Maneuver>& target, ManeuverRange&& maneuvers)
@@ -164,20 +181,23 @@ namespace
         }
     }
 
-    std::pair<Specimen, Specimen> exchangeSuffixesAfterRegion(const OrientedGenomes& genomes, const ExchangeRegion& region)
+    std::pair<Specimen, Specimen> exchangeBlocks(const OrientedGenomes& genomes, const ExchangeBlock& block)
     {
-        const std::size_t shorterCut = region.length;
-        const std::size_t longerCut = region.length;
+        const std::size_t blockEnd = block.begin + block.length;
 
         std::vector<Maneuver> shorterChildManeuvers;
-        shorterChildManeuvers.reserve(shorterCut + genomes.longer.size() - longerCut);
+        shorterChildManeuvers.reserve(genomes.shorter.size());
         std::vector<Maneuver> longerChildManeuvers;
-        longerChildManeuvers.reserve(longerCut + genomes.shorter.size() - shorterCut);
+        longerChildManeuvers.reserve(genomes.longer.size());
 
-        appendManeuvers(shorterChildManeuvers, genomes.shorter.getManeuvers() | std::views::take(shorterCut));
-        appendManeuvers(shorterChildManeuvers, genomes.longer.getManeuvers() | std::views::drop(longerCut));
-        appendManeuvers(longerChildManeuvers, genomes.longer.getManeuvers() | std::views::take(longerCut));
-        appendManeuvers(longerChildManeuvers, genomes.shorter.getManeuvers() | std::views::drop(shorterCut));
+        appendManeuvers(shorterChildManeuvers, genomes.shorter.getManeuvers() | std::views::take(block.begin));
+        appendManeuvers(shorterChildManeuvers,
+                        genomes.longer.getManeuvers() | std::views::drop(block.begin) | std::views::take(block.length));
+        appendManeuvers(shorterChildManeuvers, genomes.shorter.getManeuvers() | std::views::drop(blockEnd));
+        appendManeuvers(longerChildManeuvers, genomes.longer.getManeuvers() | std::views::take(block.begin));
+        appendManeuvers(longerChildManeuvers,
+                        genomes.shorter.getManeuvers() | std::views::drop(block.begin) | std::views::take(block.length));
+        appendManeuvers(longerChildManeuvers, genomes.longer.getManeuvers() | std::views::drop(blockEnd));
 
         if (genomes.parent1IsShorter)
         {
@@ -214,12 +234,15 @@ std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(const Specimen& 
     const std::vector<ManeuverTime> parent1Times = absoluteManeuverTimes(parent1);
     const std::vector<ManeuverTime> parent2Times = absoluteManeuverTimes(parent2);
     const OrientedGenomes genomes = orientGenomes(parent1, parent2, parent1Times, parent2Times);
-    const ExchangeRegion region = exchangeRegion(genomes, minRegionLogSimilarity, timeScaleMultiplier);
+    const SimilarPrefix prefix = similarPrefix(genomes, minRegionLogSimilarity, timeScaleMultiplier);
 
-    if (region.length == 0)
+    if (prefix.length == 0)
     {
         return RandomCutCrossover().cross(parent1, parent2);
     }
 
-    return exchangeSuffixesAfterRegion(genomes, region);
+    static thread_local std::mt19937 rng(std::random_device{}());
+    const ExchangeBlock block = randomExchangeBlock(prefix, genomes, rng);
+
+    return exchangeBlocks(genomes, block);
 }

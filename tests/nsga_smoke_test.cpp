@@ -239,56 +239,46 @@ namespace
         expect(foundBestTime, "Expected best time specimen in Pareto front.");
     }
 
-    void testAlignedSimilarityCrossoverExchangesSuffixAfterAlignedRegion()
+    bool sameThrottle(const Maneuver& lhs, const Maneuver& rhs)
     {
-        AlignedSimilarityCrossover crossover(0.9);
-
-        Specimen parent1({Maneuver(Vector3(1.0, 0.0, 0.0), 0.2, 10.0, 10.0), Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 5.0, 10.0),
-                          Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0), Maneuver(Vector3(1.0, 1.0, 0.0), 0.0, 5.0, 10.0),
-                          Maneuver(Vector3(1.0, 0.0, 1.0), 0.6, 5.0, 10.0)});
-        Specimen parent2({Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 25.0, 10.0), Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
-                          Maneuver(Vector3(1.0, 1.0, 0.0), 0.5, 5.0, 10.0)});
-
-        auto [child1, child2] = crossover.cross(parent1, parent2);
-
-        expect(child1.size() == 4, "Expected first child to contain longer prefix and shorter suffix.");
-        expect(child2.size() == 4, "Expected second child to contain shorter prefix and longer suffix.");
-        expect(child1[0].getThrottleValue() == parent1[0].getThrottleValue() &&
-                   child1[1].getThrottleValue() == parent1[1].getThrottleValue() &&
-                   child1[2].getThrottleValue() == parent1[2].getThrottleValue() &&
-                   child1[3].getThrottleValue() == parent2[2].getThrottleValue(),
-               "Expected first child to keep aligned longer prefix and receive shorter suffix.");
-        expect(child2[0].getThrottleValue() == parent2[0].getThrottleValue() &&
-                   child2[1].getThrottleValue() == parent2[1].getThrottleValue() &&
-                   child2[2].getThrottleValue() == parent1[3].getThrottleValue() &&
-                   child2[3].getThrottleValue() == parent1[4].getThrottleValue(),
-               "Expected second child to keep aligned shorter prefix and receive longer suffix.");
+        return lhs.getThrottleValue() == rhs.getThrottleValue();
     }
 
-    void testAlignedSimilarityCrossoverHandlesNegativeOffset()
+    void testAlignedSimilarityCrossoverExchangesSamePositionBlock()
     {
-        AlignedSimilarityCrossover crossover(0.9);
+        AlignedSimilarityCrossover crossover(0.01);
 
-        Specimen parent1({Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 25.0, 10.0), Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0),
-                          Maneuver(Vector3(1.0, 1.0, 0.0), 0.5, 5.0, 10.0)});
-        Specimen parent2({Maneuver(Vector3(1.0, 0.0, 0.0), 0.2, 10.0, 10.0), Maneuver(Vector3(0.0, 1.0, 0.0), 0.7, 5.0, 10.0),
-                          Maneuver(Vector3(0.0, 0.0, 1.0), 0.9, 5.0, 10.0), Maneuver(Vector3(1.0, 1.0, 0.0), 0.0, 5.0, 10.0),
-                          Maneuver(Vector3(1.0, 0.0, 1.0), 0.6, 5.0, 10.0)});
+        Specimen parent1({Maneuver(Vector3(1.0, 0.0, 0.0), 0.11, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.21, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.31, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.41, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.51, 10.0, 10.0)});
+        Specimen parent2({Maneuver(Vector3(1.0, 0.0, 0.0), 0.12, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.22, 10.0, 10.0),
+                          Maneuver(Vector3(1.0, 0.0, 0.0), 0.32, 10.0, 10.0)});
 
         auto [child1, child2] = crossover.cross(parent1, parent2);
 
-        expect(child1.size() == 4, "Expected first child to contain shorter prefix and longer suffix for negative offset.");
-        expect(child2.size() == 4, "Expected second child to contain longer prefix and shorter suffix for negative offset.");
-        expect(child1[0].getThrottleValue() == parent1[0].getThrottleValue() &&
-                   child1[1].getThrottleValue() == parent1[1].getThrottleValue() &&
-                   child1[2].getThrottleValue() == parent2[3].getThrottleValue() &&
-                   child1[3].getThrottleValue() == parent2[4].getThrottleValue(),
-               "Expected first child to keep aligned shorter prefix and receive longer suffix.");
-        expect(child2[0].getThrottleValue() == parent2[0].getThrottleValue() &&
-                   child2[1].getThrottleValue() == parent2[1].getThrottleValue() &&
-                   child2[2].getThrottleValue() == parent2[2].getThrottleValue() &&
-                   child2[3].getThrottleValue() == parent1[2].getThrottleValue(),
-               "Expected second child to keep aligned longer prefix and receive shorter suffix.");
+        expect(child1.size() == parent1.size(), "Expected first child to keep first parent size.");
+        expect(child2.size() == parent2.size(), "Expected second child to keep second parent size.");
+
+        bool foundSwappedGene = false;
+
+        for (std::size_t i = 0; i < parent2.size(); ++i)
+        {
+            const bool unchanged = sameThrottle(child1[i], parent1[i]) && sameThrottle(child2[i], parent2[i]);
+            const bool swapped = sameThrottle(child1[i], parent2[i]) && sameThrottle(child2[i], parent1[i]);
+
+            foundSwappedGene = foundSwappedGene || swapped;
+            expect(unchanged || swapped, "Expected aligned block exchange to keep genes at matching indices.");
+        }
+
+        for (std::size_t i = parent2.size(); i < parent1.size(); ++i)
+        {
+            expect(sameThrottle(child1[i], parent1[i]), "Expected longer tail outside common block range to remain unchanged.");
+        }
+
+        expect(foundSwappedGene, "Expected aligned similarity crossover to exchange at least one same-position gene.");
     }
 
     void testRandomCutCrossoverKeepsMinimumManeuverCount()
@@ -313,8 +303,7 @@ auto main() -> int
     {
         testTrajectoryComparatorObjectivesAndTieBreakers();
         testNSGAIIReturnsParetoFrontHistory();
-        testAlignedSimilarityCrossoverExchangesSuffixAfterAlignedRegion();
-        testAlignedSimilarityCrossoverHandlesNegativeOffset();
+        testAlignedSimilarityCrossoverExchangesSamePositionBlock();
         testRandomCutCrossoverKeepsMinimumManeuverCount();
         std::cout << "NSGA-II smoke tests passed.\n";
         return 0;
