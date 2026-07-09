@@ -14,21 +14,13 @@ class SpecimenComparator
 public:
     virtual ~SpecimenComparator() = default;
 
-    virtual std::partial_ordering compare(
-        const Specimen& lhs,
-        const Specimen& rhs
-    ) const = 0;
+    virtual std::partial_ordering compare(const Specimen& lhs, const Specimen& rhs) const = 0;
 
-    virtual bool isLess(
-        const Specimen& lhs,
-        const Specimen& rhs
-    ) const = 0;
+    virtual bool isLess(const Specimen& lhs, const Specimen& rhs) const = 0;
 
     virtual std::size_t objectiveCount() const = 0;
 
-    virtual Real objectiveValue(
-        const FitnessValue& fitness,
-        std::size_t objective) const = 0;
+    virtual Real objectiveValue(const FitnessValue& fitness, std::size_t objective) const = 0;
 };
 
 #endif

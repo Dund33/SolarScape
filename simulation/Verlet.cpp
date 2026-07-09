@@ -8,16 +8,13 @@
 
 namespace
 {
-    std::optional<Maneuver> activeManeuverAt(
-        const std::vector<Maneuver>& maneuvers,
-        Real time)
+    std::optional<Maneuver> activeManeuverAt(const std::vector<Maneuver>& maneuvers, Real time)
     {
-        Real previousManeuverEndTime = 0.0L;
+        Real previousManeuverEndTime = 0.0;
 
         for (const Maneuver& maneuver : maneuvers)
         {
-            const Real maneuverStartTime =
-                previousManeuverEndTime + maneuver.getInitDelay();
+            const Real maneuverStartTime = previousManeuverEndTime + maneuver.getInitDelay();
             const Real maneuverEndTime = maneuverStartTime + maneuver.getDuration();
 
             if (maneuverStartTime <= time && time < maneuverEndTime)
@@ -31,61 +28,37 @@ namespace
         return std::nullopt;
     }
 
-    Vector3 calculateManeuverAcceleration(
-        const Probe& probe,
-        const std::optional<Maneuver>& maneuver,
-        Real timeStep)
+    Vector3 calculateManeuverAcceleration(const Probe& probe, const std::optional<Maneuver>& maneuver, Real timeStep)
     {
-        if (probe.fuelMass() <= 0.0L || !maneuver.has_value())
+        if (probe.fuelMass() <= 0.0 || !maneuver.has_value())
         {
             return {};
         }
 
         const Maneuver& activeManeuver = maneuver.value();
-        const Real throttleValue =
-            std::clamp(
-                activeManeuver.getThrottleValue(),
-                0.0L,
-                1.0L);
+        const Real throttleValue = std::clamp(activeManeuver.getThrottleValue(), 0.0, 1.0);
 
-        const Real fuelNeeded =
-            probe.fuelFlow() * throttleValue * timeStep;
-        const Real fuelScale =
-            fuelNeeded > 0.0L
-                ? std::min(1.0L, probe.fuelMass() / fuelNeeded)
-                : 0.0L;
+        const Real fuelNeeded = probe.fuelFlow() * throttleValue * timeStep;
+        const Real fuelScale = fuelNeeded > 0.0 ? std::min(1.0, probe.fuelMass() / fuelNeeded) : 0.0;
         const Real effectiveThrottle = throttleValue * fuelScale;
 
         const Vector3 force =
-            activeManeuver.getThrustDirection() *
-            effectiveThrottle *
-            probe.fuelFlow() *
-            probe.specificImpulse() *
-            STANDARD_GRAVITY;
+            activeManeuver.getThrustDirection() * effectiveThrottle * probe.fuelFlow() * probe.specificImpulse() * STANDARD_GRAVITY;
 
         return force / probe.mass();
     }
-}
+} // namespace
 
-Verlet::Verlet(
-    std::vector<Body> bodies,
-    Body targetBody,
-    Probe probe,
-    std::vector<Maneuver> maneuvers,
-    Real gravitationalConstant)
-    : Simulation(
-        std::move(bodies),
-        std::move(targetBody),
-        std::move(probe),
-        std::move(maneuvers),
-        gravitationalConstant)
+Verlet::Verlet(std::vector<Body> bodies, Body targetBody, Probe probe, std::vector<Maneuver> maneuvers, Real gravitationalConstant)
+    : Simulation(std::move(bodies), std::move(targetBody), std::move(probe), std::move(maneuvers), gravitationalConstant)
 {
+    const std::size_t reserveSize = mutableBodies().size() + 1;
+    bodyPointers_.reserve(reserveSize);
+    previousAccelerations_.reserve(reserveSize);
+    nextAccelerations_.reserve(reserveSize);
 }
 
-auto Verlet::calculateAccelerationForBody(
-    const std::vector<Body*>& bodies,
-    std::size_t bodyIndex,
-    Real gravitationalConstant) -> Vector3
+auto Verlet::calculateAccelerationForBody(const std::vector<Body*>& bodies, std::size_t bodyIndex, Real gravitationalConstant) -> Vector3
 {
     Vector3 acceleration;
     const Body& body = *bodies[bodyIndex];
@@ -97,24 +70,18 @@ auto Verlet::calculateAccelerationForBody(
             continue;
         }
 
-        const Vector3 direction =
-            otherBody->position() - body.position();
+        const Vector3 direction = otherBody->position() - body.position();
 
-        const Real distanceSquared =
-            direction.lengthSquared();
+        const Real distanceSquared = direction.lengthSquared();
 
-        if (distanceSquared == 0.0L)
+        if (distanceSquared == 0.0)
         {
             continue;
         }
 
-        const Real distance =
-            std::sqrt(distanceSquared);
+        const Real distance = std::sqrt(distanceSquared);
 
-        const Real factor =
-            gravitationalConstant *
-            otherBody->mass() /
-            (distanceSquared * distance);
+        const Real factor = gravitationalConstant * otherBody->mass() / (distanceSquared * distance);
 
         acceleration += direction * factor;
     }
@@ -122,101 +89,63 @@ auto Verlet::calculateAccelerationForBody(
     return acceleration;
 }
 
-auto Verlet::calculateAccelerations(
-    const std::vector<Body*>& bodies,
-    Real gravitationalConstant) -> std::vector<Vector3>
+auto Verlet::calculateAccelerations(const std::vector<Body*>& bodies, Real gravitationalConstant, std::vector<Vector3>& accelerations)
+    -> void
 {
-    std::vector<Vector3> accelerations;
-    accelerations.reserve(bodies.size());
+    accelerations.resize(bodies.size());
 
     for (std::size_t i = 0; i < bodies.size(); ++i)
     {
-        accelerations.push_back(
-            calculateAccelerationForBody(
-                bodies,
-                i,
-                gravitationalConstant));
+        accelerations[i] = calculateAccelerationForBody(bodies, i, gravitationalConstant);
     }
-
-    return accelerations;
 }
 
-void Verlet::step(
-    Real timeStep)
+void Verlet::step(Real timeStep)
 {
-    const auto maneuver =
-        activeManeuverAt(
-            maneuvers(),
-            time());
+    const auto maneuver = activeManeuverAt(maneuvers(), currentTime());
 
-    std::vector<Body*> bodyPointers;
-    bodyPointers.reserve(mutableBodies().size() + 1);
+    bodyPointers_.clear();
+    bodyPointers_.reserve(mutableBodies().size() + 1);
 
     for (Body& body : mutableBodies())
     {
-        bodyPointers.push_back(&body);
+        bodyPointers_.push_back(&body);
     }
 
     Probe& simulationProbe = mutableProbe();
-    bodyPointers.push_back(&simulationProbe);
+    bodyPointers_.push_back(&simulationProbe);
 
-    const std::vector<Vector3> previousAccelerations =
-        calculateAccelerations(
-            bodyPointers,
-            gravitationalConstant());
+    calculateAccelerations(bodyPointers_, gravitationalConstant(), previousAccelerations_);
 
-    const Real timeStepSquared =
-        timeStep * timeStep;
+    const Real timeStepSquared = timeStep * timeStep;
 
-    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers_.size(); ++i)
     {
-        const Vector3 velocityPart =
-            bodyPointers[i]->velocity() * timeStep;
+        const Vector3 velocityPart = bodyPointers_[i]->velocity() * timeStep;
 
-        const Vector3 accelerationPart =
-            previousAccelerations[i] *
-            (0.5L * timeStepSquared);
+        const Vector3 accelerationPart = previousAccelerations_[i] * (0.5 * timeStepSquared);
 
-        bodyPointers[i]->position() +=
-            velocityPart + accelerationPart;
+        bodyPointers_[i]->position() += velocityPart + accelerationPart;
     }
 
-    const std::vector<Vector3> nextAccelerations =
-        calculateAccelerations(
-            bodyPointers,
-            gravitationalConstant());
+    calculateAccelerations(bodyPointers_, gravitationalConstant(), nextAccelerations_);
 
-    const Vector3 maneuverAcceleration =
-        calculateManeuverAcceleration(
-            simulationProbe,
-            maneuver,
-            timeStep);
+    const Vector3 maneuverAcceleration = calculateManeuverAcceleration(simulationProbe, maneuver, timeStep);
 
-    for (std::size_t i = 0; i < bodyPointers.size(); ++i)
+    for (std::size_t i = 0; i < bodyPointers_.size(); ++i)
     {
-        Vector3 averageAcceleration =
-            (previousAccelerations[i] +
-                nextAccelerations[i]) * 0.5L;
+        Vector3 averageAcceleration = (previousAccelerations_[i] + nextAccelerations_[i]) * 0.5;
 
-        bodyPointers[i]->velocity() +=
-            averageAcceleration * timeStep;
+        bodyPointers_[i]->velocity() += averageAcceleration * timeStep;
     }
 
     simulationProbe.velocity() += maneuverAcceleration * timeStep;
 
     if (maneuver.has_value())
     {
-        const Real throttleValue =
-            std::clamp(
-                maneuver.value().getThrottleValue(),
-                0.0L,
-                1.0L);
+        const Real throttleValue = std::clamp(maneuver.value().getThrottleValue(), 0.0, 1.0);
 
-        simulationProbe.setFuelMass(
-            std::max(
-                0.0L,
-                simulationProbe.fuelMass() -
-                simulationProbe.fuelFlow() * throttleValue * timeStep));
+        simulationProbe.setFuelMass(std::max(0.0, simulationProbe.fuelMass() - simulationProbe.fuelFlow() * throttleValue * timeStep));
     }
 
     advanceTime(timeStep);

@@ -1,5 +1,6 @@
 #include "RecordingValidator.h"
 
+#include <cstddef>
 #include <stdexcept>
 #include <vector>
 
@@ -8,70 +9,43 @@
 
 namespace
 {
-    void appendStatuses(
-        const Simulation& simulation,
-        std::vector<Status>& recording)
+    void appendStatuses(const Simulation& simulation, Real time, std::vector<Status>& recording)
     {
-        const std::vector<Body>& bodies =
-            simulation.bodies();
+        const std::size_t bodyCount = simulation.bodyCount();
 
-        for (std::size_t bodyIndex = 0; bodyIndex < bodies.size(); ++bodyIndex)
+        for (std::size_t bodyIndex = 0; bodyIndex < bodyCount; ++bodyIndex)
         {
-            const Body& body = bodies[bodyIndex];
-            recording.push_back(
-                Status{
-                    bodyIndex,
-                    simulation.time(),
-                    body.position(),
-                    body.velocity()});
+            recording.push_back(Status{bodyIndex, time, simulation.bodyPosition(bodyIndex), simulation.bodyVelocity(bodyIndex)});
         }
 
-        const std::size_t probeIndex =
-            bodies.size();
-        recording.push_back(
-            Status{
-                probeIndex,
-                simulation.time(),
-                simulation.probe().position(),
-                simulation.probe().velocity()});
+        const std::size_t probeIndex = bodyCount;
+        recording.push_back(Status{probeIndex, time, simulation.probePosition(), simulation.probeVelocity()});
     }
-}
+} // namespace
 
-RecordingValidator::RecordingValidator(
-    const SimulationFactory& simulationFactory,
-    Real timeStep,
-    std::size_t steps)
-    : simulationFactory(simulationFactory),
-      timeStep(timeStep),
-      steps(steps)
+RecordingValidator::RecordingValidator(const SimulationFactory& simulationFactory, Real timeStep, std::size_t steps)
+    : simulationFactory(simulationFactory), timeStep(timeStep), steps(steps)
 {
 }
 
 std::vector<Status> RecordingValidator::record() const
 {
-    if (timeStep <= 0.0L)
+    if (timeStep <= 0.0)
     {
         throw std::invalid_argument("timeStep must be greater than zero");
     }
 
-    auto simulation =
-        simulationFactory.create(
-            std::vector<Maneuver>{});
+    auto simulation = simulationFactory.create(std::vector<Maneuver>{});
 
     std::vector<Status> recording;
-    recording.reserve((steps + 1) * (simulation->bodies().size() + 1));
-    appendStatuses(
-        *simulation,
-        recording);
+    recording.reserve((steps + 1) * (simulation->bodyCount() + 1));
+    appendStatuses(*simulation, 0.0, recording);
 
     for (std::size_t step = 0; step < steps; ++step)
     {
-        simulation->step(
-            timeStep);
+        simulation->step(timeStep);
 
-        appendStatuses(
-            *simulation,
-            recording);
+        appendStatuses(*simulation, static_cast<Real>(step + 1) * timeStep, recording);
     }
 
     return recording;

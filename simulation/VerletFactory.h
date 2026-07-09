@@ -10,14 +10,9 @@
 class VerletFactory final : public SimulationFactory
 {
 public:
-    VerletFactory(
-        Real gravitationalConstant,
-        std::vector<Body> bodies,
-        Body targetBody,
-        Probe probe);
+    VerletFactory(Real gravitationalConstant, std::vector<Body> bodies, Body targetBody, Probe probe);
 
-    std::unique_ptr<Simulation> create(
-        std::vector<Maneuver> maneuvers) const override;
+    std::unique_ptr<Simulation> create(std::vector<Maneuver> maneuvers) const override;
 
 private:
     Real gravitationalConstant;

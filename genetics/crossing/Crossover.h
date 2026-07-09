@@ -10,10 +10,7 @@ class Crossover
 public:
     virtual ~Crossover() = default;
 
-    virtual std::pair<Specimen, Specimen> cross(
-        const Specimen& parent1,
-        const Specimen& parent2
-    ) const = 0;
+    virtual std::pair<Specimen, Specimen> cross(const Specimen& parent1, const Specimen& parent2) const = 0;
 };
 
 #endif

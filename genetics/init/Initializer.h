@@ -12,9 +12,7 @@ public:
     virtual ~Initializer() = default;
 
     virtual Specimen create() const = 0;
-    virtual std::vector<Specimen> createPopulation(
-        std::size_t populationSize
-    ) const = 0;
+    virtual std::vector<Specimen> createPopulation(std::size_t populationSize) const = 0;
 };
 
 #endif

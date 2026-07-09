@@ -1,0 +1,82 @@
+simulation:
+  gravitationalConstant: 0.000000000066743
+  timeStep: 150.0
+  simulationTime: 460350.0
+
+targetPointFromTargetBody:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+
+bodies:
+  # Central body: Jupiter
+  - position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    mass: 1898200000000000000000000000.0
+
+  # Io-like inner moon
+  - position:
+      x: 421800000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 17330.8777439577
+      z: 0.0
+    mass: 89319000000000000000000.0
+
+  # Ganymede-like moon
+  - position:
+      x: -1070400000.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: -10879.2960777105
+      z: 0.0
+    mass: 148190000000000000000000.0
+
+  # Callisto-like outer moon
+  - position:
+      x: 0.0
+      y: -1882700000.0
+      z: 0.0
+    velocity:
+      x: 8203.19971591704
+      y: 0.0
+      z: 0.0
+    mass: 107590000000000000000000.0
+
+# Europa-like target moon
+targetBody:
+  position:
+    x: 0.0
+    y: 671100000.0
+    z: 0.0
+  velocity:
+    x: -13739.7941750443
+    y: 0.0
+    z: 0.0
+  mass: 47998000000000000000000.0
+
+# Probe starting near the Io-like moon.
+probe:
+  position:
+    x: 424300000.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 18875.0821367762
+    z: 0.0
+
+  emptyMass: 4000.0
+  fuelMass: 6000.0
+  fuelFlow: 4
+  specificImpulse: 450.0

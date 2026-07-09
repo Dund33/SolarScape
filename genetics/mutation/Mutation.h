@@ -8,7 +8,7 @@ class Mutation
 public:
     virtual ~Mutation() = default;
 
-    virtual void mutate(Specimen& specimen) const = 0;
+    virtual void mutate(Specimen& specimen, bool closeToTarget = false) const = 0;
 };
 
 #endif

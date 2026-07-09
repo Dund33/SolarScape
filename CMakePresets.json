@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "windows-vcpkg",
+      "displayName": "Windows vcpkg",
+      "description": "Configure with vcpkg using the VCPKG_ROOT environment variable.",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "windows-vcpkg-mingw",
+      "displayName": "Windows vcpkg MinGW",
+      "description": "Configure with vcpkg and the x64 MinGW dynamic triplet.",
+      "inherits": "windows-vcpkg",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
+      }
+    },
+    {
+      "name": "wsl-release-lto",
+      "displayName": "WSL Release LTO",
+      "description": "Configure a Release build inside WSL with link-time optimization.",
+      "binaryDir": "${sourceDir}/build-wsl",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -march=native -mtune=native -fno-math-errno -ffinite-math-only -ffp-contract=fast"
+      }
+    },
+    {
+      "name": "wsl-debug",
+      "displayName": "WSL Debug",
+      "description": "Configure a Debug build inside WSL without link-time optimization.",
+      "binaryDir": "${sourceDir}/build-wsl-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-vcpkg",
+      "displayName": "Build Windows vcpkg",
+      "configurePreset": "windows-vcpkg"
+    },
+    {
+      "name": "windows-vcpkg-mingw",
+      "displayName": "Build Windows vcpkg MinGW",
+      "configurePreset": "windows-vcpkg-mingw"
+    },
+    {
+      "name": "wsl-release-lto",
+      "displayName": "Build WSL Release LTO",
+      "configurePreset": "wsl-release-lto"
+    },
+    {
+      "name": "wsl-debug",
+      "displayName": "Build WSL Debug",
+      "configurePreset": "wsl-debug"
+    }
+  ]
+}

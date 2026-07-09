@@ -5,25 +5,13 @@
 
 #include "simulation/Verlet.h"
 
-VerletFactory::VerletFactory(
-    Real gravitationalConstant,
-    std::vector<Body> bodies,
-    Body targetBody,
-    Probe probe)
-    : gravitationalConstant(gravitationalConstant),
-      bodies(std::move(bodies)),
-      targetBody(std::move(targetBody)),
-      probe(std::move(probe))
+VerletFactory::VerletFactory(Real gravitationalConstantValue, std::vector<Body> bodyValues, Body targetBodyValue, Probe probeValue)
+    : gravitationalConstant(gravitationalConstantValue), bodies(std::move(bodyValues)), targetBody(std::move(targetBodyValue)),
+      probe(std::move(probeValue))
 {
 }
 
-std::unique_ptr<Simulation> VerletFactory::create(
-    std::vector<Maneuver> maneuvers) const
+std::unique_ptr<Simulation> VerletFactory::create(std::vector<Maneuver> maneuvers) const
 {
-    return std::make_unique<Verlet>(
-        bodies,
-        targetBody,
-        probe,
-        std::move(maneuvers),
-        gravitationalConstant);
+    return std::make_unique<Verlet>(bodies, targetBody, probe, std::move(maneuvers), gravitationalConstant);
 }

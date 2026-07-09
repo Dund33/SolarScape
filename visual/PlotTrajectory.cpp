@@ -1,5 +1,6 @@
 #include "PlotTrajectory.h"
 
+#include <cstddef>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -8,31 +9,18 @@
 
 namespace
 {
-    Vector3 absolutePointForBody(
-        const Body& targetBody,
-        const Vector3& relativePoint)
+    Vector3 absolutePointForPosition(const Vector3& targetBodyPosition, const Vector3& relativePoint)
     {
-        return targetBody.position() + relativePoint;
+        return targetBodyPosition + relativePoint;
     }
-}
+} // namespace
 
-void plotTrajectory(
-    const SimulationFactory& simulationFactory,
-    Real timeStep,
-    std::size_t steps,
-    const Vector3& targetPointFromTargetBody,
-    const std::vector<Maneuver>& maneuvers)
+void plotTrajectory(const SimulationFactory& simulationFactory, Real timeStep, std::size_t steps, const Vector3& targetPointFromTargetBody,
+                    const std::vector<Maneuver>& maneuvers)
 {
-    auto simulation =
-        simulationFactory.create(
-            maneuvers);
+    auto simulation = simulationFactory.create(maneuvers);
 
-    const std::vector<Body>& simulationBodies =
-        simulation->bodies();
-    const Body& simulatedTargetBody =
-        simulation->targetBody();
-    const Probe& simulationProbe =
-        simulation->probe();
+    const std::size_t bodyCount = simulation->bodyCount();
 
     std::ofstream output("simulation.csv");
     if (!output)
@@ -46,51 +34,32 @@ void plotTrajectory(
 
     for (std::size_t step = 0; step <= steps; ++step)
     {
-        const Real time = step * timeStep;
-        const Vector3 targetPoint = absolutePointForBody(
-            simulatedTargetBody,
-            targetPointFromTargetBody);
+        const Real time = static_cast<Real>(step) * timeStep;
+        const Vector3 targetPoint = absolutePointForPosition(simulation->targetBodyPosition(), targetPointFromTargetBody);
 
         if (step % 500 == 0)
         {
-            for (std::size_t i = 0; i < simulationBodies.size(); ++i)
+            for (std::size_t bodyIndex = 0; bodyIndex < bodyCount; ++bodyIndex)
             {
-                const Body& body = simulationBodies[i];
+                const Vector3 bodyPosition = simulation->bodyPosition(bodyIndex);
+                const Vector3 bodyVelocity = simulation->bodyVelocity(bodyIndex);
 
-                output << step << ','
-                    << time << ','
-                    << i << ','
-                    << body.position().x << ','
-                    << body.position().y << ','
-                    << body.position().z << ','
-                    << body.velocity().x << ','
-                    << body.velocity().y << ','
-                    << body.velocity().z << ','
-                    << body.mass() << ','
-                    << targetPoint.x << ','
-                    << targetPoint.y << ','
-                    << targetPoint.z << '\n';
+                output << step << ',' << time << ',' << bodyIndex << ',' << bodyPosition.x << ',' << bodyPosition.y << ',' << bodyPosition.z
+                       << ',' << bodyVelocity.x << ',' << bodyVelocity.y << ',' << bodyVelocity.z << ',' << simulation->bodyMass(bodyIndex)
+                       << ',' << targetPoint.x << ',' << targetPoint.y << ',' << targetPoint.z << '\n';
             }
 
-            output << step << ','
-                << time << ','
-                << simulationBodies.size() << ','
-                << simulationProbe.position().x << ','
-                << simulationProbe.position().y << ','
-                << simulationProbe.position().z << ','
-                << simulationProbe.velocity().x << ','
-                << simulationProbe.velocity().y << ','
-                << simulationProbe.velocity().z << ','
-                << simulationProbe.mass() << ','
-                << targetPoint.x << ','
-                << targetPoint.y << ','
-                << targetPoint.z << '\n';
+            const Vector3 probePosition = simulation->probePosition();
+            const Vector3 probeVelocity = simulation->probeVelocity();
+
+            output << step << ',' << time << ',' << bodyCount << ',' << probePosition.x << ',' << probePosition.y << ',' << probePosition.z
+                   << ',' << probeVelocity.x << ',' << probeVelocity.y << ',' << probeVelocity.z << ',' << simulation->probeMass() << ','
+                   << targetPoint.x << ',' << targetPoint.y << ',' << targetPoint.z << '\n';
         }
 
         if (step < steps)
         {
-            simulation->step(
-                timeStep);
+            simulation->step(timeStep);
         }
     }
 }

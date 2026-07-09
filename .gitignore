@@ -18,3 +18,8 @@ __pycache__
 .venv
 .idea
 *.pdf
+build-*
+cmake-build-*
+tools/out
+.codex-work
+magisterka/

@@ -6,10 +6,18 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+option(SOLARSCAPE_ENABLE_NATIVE_OPTIMIZATIONS "Build release binaries with -march=native" ON)
+
+set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O3 -fno-math-errno -ffinite-math-only")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fno-math-errno -ffinite-math-only")
+
+if(SOLARSCAPE_ENABLE_NATIVE_OPTIMIZATIONS)
+    set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -march=native -mtune=native")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -mtune=native")
+endif()
 
 find_package(yaml-cpp CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options json)
 
 add_library(SolarScapeMath STATIC
         math/Vector3.cpp
@@ -40,6 +48,12 @@ add_library(SolarScapeSimulation STATIC
         simulation/Verlet.h
         simulation/VerletFactory.cpp
         simulation/VerletFactory.h
+        simulation/VectorSimulation.h
+        simulation/VectorSimulationFactory.h
+        simulation/VectorVerlet.cpp
+        simulation/VectorVerlet.h
+        simulation/VectorVerletFactory.cpp
+        simulation/VectorVerletFactory.h
 )
 
 add_library(SolarScape::Simulation ALIAS SolarScapeSimulation)
@@ -55,6 +69,8 @@ target_link_libraries(SolarScapeSimulation
 )
 
 add_library(SolarScapeConfig STATIC
+        config/CommandLineOptions.cpp
+        config/CommandLineOptions.h
         config/SimulationConfig.cpp
         config/SimulationConfig.h
 )
@@ -70,6 +86,7 @@ target_link_libraries(SolarScapeConfig
         PUBLIC
         SolarScape::Math
         yaml-cpp::yaml-cpp
+        Boost::program_options
 )
 
 add_library(SolarScapeVisual STATIC
@@ -92,16 +109,25 @@ target_link_libraries(SolarScapeVisual
 add_library(SolarScapeGeneticCore STATIC
         genetics/GeneticAlgorithm.cpp
         genetics/GeneticAlgorithm.h
+        genetics/ParetoFrontJsonWriter.cpp
+        genetics/ParetoFrontJsonWriter.h
         genetics/Specimen.cpp
         genetics/Specimen.h
-        genetics/comparison/NSGAIIComparator.cpp
-        genetics/comparison/NSGAIIComparator.h
+        genetics/comparison/FitnessObjectiveComparator.cpp
+        genetics/comparison/FitnessObjectiveComparator.h
         genetics/comparison/NSGAIIRankingComparator.cpp
         genetics/comparison/NSGAIIRankingComparator.h
         genetics/comparison/SpecimenComparator.h
         genetics/comparison/SpecimenRank.h
-        genetics/comparison/SimpleSpecimenComparator.cpp
-        genetics/comparison/SimpleSpecimenComparator.h
+        genetics/comparison/TrajectorySpecimenComparator.cpp
+        genetics/comparison/TrajectorySpecimenComparator.h
+        genetics/utils/GenerationProgressLogger.cpp
+        genetics/utils/GenerationProgressLogger.h
+        genetics/utils/ParetoRanking.cpp
+        genetics/utils/ParetoRanking.h
+        genetics/utils/ParetoFrontUtils.cpp
+        genetics/utils/ParetoFrontUtils.h
+        genetics/fitness/FitnessMetrics.h
         genetics/fitness/FitnessValue.h
 )
 
@@ -116,7 +142,17 @@ target_link_libraries(SolarScapeGeneticCore
         PUBLIC
         SolarScape::Math
         SolarScape::Simulation
+        Boost::json
 )
+
+if(LINUX)
+    find_package(TBB REQUIRED)
+
+    target_link_libraries(SolarScapeGeneticCore
+            PUBLIC
+            TBB::tbb
+    )
+endif()
 
 add_library(SolarScapeGeneticOperators STATIC
         genetics/selection/SelectionFactory.h
@@ -131,6 +167,7 @@ add_library(SolarScapeGeneticOperators STATIC
         genetics/mutation/ExtensiveMutation.h
         genetics/mutation/ExtensiveMutationFactory.cpp
         genetics/mutation/ExtensiveMutationFactory.h
+        genetics/mutation/ManeuverMutationUtils.h
         genetics/mutation/RandomUniformMutation.cpp
         genetics/mutation/RandomUniformMutation.h
         genetics/mutation/RandomUniformMutationFactory.cpp
@@ -172,6 +209,10 @@ add_library(SolarScapeGeneticFitness STATIC
         genetics/fitness/SimulationFitnessEvaluator.h
         genetics/fitness/SimulationFitnessEvaluatorFactory.cpp
         genetics/fitness/SimulationFitnessEvaluatorFactory.h
+        genetics/fitness/VectorSimulationFitnessEvaluator.cpp
+        genetics/fitness/VectorSimulationFitnessEvaluator.h
+        genetics/fitness/VectorSimulationFitnessEvaluatorFactory.cpp
+        genetics/fitness/VectorSimulationFitnessEvaluatorFactory.h
 )
 
 add_library(SolarScape::GeneticFitness ALIAS SolarScapeGeneticFitness)
@@ -185,28 +226,6 @@ target_link_libraries(SolarScapeGeneticFitness
         PUBLIC
         SolarScape::GeneticCore
         SolarScape::Simulation
-)
-
-add_library(SolarScapeGeneticSearch STATIC
-        genetics/search/LocalImprovement.h
-        genetics/search/LocalImprovementFactory.h
-        genetics/search/NormalRandomSearch.cpp
-        genetics/search/NormalRandomSearch.h
-        genetics/search/NormalRandomSearchFactory.cpp
-        genetics/search/NormalRandomSearchFactory.h
-)
-
-add_library(SolarScape::GeneticSearch ALIAS SolarScapeGeneticSearch)
-
-target_include_directories(SolarScapeGeneticSearch
-        PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_link_libraries(SolarScapeGeneticSearch
-        PUBLIC
-        SolarScape::GeneticCore
-        SolarScape::GeneticFitness
 )
 
 add_library(SolarScapeGeneticAlgo STATIC
@@ -225,7 +244,6 @@ target_link_libraries(SolarScapeGeneticAlgo
         PUBLIC
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
-        SolarScape::GeneticSearch
 )
 
 add_library(SolarScapeGeneticNSGAII STATIC
@@ -273,13 +291,14 @@ target_link_libraries(SolarScapeGenetic
         SolarScape::GeneticCore
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
-        SolarScape::GeneticSearch
         SolarScape::GeneticAlgo
 )
 
 add_custom_target(copy_yaml_files
         COMMAND ${CMAKE_COMMAND} -E copy
-                "${CMAKE_CURRENT_SOURCE_DIR}/config.yaml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario1.yml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario2.yml"
+                "${CMAKE_CURRENT_SOURCE_DIR}/scenario3.yml"
                 "${CMAKE_CURRENT_SOURCE_DIR}/validation-basic.yaml"
                 "${CMAKE_CURRENT_SOURCE_DIR}/validation-outer-body.yaml"
                 "${CMAKE_CURRENT_BINARY_DIR}"
@@ -287,10 +306,6 @@ add_custom_target(copy_yaml_files
         VERBATIM
 )
 
-
-if(LINUX)
-    find_package(TBB REQUIRED)
-endif()
 
 add_executable(SolarScape
         algo_simulation.cpp
@@ -306,7 +321,6 @@ target_link_libraries(SolarScape
         SolarScape::Visual
         SolarScape::Genetic
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(SolarScapeNSGAII
@@ -325,7 +339,6 @@ target_link_libraries(SolarScapeNSGAII
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(SolarScapeMOEAD
@@ -344,7 +357,6 @@ target_link_libraries(SolarScapeMOEAD
         SolarScape::GeneticFitness
         SolarScape::GeneticMOEAD
         SolarScape::Simulation
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
 )
 
 add_executable(NSGAIISmokeTest
@@ -357,7 +369,24 @@ target_link_libraries(NSGAIISmokeTest
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
-        $<$<PLATFORM_ID:Linux>:TBB::tbb>
+)
+
+add_executable(VectorFitnessConsistencyTest
+        tests/vector_fitness_consistency_test.cpp
+)
+
+target_link_libraries(VectorFitnessConsistencyTest
+        PRIVATE
+        SolarScape::GeneticFitness
+)
+
+add_executable(longDoubleTest
+        tools/long_double_test.cpp
+)
+
+target_include_directories(longDoubleTest
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(validation

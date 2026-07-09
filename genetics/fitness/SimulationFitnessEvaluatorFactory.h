@@ -9,12 +9,8 @@
 class SimulationFitnessEvaluatorFactory final : public FitnessEvaluatorFactory
 {
 public:
-    SimulationFitnessEvaluatorFactory(
-        Real timeStep,
-        Real simulationTime,
-        Vector3 targetPointFromTargetBody,
-        const SimulationFactory& simulationFactory
-    );
+    SimulationFitnessEvaluatorFactory(Real timeStep, Real simulationTime, Vector3 targetPointFromTargetBody,
+                                      const SimulationFactory& simulationFactory);
 
     std::unique_ptr<FitnessEvaluator> create() const override;
 

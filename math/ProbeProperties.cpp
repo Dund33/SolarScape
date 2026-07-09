@@ -4,32 +4,25 @@
 
 ProbeProperties::ProbeProperties() = default;
 
-ProbeProperties::ProbeProperties(
-    Real emptyMass,
-    Real fuelMass,
-    Real fuelFlow,
-    Real specificImpulse)
-    : emptyMass_(emptyMass),
-      fuelMass_(fuelMass),
-      fuelFlow_(fuelFlow),
-      specificImpulse_(specificImpulse)
+ProbeProperties::ProbeProperties(Real emptyMass, Real fuelMass, Real fuelFlow, Real specificImpulse)
+    : emptyMass_(emptyMass), fuelMass_(fuelMass), fuelFlow_(fuelFlow), specificImpulse_(specificImpulse)
 {
-    if (emptyMass < 0.0L)
+    if (emptyMass < 0.0)
     {
         throw std::invalid_argument("emptyMass must be non-negative.");
     }
 
-    if (fuelMass < 0.0L)
+    if (fuelMass < 0.0)
     {
         throw std::invalid_argument("fuelMass must be non-negative.");
     }
 
-    if (fuelFlow < 0.0L)
+    if (fuelFlow < 0.0)
     {
         throw std::invalid_argument("fuelFlow must be non-negative.");
     }
 
-    if (specificImpulse < 0.0L)
+    if (specificImpulse < 0.0)
     {
         throw std::invalid_argument("specificImpulse must be non-negative.");
     }

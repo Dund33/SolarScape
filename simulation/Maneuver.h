@@ -6,28 +6,34 @@
 class Maneuver
 {
 public:
-    Maneuver(
-        const Vector3& thrustDirection,
-        Real thrustValue,
-        long double initDelay,
-        long double duration)
-        : thrustDirection(normalized(thrustDirection)),
-          throttleValue(thrustValue),
-          initDelay(initDelay),
-          duration(duration)
-    {}
+    Maneuver(const Vector3& thrustDirectionValue, Real thrustValue, Real initDelayValue, Real durationValue)
+        : thrustDirection(normalized(thrustDirectionValue)), throttleValue(thrustValue), initDelay(initDelayValue), duration(durationValue)
+    {
+    }
 
-    const Vector3& getThrustDirection() const { return thrustDirection; }
-    Real getThrottleValue() const { return throttleValue; }
-    long double getInitDelay() const { return initDelay; }
-    long double getDuration() const { return duration; }
+    const Vector3& getThrustDirection() const
+    {
+        return thrustDirection;
+    }
+    Real getThrottleValue() const
+    {
+        return throttleValue;
+    }
+    Real getInitDelay() const
+    {
+        return initDelay;
+    }
+    Real getDuration() const
+    {
+        return duration;
+    }
 
 private:
     static Vector3 normalized(const Vector3& vector)
     {
         const Real length = vector.length();
 
-        if (length <= 0.0L)
+        if (length <= 0.0)
         {
             return {};
         }
@@ -37,9 +43,8 @@ private:
 
     Vector3 thrustDirection;
     Real throttleValue;
-    long double initDelay;
-    long double duration;
+    Real initDelay;
+    Real duration;
 };
-
 
 #endif

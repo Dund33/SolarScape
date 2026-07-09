@@ -7,6 +7,9 @@
 #include "genetics/Specimen.h"
 #include "genetics/comparison/SpecimenComparator.h"
 
+using ParetoFront = std::vector<Specimen>;
+using ParetoFrontHistory = std::vector<ParetoFront>;
+
 class Crossover;
 class FitnessEvaluator;
 class Initializer;
@@ -18,29 +21,18 @@ class GeneticAlgorithm
 public:
     virtual ~GeneticAlgorithm() = 0;
 
+    virtual ParetoFrontHistory run() const = 0;
+
 protected:
-    void evaluatePopulationUnsequenced(
-        std::vector<Specimen>& population,
-        const FitnessEvaluator& fitnessEvaluator) const;
+    void evaluatePopulation(std::vector<Specimen>& population, const FitnessEvaluator& fitnessEvaluator) const;
 
-    void appendChildren(
-        const std::vector<Specimen>& parents,
-        std::vector<Specimen>& target,
-        std::size_t targetSize,
-        const SpecimenComparator& selectionComparator,
-        Selection& selection,
-        Crossover& crossover,
-        Mutation& mutation) const;
+    void evaluateSpecimens(std::vector<Specimen*>& specimens, const FitnessEvaluator& fitnessEvaluator) const;
 
-    void appendImmigrants(
-        std::vector<Specimen>& population,
-        std::size_t count,
-        Initializer& initializer) const;
+    virtual void appendChildren(const std::vector<Specimen>& parents, std::vector<Specimen>& target, std::size_t targetSize,
+                                const SpecimenComparator& selectionComparator, Selection& selection, Crossover& crossover,
+                                Mutation& mutation) const;
 
-    void replaceTailWithImmigrants(
-        std::vector<Specimen>& population,
-        std::size_t count,
-        Initializer& initializer) const;
+    void appendImmigrants(std::vector<Specimen>& population, std::size_t count, Initializer& initializer) const;
 };
 
 #endif

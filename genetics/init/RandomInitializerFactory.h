@@ -10,15 +10,8 @@
 class RandomInitializerFactory final : public InitializerFactory
 {
 public:
-    RandomInitializerFactory(
-        std::size_t minManeuvers,
-        std::size_t maxManeuvers,
-        Real minInitTime,
-        Real maxInitTime,
-        Real minDuration,
-        Real maxDuration,
-        const ProbeProperties& probeProperties
-    );
+    RandomInitializerFactory(std::size_t minManeuvers, std::size_t maxManeuvers, Real minInitTime, Real maxInitTime, Real minDuration,
+                             Real maxDuration, const ProbeProperties& probeProperties);
 
     std::unique_ptr<Initializer> create() const override;
 

@@ -2,142 +2,100 @@
 #include <cstddef>
 #include <exception>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
 
+#include "config/CommandLineOptions.h"
 #include "config/SimulationConfig.h"
 #include "config/consts.h"
 #include "genetics/Specimen.h"
-#include "genetics/comparison/NSGAIIComparator.h"
-#include "genetics/crossing/AlignedSimilarityCrossoverFactory.h"
+#include "genetics/ParetoFrontJsonWriter.h"
+#include "genetics/comparison/TrajectorySpecimenComparator.h"
+#include "genetics/crossing/RandomCutCrossoverFactory.h"
 #include "genetics/fitness/FitnessValue.h"
-#include "genetics/fitness/SimulationFitnessEvaluatorFactory.h"
+#include "genetics/fitness/VectorSimulationFitnessEvaluatorFactory.h"
 #include "genetics/init/RandomInitializerFactory.h"
 #include "genetics/moead/MOEADAlgorithm.h"
-#include "genetics/mutation/ExtensiveMutationFactory.h"
+#include "genetics/mutation/RandomUniformMutationFactory.h"
 #include "math/Body.h"
 #include "math/ProbeFactory.h"
 #include "math/ProbeProperties.h"
-#include "simulation/VerletFactory.h"
+#include "simulation/VectorVerletFactory.h"
 #include "simulation_helper.h"
 
 namespace
 {
-    void printParetoFront(
-        const std::vector<Specimen>& paretoFront)
+    auto run(const std::string& configFilePath, const std::string& outputFilePath, bool verbose) -> int
     {
-        std::cout
-            << "\nFinal Pareto front size: "
-            << paretoFront.size()
-            << '\n';
+        SimulationConfig config = SimulationConfig::loadFromFile(configFilePath);
 
-        for (std::size_t i = 0; i < paretoFront.size(); ++i)
-        {
-            std::cout
-                << "Pareto front specimen " << i
-                << " fitness = ";
-            printFitnessValue(
-                paretoFront[i].getFitness().value());
-            std::cout << '\n';
-        }
-    }
+        SimulationState state = createSimulationState(std::move(config));
 
-    auto run() -> int
-    {
-        SimulationConfig config =
-            SimulationConfig::loadFromFile(
-                "config.yaml");
+        VectorVerletFactory simulationFactory(state.gravitationalConstant, state.initialBodies, state.targetBody,
+                                              ProbeFactory(state.probeProperties, state.probePosition, state.probeVelocity).create());
 
-        SimulationState state =
-            createSimulationState(
-                std::move(config));
+        RandomInitializerFactory initializerFactory(MIN_MANEUVERS, MAX_MANEUVERS, MIN_MANEUVER_TIME, state.simulationTime,
+                                                    MIN_MANEUVER_DURATION, MAX_MANEUVER_DURATION, state.probeProperties);
 
-        VerletFactory verletFactory(
-            state.gravitationalConstant,
-            state.initialBodies,
-            state.targetBody,
-            ProbeFactory(
-                state.probeProperties,
-                state.probePosition,
-                state.probeVelocity).create());
+        RandomCutCrossoverFactory crossoverFactory;
 
-        RandomInitializerFactory initializerFactory(
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            state.probeProperties);
+        RandomUniformMutationFactory mutationFactory(MOEAD_MUTATION_PROBABILITY, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
+                                                     MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
-        AlignedSimilarityCrossoverFactory crossoverFactory;
+        VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
+                                                                        state.targetPointFromTargetBody, simulationFactory);
 
-        ExtensiveMutationFactory mutationFactory(
-            MUTATION_PROBABILITY,
-            0.5,
-            0.5,
-            MIN_MANEUVERS,
-            MAX_MANEUVERS,
-            MIN_MANEUVER_TIME,
-            state.simulationTime,
-            MIN_MANEUVER_DURATION,
-            MAX_MANEUVER_DURATION,
-            MUTATION_TIME_RANGE,
-            MUTATION_DURATION_RANGE,
-            MUTATION_THRUST_RANGE,
-            state.probeProperties);
+        TrajectorySpecimenComparator specimenComparator;
 
-        SimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(
-            state.timeStep,
-            state.simulationTime,
-            state.targetPointFromTargetBody,
-            verletFactory);
+        MOEADAlgorithm::Factories factories{initializerFactory, crossoverFactory, mutationFactory, fitnessEvaluatorFactory};
 
-        NSGAIIComparator specimenComparator;
+        const std::size_t neighborhoodSize = std::max<std::size_t>(2, POPULATION_SIZE / 10);
 
-        MOEADAlgorithm::Factories factories{
-            initializerFactory,
-            crossoverFactory,
-            mutationFactory,
-            fitnessEvaluatorFactory};
+        MOEADAlgorithm algorithm(POPULATION_SIZE, GENERATIONS, neighborhoodSize, specimenComparator, factories, verbose);
 
-        const std::size_t neighborhoodSize =
-            std::max<std::size_t>(
-                2,
-                POPULATION_SIZE / 10);
+        const ParetoFrontHistory paretoFrontHistory = algorithm.run();
 
-        MOEADAlgorithm algorithm(
-            POPULATION_SIZE,
-            GENERATIONS,
-            neighborhoodSize,
-            specimenComparator,
-            factories);
+        writeParetoFrontJson(outputFilePath, paretoFrontHistory);
 
-        const std::vector<Specimen> paretoFront =
-            algorithm.run();
-
-        printParetoFront(
-            paretoFront);
+        std::cout << "Saved Pareto front history JSON to: " << outputFilePath << '\n';
 
         return 0;
     }
-}
+} // namespace
 
-auto main() -> int
+auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        return run();
+        const CommandLineOptions options = CommandLineOptions::parse(argc, argv);
+
+        if (options.helpRequested())
+        {
+            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr);
+            return 0;
+        }
+
+        try
+        {
+            return run(options.configFilePath(), options.outputFilePath(), options.verbose());
+        }
+        catch (const YAML::Exception& e)
+        {
+            std::cerr << "YAML error: " << e.what() << '\n';
+            return 1;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << '\n';
+            return 1;
+        }
     }
-    catch (const YAML::Exception& e)
+    catch (const CommandLineParseError& e)
     {
-        std::cerr << "YAML error: " << e.what() << '\n';
-        return 1;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << '\n';
-        return 1;
+        std::cerr << "Argument error: " << e.what() << '\n';
+        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr);
+        return 2;
     }
 }

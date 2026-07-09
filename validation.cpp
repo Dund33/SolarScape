@@ -37,20 +37,14 @@ namespace
 
     auto loadValidationState(const std::string& configFile) -> ValidationState
     {
-        SimulationConfig simulationConfig =
-            SimulationConfig::loadFromFile(
-                configFile);
+        SimulationConfig simulationConfig = SimulationConfig::loadFromFile(configFile);
 
         if (simulationConfig.timeStep <= 0.0L)
         {
             throw std::invalid_argument("simulation.timeStep musi byc dodatnia liczba");
         }
 
-        return {
-            loadOutputFilename(
-                YAML::LoadFile(
-                    configFile)),
-            std::move(simulationConfig)};
+        return {loadOutputFilename(YAML::LoadFile(configFile)), std::move(simulationConfig)};
     }
 
     auto configFileFromArguments(int argc, char* argv[]) -> std::string
@@ -72,26 +66,14 @@ namespace
     {
         const SimulationConfig& config = state.simulationConfig;
 
-        VerletFactory simulationFactory(
-            config.gravitationalConstant,
-            config.bodies,
-            config.targetBody,
-            ProbeFactory(
-                config.probeProperties,
-                config.probePosition,
-                config.probeVelocity).create());
+        VerletFactory simulationFactory(config.gravitationalConstant, config.bodies, config.targetBody,
+                                        ProbeFactory(config.probeProperties, config.probePosition, config.probeVelocity).create());
 
-        const std::size_t steps =
-            static_cast<std::size_t>(
-                config.simulationTime / config.timeStep);
+        const std::size_t steps = static_cast<std::size_t>(config.simulationTime / config.timeStep);
 
-        RecordingValidator validator(
-            simulationFactory,
-            config.timeStep,
-            steps);
+        RecordingValidator validator(simulationFactory, config.timeStep, steps);
 
-        const std::vector<Status> recording =
-            validator.record();
+        const std::vector<Status> recording = validator.record();
 
         std::ofstream output(state.outputFilename);
         if (!output)
@@ -104,30 +86,19 @@ namespace
         output << "bodyId,time,x,y,z,vx,vy,vz\n";
         for (const Status& status : recording)
         {
-            output
-                << status.bodyId << ','
-                << status.time << ','
-                << status.position.x << ','
-                << status.position.y << ','
-                << status.position.z << ','
-                << status.velocity.x << ','
-                << status.velocity.y << ','
-                << status.velocity.z << '\n';
+            output << status.bodyId << ',' << status.time << ',' << status.position.x << ',' << status.position.y << ','
+                   << status.position.z << ',' << status.velocity.x << ',' << status.velocity.y << ',' << status.velocity.z << '\n';
         }
 
         return 0;
     }
-}
+} // namespace
 
 auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        return run(
-            loadValidationState(
-                configFileFromArguments(
-                    argc,
-                    argv)));
+        return run(loadValidationState(configFileFromArguments(argc, argv)));
     }
     catch (const YAML::Exception& e)
     {

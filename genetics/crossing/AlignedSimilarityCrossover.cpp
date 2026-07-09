@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <ranges>
 #include <random>
 #include <stdexcept>
 #include <utility>
@@ -19,32 +20,39 @@ namespace
         Real endTime{};
     };
 
-    struct SimilarityRegion
+    struct SimilarPrefix
     {
-        std::ptrdiff_t offset{};
-        std::size_t parent2Begin{};
         std::size_t length{};
-        Real score{};
     };
 
-    std::vector<ManeuverTime> absoluteManeuverTimes(
-        const Specimen& specimen)
+    struct ExchangeBlock
+    {
+        std::size_t begin{};
+        std::size_t length{};
+    };
+
+    struct OrientedGenomes
+    {
+        const Specimen& shorter;
+        const Specimen& longer;
+        const std::vector<ManeuverTime>& shorterTimes;
+        const std::vector<ManeuverTime>& longerTimes;
+        bool parent1IsShorter{};
+    };
+
+    std::vector<ManeuverTime> absoluteManeuverTimes(const Specimen& specimen)
     {
         std::vector<ManeuverTime> times;
         times.reserve(specimen.size());
 
-        Real previousEndTime = 0.0L;
+        Real previousEndTime = 0.0;
 
         for (const Maneuver& maneuver : specimen.getManeuvers())
         {
-            const Real initTime =
-                previousEndTime + maneuver.getInitDelay();
-            const Real endTime =
-                initTime + maneuver.getDuration();
+            const Real initTime = previousEndTime + maneuver.getInitDelay();
+            const Real endTime = initTime + maneuver.getDuration();
 
-            times.push_back({
-                initTime,
-                endTime});
+            times.push_back({initTime, endTime});
 
             previousEndTime = endTime;
         }
@@ -52,83 +60,48 @@ namespace
         return times;
     }
 
-    std::pair<std::size_t, std::size_t> validRangeForOffset(
-        std::ptrdiff_t offset,
-        std::size_t parent1Size,
-        std::size_t parent2Size)
+    OrientedGenomes orientGenomes(const Specimen& parent1, const Specimen& parent2, const std::vector<ManeuverTime>& parent1Times,
+                                  const std::vector<ManeuverTime>& parent2Times)
     {
-        const std::ptrdiff_t signedParent2Begin =
-            std::max(
-                static_cast<std::ptrdiff_t>(0),
-                -offset);
-        const std::ptrdiff_t signedParent2End =
-            std::min(
-                static_cast<std::ptrdiff_t>(parent2Size),
-                static_cast<std::ptrdiff_t>(parent1Size) - offset);
-
-        if (signedParent2Begin >= signedParent2End)
+        if (parent1.size() <= parent2.size())
         {
-            return {};
+            return {parent1, parent2, parent1Times, parent2Times, true};
         }
 
-        const std::size_t parent2Begin =
-            static_cast<std::size_t>(signedParent2Begin);
-        const std::size_t parent2End =
-            static_cast<std::size_t>(signedParent2End);
-
-        return {
-            parent2Begin,
-            parent2End};
+        return {parent2, parent1, parent2Times, parent1Times, false};
     }
 
-    Real dot(
-        const Vector3& left,
-        const Vector3& right)
+    Real dot(const Vector3& left, const Vector3& right)
     {
-        return
-            left.x * right.x +
-            left.y * right.y +
-            left.z * right.z;
+        return left.x * right.x + left.y * right.y + left.z * right.z;
     }
 
-    Real directionSimilarity(
-        const Maneuver& lhs,
-        const Maneuver& rhs)
+    Real directionSimilarity(const Maneuver& lhs, const Maneuver& rhs)
     {
-        const Vector3& lhsDirection =
-            lhs.getThrustDirection();
-        const Vector3& rhsDirection =
-            rhs.getThrustDirection();
+        const Vector3& lhsDirection = lhs.getThrustDirection();
+        const Vector3& rhsDirection = rhs.getThrustDirection();
 
-        const Real lhsLength =
-            lhsDirection.length();
-        const Real rhsLength =
-            rhsDirection.length();
+        const Real lhsLength = lhsDirection.length();
+        const Real rhsLength = rhsDirection.length();
 
-        if (lhsLength <= 0.0L && rhsLength <= 0.0L)
+        if (lhsLength <= 0.0 && rhsLength <= 0.0)
         {
-            return 1.0L;
+            return 1.0;
         }
 
-        if (lhsLength <= 0.0L || rhsLength <= 0.0L)
+        if (lhsLength <= 0.0 || rhsLength <= 0.0)
         {
-            return 0.0L;
+            return 0.0;
         }
 
-        const Real cosine =
-            std::clamp(
-                dot(lhsDirection, rhsDirection) /
-                    (lhsLength * rhsLength),
-                -1.0L,
-                1.0L);
+        const Real cosine = std::clamp(dot(lhsDirection, rhsDirection) / (lhsLength * rhsLength), -1.0, 1.0);
 
-        return (cosine + 1.0L) * 0.5L;
+        return (cosine + 1.0) * 0.5;
     }
 
-    Real logSimilarity(
-        Real similarity)
+    Real logSimilarity(Real similarity)
     {
-        if (similarity <= 0.0L)
+        if (similarity <= 0.0)
         {
             return -std::numeric_limits<Real>::infinity();
         }
@@ -136,270 +109,140 @@ namespace
         return std::log(similarity);
     }
 
-    Real logTimeSimilarity(
-        Real lhs,
-        Real rhs,
-        Real scale)
+    Real logTimeSimilarity(Real lhs, Real rhs, Real scale)
     {
-        return -std::log1p(
-            std::abs(lhs - rhs) / scale);
+        return -std::log1p(std::abs(lhs - rhs) / scale);
     }
 
-    Real maneuverLogSimilarity(
-        const Maneuver& lhs,
-        const Maneuver& rhs,
-        const ManeuverTime& lhsTime,
-        const ManeuverTime& rhsTime,
-        Real timeScaleMultiplier)
+    Real maneuverLogSimilarity(const Maneuver& lhs, const Maneuver& rhs, const ManeuverTime& lhsTime, const ManeuverTime& rhsTime,
+                               Real timeScaleMultiplier)
     {
         const Real throttleSimilarity =
-            1.0L -
-            std::abs(
-                std::clamp(
-                    lhs.getThrottleValue(),
-                    0.0L,
-                    1.0L) -
-                std::clamp(
-                    rhs.getThrottleValue(),
-                    0.0L,
-                    1.0L));
-        const Real direction =
-            directionSimilarity(
-                lhs,
-                rhs);
+            1.0 - std::abs(std::clamp(lhs.getThrottleValue(), 0.0, 1.0) - std::clamp(rhs.getThrottleValue(), 0.0, 1.0));
+        const Real direction = directionSimilarity(lhs, rhs);
 
-        const Real timeScale =
-            std::max({
-                1.0L,
-                lhs.getDuration(),
-                rhs.getDuration()}) *
-            timeScaleMultiplier;
+        const Real timeScale = std::max({1.0, lhs.getDuration(), rhs.getDuration()}) * timeScaleMultiplier;
 
-        return
-            logSimilarity(throttleSimilarity) +
-            logSimilarity(direction) +
-            logTimeSimilarity(
-                lhsTime.initTime,
-                rhsTime.initTime,
-                timeScale) +
-            logTimeSimilarity(
-                lhsTime.endTime,
-                rhsTime.endTime,
-                timeScale);
+        return logSimilarity(throttleSimilarity) + logSimilarity(direction) +
+               logTimeSimilarity(lhsTime.initTime, rhsTime.initTime, timeScale) +
+               logTimeSimilarity(lhsTime.endTime, rhsTime.endTime, timeScale);
     }
 
-    SimilarityRegion similarityRegion(
-        std::ptrdiff_t offset,
-        const Specimen& parent1,
-        const Specimen& parent2,
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times,
-        Real minPairLogSimilarity,
-        Real timeScaleMultiplier,
-        Real lengthReward)
+    auto alignedManeuvers(const OrientedGenomes& genomes)
     {
-        const auto [parent2Begin, parent2End] =
-            validRangeForOffset(
-                offset,
-                parent1.size(),
-                parent2.size());
+        return std::views::zip(genomes.shorter.getManeuvers(),
+                               genomes.longer.getManeuvers() | std::views::take(genomes.shorter.size()), genomes.shorterTimes,
+                               genomes.longerTimes | std::views::take(genomes.shorter.size()));
+    }
 
-        SimilarityRegion region{
-            offset,
-            parent2Begin,
-            0,
-            -std::numeric_limits<Real>::infinity()};
-        Real logSimilaritySum = 0.0L;
-        std::size_t currentLength = 0;
+    SimilarPrefix similarPrefix(const OrientedGenomes& genomes, Real minRegionLogSimilarity, Real timeScaleMultiplier)
+    {
+        SimilarPrefix prefix{};
+        Real cumulativeLogSimilarity = 0.0;
+        const std::size_t maxPrefixLength = genomes.shorter.size() - 1;
 
-        for (std::size_t parent2Index = parent2Begin;
-             parent2Index < parent2End;
-             ++parent2Index)
+        for (auto&& [shorterManeuver, longerManeuver, shorterTime, longerTime] : alignedManeuvers(genomes))
         {
-            const std::size_t parent1Index =
-                static_cast<std::size_t>(
-                    static_cast<std::ptrdiff_t>(parent2Index) + offset);
-
-            const Real logSimilarity =
-                maneuverLogSimilarity(
-                    parent1[parent1Index],
-                    parent2[parent2Index],
-                    parent1Times[parent1Index],
-                    parent2Times[parent2Index],
-                    timeScaleMultiplier);
-
-            if (logSimilarity < minPairLogSimilarity)
+            if (prefix.length >= maxPrefixLength)
             {
                 break;
             }
 
-            logSimilaritySum += logSimilarity;
-            ++currentLength;
+            const Real nextLogSimilarity = cumulativeLogSimilarity + maneuverLogSimilarity(shorterManeuver, longerManeuver, shorterTime,
+                                                                                           longerTime, timeScaleMultiplier);
 
-            const Real score =
-                logSimilaritySum +
-                lengthReward * static_cast<Real>(currentLength);
-
-            if (score > region.score)
+            if (nextLogSimilarity < minRegionLogSimilarity)
             {
-                region.length = currentLength;
-                region.score = score;
+                break;
             }
+
+            cumulativeLogSimilarity = nextLogSimilarity;
+            ++prefix.length;
         }
 
-        return region;
+        return prefix;
     }
 
-    SimilarityRegion bestSimilarityRegion(
-        const Specimen& parent1,
-        const Specimen& parent2,
-        const std::vector<ManeuverTime>& parent1Times,
-        const std::vector<ManeuverTime>& parent2Times,
-        Real minPairLogSimilarity,
-        Real timeScaleMultiplier,
-        Real lengthReward)
+    ExchangeBlock randomExchangeBlock(const SimilarPrefix& prefix, const OrientedGenomes& genomes, std::mt19937& rng)
     {
-        const std::ptrdiff_t minOffset =
-            -static_cast<std::ptrdiff_t>(parent2Times.size() - 1);
-        const std::ptrdiff_t maxOffset =
-            static_cast<std::ptrdiff_t>(parent1Times.size() - 1);
+        std::uniform_int_distribution<std::size_t> beginDist(0, prefix.length - 1);
+        const std::size_t begin = beginDist(rng);
+        const std::size_t maxLength = genomes.shorter.size() - begin;
+        std::uniform_int_distribution<std::size_t> lengthDist(1, maxLength);
 
-        SimilarityRegion bestRegion{};
-        Real bestScore =
-            -std::numeric_limits<Real>::infinity();
-
-        for (std::ptrdiff_t offset = minOffset;
-             offset <= maxOffset;
-             ++offset)
-        {
-            const SimilarityRegion region =
-                similarityRegion(
-                    offset,
-                    parent1,
-                    parent2,
-                    parent1Times,
-                    parent2Times,
-                    minPairLogSimilarity,
-                    timeScaleMultiplier,
-                    lengthReward);
-
-            if (region.length == 0)
-            {
-                continue;
-            }
-
-            if (
-                region.score > bestScore ||
-                (region.score == bestScore &&
-                    region.length > bestRegion.length))
-            {
-                bestScore = region.score;
-                bestRegion = region;
-            }
-        }
-
-        return bestRegion;
+        return {begin, lengthDist(rng)};
     }
 
-    std::size_t randomizedSwapLength(
-        std::size_t maxLength)
+    template <std::ranges::input_range ManeuverRange> void appendManeuvers(std::vector<Maneuver>& target, ManeuverRange&& maneuvers)
     {
-        if (maxLength <= 1)
+        for (const Maneuver& maneuver : maneuvers)
         {
-            return maxLength;
+            target.push_back(maneuver);
+        }
+    }
+
+    std::pair<Specimen, Specimen> exchangeBlocks(const OrientedGenomes& genomes, const ExchangeBlock& block)
+    {
+        const std::size_t blockEnd = block.begin + block.length;
+
+        std::vector<Maneuver> shorterChildManeuvers;
+        shorterChildManeuvers.reserve(genomes.shorter.size());
+        std::vector<Maneuver> longerChildManeuvers;
+        longerChildManeuvers.reserve(genomes.longer.size());
+
+        appendManeuvers(shorterChildManeuvers, genomes.shorter.getManeuvers() | std::views::take(block.begin));
+        appendManeuvers(shorterChildManeuvers,
+                        genomes.longer.getManeuvers() | std::views::drop(block.begin) | std::views::take(block.length));
+        appendManeuvers(shorterChildManeuvers, genomes.shorter.getManeuvers() | std::views::drop(blockEnd));
+        appendManeuvers(longerChildManeuvers, genomes.longer.getManeuvers() | std::views::take(block.begin));
+        appendManeuvers(longerChildManeuvers,
+                        genomes.shorter.getManeuvers() | std::views::drop(block.begin) | std::views::take(block.length));
+        appendManeuvers(longerChildManeuvers, genomes.longer.getManeuvers() | std::views::drop(blockEnd));
+
+        if (genomes.parent1IsShorter)
+        {
+            return {Specimen(std::move(shorterChildManeuvers)), Specimen(std::move(longerChildManeuvers))};
         }
 
-        static thread_local std::mt19937 rng(std::random_device{}());
-        std::uniform_int_distribution<std::size_t> dist(1, maxLength);
-
-        return std::max(
-            dist(rng),
-            dist(rng));
+        return {Specimen(std::move(longerChildManeuvers)), Specimen(std::move(shorterChildManeuvers))};
     }
-}
+} // namespace
 
-AlignedSimilarityCrossover::AlignedSimilarityCrossover(
-    Real minPairSimilarity,
-    Real timeScaleMultiplier,
-    Real lengthReward)
-    : minPairLogSimilarity(0.0L),
-      timeScaleMultiplier(timeScaleMultiplier),
-      lengthReward(lengthReward)
+AlignedSimilarityCrossover::AlignedSimilarityCrossover(Real minRegionSimilarity, Real timeScaleMultiplierValue)
+    : minRegionLogSimilarity(0.0), timeScaleMultiplier(timeScaleMultiplierValue)
 {
-    if (minPairSimilarity <= 0.0L || minPairSimilarity > 1.0L)
+    if (minRegionSimilarity <= 0.0 || minRegionSimilarity > 1.0)
     {
-        throw std::invalid_argument(
-            "minPairSimilarity must be in range (0, 1].");
+        throw std::invalid_argument("minRegionSimilarity must be in range (0, 1].");
     }
 
-    if (timeScaleMultiplier <= 0.0L)
+    if (timeScaleMultiplierValue <= 0.0)
     {
-        throw std::invalid_argument(
-            "timeScaleMultiplier must be greater than zero.");
+        throw std::invalid_argument("timeScaleMultiplier must be greater than zero.");
     }
 
-    if (lengthReward < 0.0L)
-    {
-        throw std::invalid_argument(
-            "lengthReward must be non-negative.");
-    }
-
-    minPairLogSimilarity =
-        std::log(minPairSimilarity);
+    minRegionLogSimilarity = std::log(minRegionSimilarity);
 }
 
-std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(
-    const Specimen& parent1,
-    const Specimen& parent2
-) const
+std::pair<Specimen, Specimen> AlignedSimilarityCrossover::cross(const Specimen& parent1, const Specimen& parent2) const
 {
     if (parent1.empty() || parent2.empty())
     {
-        return {
-            Specimen(parent1.getManeuvers()),
-            Specimen(parent2.getManeuvers())};
+        return {Specimen(parent1.getManeuvers()), Specimen(parent2.getManeuvers())};
     }
 
-    const std::vector<ManeuverTime> parent1Times =
-        absoluteManeuverTimes(parent1);
-    const std::vector<ManeuverTime> parent2Times =
-        absoluteManeuverTimes(parent2);
-    const SimilarityRegion region =
-        bestSimilarityRegion(
-            parent1,
-            parent2,
-            parent1Times,
-            parent2Times,
-            minPairLogSimilarity,
-            timeScaleMultiplier,
-            lengthReward);
+    const std::vector<ManeuverTime> parent1Times = absoluteManeuverTimes(parent1);
+    const std::vector<ManeuverTime> parent2Times = absoluteManeuverTimes(parent2);
+    const OrientedGenomes genomes = orientGenomes(parent1, parent2, parent1Times, parent2Times);
+    const SimilarPrefix prefix = similarPrefix(genomes, minRegionLogSimilarity, timeScaleMultiplier);
 
-    if (region.length == 0)
+    if (prefix.length == 0)
     {
-        return RandomCutCrossover().cross(
-            parent1,
-            parent2);
+        return RandomCutCrossover().cross(parent1, parent2);
     }
 
-    Specimen child1(parent1.getManeuvers());
-    Specimen child2(parent2.getManeuvers());
-    const std::size_t swapLength =
-        randomizedSwapLength(region.length);
+    static thread_local std::mt19937 rng(std::random_device{}());
+    const ExchangeBlock block = randomExchangeBlock(prefix, genomes, rng);
 
-    for (std::size_t i = 0; i < swapLength; ++i)
-    {
-        const std::size_t parent2Index =
-            region.parent2Begin + i;
-        const std::size_t parent1Index =
-            static_cast<std::size_t>(
-                static_cast<std::ptrdiff_t>(parent2Index) + region.offset);
-
-        std::swap(
-            child1[parent1Index],
-            child2[parent2Index]);
-    }
-
-    return {
-        std::move(child1),
-        std::move(child2)};
+    return exchangeBlocks(genomes, block);
 }

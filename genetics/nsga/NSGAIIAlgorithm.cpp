@@ -1,360 +1,78 @@
 #include "NSGAIIAlgorithm.h"
 
 #include <algorithm>
-#include <compare>
-#include <iostream>
 #include <iterator>
-#include <limits>
 #include <ranges>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include "genetics/comparison/NSGAIIRankingComparator.h"
-#include "genetics/comparison/SpecimenRank.h"
+#include "genetics/utils/GenerationProgressLogger.h"
+#include "genetics/utils/ParetoFrontUtils.h"
+#include "genetics/utils/ParetoRanking.h"
 
 namespace
 {
-    struct RankedPopulation
-    {
-        std::vector<std::vector<std::size_t>> fronts;
-        std::vector<SpecimenRank> ranks;
-    };
+    constexpr std::size_t PrintedFrontLimit = 5;
 
-    struct FrontStats
+    std::string frontsDetails(const ParetoRankedPopulation& rankedPopulation)
     {
-        std::size_t size{};
-        std::size_t fuelFeasibleCount{};
-        Real minDistance{};
-        Real maxDistance{};
-        Real minTime{};
-        Real maxTime{};
-        Real minFuel{};
-        Real maxFuel{};
-        Real minFuelViolation{};
-        Real maxFuelViolation{};
-    };
+        std::ostringstream details;
+        details << "fronts=" << rankedPopulation.fronts.size() << " [";
 
-    FrontStats calculateFrontStats(
-        const std::vector<Specimen>& population,
-        const std::vector<std::size_t>& front)
-    {
-        FrontStats stats;
-        stats.size = front.size();
+        const auto printedFronts = rankedPopulation.fronts | std::views::take(PrintedFrontLimit);
 
-        if (front.empty())
+        bool first = true;
+
+        for (const auto& front : printedFronts)
         {
-            return stats;
-        }
-
-        const FitnessValue& firstFitness =
-            population[front.front()].getFitness().value();
-
-        stats.minDistance = firstFitness.minimumDistance;
-        stats.maxDistance = firstFitness.minimumDistance;
-        stats.minTime = firstFitness.minimumDistanceTime;
-        stats.maxTime = firstFitness.minimumDistanceTime;
-        stats.minFuel = firstFitness.minimumDistanceFuelMass;
-        stats.maxFuel = firstFitness.minimumDistanceFuelMass;
-        stats.minFuelViolation = firstFitness.fuelConstraintViolation;
-        stats.maxFuelViolation = firstFitness.fuelConstraintViolation;
-
-        for (std::size_t specimenIndex : front)
-        {
-            const FitnessValue& fitness =
-                population[specimenIndex].getFitness().value();
-
-            if (fitness.fuelConstraintViolation <= 0.0L)
+            if (!first)
             {
-                ++stats.fuelFeasibleCount;
+                details << ", ";
             }
 
-            stats.minDistance =
-                std::min(
-                    stats.minDistance,
-                    fitness.minimumDistance);
-            stats.maxDistance =
-                std::max(
-                    stats.maxDistance,
-                    fitness.minimumDistance);
-            stats.minTime =
-                std::min(
-                    stats.minTime,
-                    fitness.minimumDistanceTime);
-            stats.maxTime =
-                std::max(
-                    stats.maxTime,
-                    fitness.minimumDistanceTime);
-            stats.minFuel =
-                std::min(
-                    stats.minFuel,
-                    fitness.minimumDistanceFuelMass);
-            stats.maxFuel =
-                std::max(
-                    stats.maxFuel,
-                    fitness.minimumDistanceFuelMass);
-            stats.minFuelViolation =
-                std::min(
-                    stats.minFuelViolation,
-                    fitness.fuelConstraintViolation);
-            stats.maxFuelViolation =
-                std::max(
-                    stats.maxFuelViolation,
-                    fitness.fuelConstraintViolation);
+            details << front.size();
+            first = false;
         }
 
-        return stats;
+        if (rankedPopulation.fronts.size() > PrintedFrontLimit)
+        {
+            details << ", ...";
+        }
+
+        details << ']';
+
+        return details.str();
     }
 
-    void printGenerationResult(
-        std::size_t generation,
-        const std::vector<Specimen>& population,
-        const RankedPopulation& rankedPopulation)
+    void printGenerationResult(std::size_t generation, const std::vector<Specimen>& population,
+                               const ParetoRankedPopulation& rankedPopulation)
     {
-        if (rankedPopulation.fronts.empty())
-        {
-            std::cout
-                << "NSGA-II generation " << generation
-                << " | Pareto front size = 0\n";
-            return;
-        }
+        const ParetoFrontStats stats = rankedPopulation.fronts.empty()
+                                           ? ParetoFrontStats{}
+                                           : ParetoFrontUtils::calculateStats(population, rankedPopulation.fronts.front());
 
-        const FrontStats stats =
-            calculateFrontStats(
-                population,
-                rankedPopulation.fronts.front());
-
-        std::cout
-            << "NSGA-II generation " << generation
-            << " | Pareto front size = " << stats.size
-            << " | fronts = " << rankedPopulation.fronts.size()
-            << " [";
-
-        const std::size_t printedFrontCount =
-            std::min<std::size_t>(
-                rankedPopulation.fronts.size(),
-                5);
-
-        for (std::size_t i = 0; i < printedFrontCount; ++i)
-        {
-            if (i > 0)
-            {
-                std::cout << ", ";
-            }
-
-            std::cout << rankedPopulation.fronts[i].size();
-        }
-
-        if (printedFrontCount < rankedPopulation.fronts.size())
-        {
-            std::cout << ", ...";
-        }
-
-        std::cout
-            << ']'
-            << " | fuel feasible = "
-            << stats.fuelFeasibleCount << '/' << stats.size
-            << " | distance = ["
-            << stats.minDistance << ", " << stats.maxDistance << ']'
-            << " | time = ["
-            << stats.minTime << ", " << stats.maxTime << ']'
-            << " | fuel = ["
-            << stats.minFuel << ", " << stats.maxFuel << ']'
-            << " | fuel violation = ["
-            << stats.minFuelViolation << ", "
-            << stats.maxFuelViolation << ']'
-            << '\n';
+        GenerationProgressLogger::print("NSGA-II", generation, stats, frontsDetails(rankedPopulation));
     }
 
-    void calculateCrowdingDistance(
-        const std::vector<Specimen>& population,
-        const std::vector<std::size_t>& front,
-        const SpecimenComparator& specimenComparator,
-        std::vector<SpecimenRank>& ranks)
+    void appendMovedPopulation(std::vector<Specimen>& target, std::vector<Specimen>& source)
     {
-        if (front.empty())
+        std::ranges::move(source, std::back_inserter(target));
+    }
+
+    void appendMovedSpecimensByIndex(std::vector<Specimen>& target, std::vector<Specimen>& source, const std::vector<std::size_t>& indices,
+                                     std::size_t maxCount)
+    {
+        for (std::size_t specimenIndex : indices | std::views::take(maxCount))
         {
-            return;
-        }
-
-        for (std::size_t specimenIndex : front)
-        {
-            ranks[specimenIndex].crowdingDistance = 0.0L;
-        }
-
-        if (front.size() <= 2)
-        {
-            for (std::size_t specimenIndex : front)
-            {
-                ranks[specimenIndex].crowdingDistance =
-                    std::numeric_limits<Real>::infinity();
-            }
-
-            return;
-        }
-
-        const std::size_t objectiveCount =
-            specimenComparator.objectiveCount();
-
-        for (std::size_t objective = 0; objective < objectiveCount; ++objective)
-        {
-            std::vector<std::size_t> sortedFront = front;
-
-            std::ranges::sort(
-                sortedFront,
-                [&](std::size_t lhs, std::size_t rhs)
-                {
-                    return specimenComparator.objectiveValue(
-                        population[lhs].getFitness().value(),
-                        objective) <
-                        specimenComparator.objectiveValue(
-                            population[rhs].getFitness().value(),
-                            objective);
-                });
-
-            ranks[sortedFront.front()].crowdingDistance =
-                std::numeric_limits<Real>::infinity();
-            ranks[sortedFront.back()].crowdingDistance =
-                std::numeric_limits<Real>::infinity();
-
-            const Real minimumValue =
-                specimenComparator.objectiveValue(
-                    population[sortedFront.front()].getFitness().value(),
-                    objective);
-            const Real maximumValue =
-                specimenComparator.objectiveValue(
-                    population[sortedFront.back()].getFitness().value(),
-                    objective);
-            const Real valueRange = maximumValue - minimumValue;
-
-            if (valueRange == 0.0L)
-            {
-                continue;
-            }
-
-            for (std::size_t i = 1; i + 1 < sortedFront.size(); ++i)
-            {
-                Real& distance =
-                    ranks[sortedFront[i]].crowdingDistance;
-
-                if (distance == std::numeric_limits<Real>::infinity())
-                {
-                    continue;
-                }
-
-                const Real previousValue =
-                    specimenComparator.objectiveValue(
-                        population[sortedFront[i - 1]].getFitness().value(),
-                        objective);
-                const Real nextValue =
-                    specimenComparator.objectiveValue(
-                        population[sortedFront[i + 1]].getFitness().value(),
-                        objective);
-
-                distance +=
-                    (nextValue - previousValue) /
-                    valueRange;
-            }
+            target.push_back(std::move(source[specimenIndex]));
         }
     }
 
-    RankedPopulation rankPopulation(
-        const std::vector<Specimen>& population,
-        const SpecimenComparator& specimenComparator)
-    {
-        const std::size_t populationSize = population.size();
-        std::vector<std::vector<std::size_t>> dominatedBySpecimen(
-            populationSize);
-        std::vector<std::size_t> dominationCounts(
-            populationSize,
-            0);
-
-        RankedPopulation rankedPopulation;
-        rankedPopulation.ranks.resize(populationSize);
-        rankedPopulation.fronts.emplace_back();
-
-        for (std::size_t lhs = 0; lhs < populationSize; ++lhs)
-        {
-            for (std::size_t rhs = 0; rhs < populationSize; ++rhs)
-            {
-                if (lhs == rhs)
-                {
-                    continue;
-                }
-
-                const std::partial_ordering comparison =
-                    specimenComparator.compare(
-                        population[lhs],
-                        population[rhs]);
-
-                if (comparison == std::partial_ordering::less)
-                {
-                    dominatedBySpecimen[lhs].push_back(rhs);
-                }
-                else if (comparison == std::partial_ordering::greater)
-                {
-                    ++dominationCounts[lhs];
-                }
-            }
-
-            if (dominationCounts[lhs] == 0)
-            {
-                rankedPopulation.ranks[lhs].rank = 0;
-                rankedPopulation.fronts.front().push_back(lhs);
-            }
-        }
-
-        std::size_t frontIndex = 0;
-
-        while (
-            frontIndex < rankedPopulation.fronts.size() &&
-            !rankedPopulation.fronts[frontIndex].empty())
-        {
-            std::vector<std::size_t> nextFront;
-
-            for (std::size_t specimenIndex :
-                 rankedPopulation.fronts[frontIndex])
-            {
-                for (std::size_t dominatedIndex :
-                     dominatedBySpecimen[specimenIndex])
-                {
-                    --dominationCounts[dominatedIndex];
-
-                    if (dominationCounts[dominatedIndex] == 0)
-                    {
-                        rankedPopulation.ranks[dominatedIndex].rank =
-                            frontIndex + 1;
-                        nextFront.push_back(dominatedIndex);
-                    }
-                }
-            }
-
-            if (!nextFront.empty())
-            {
-                rankedPopulation.fronts.push_back(
-                    std::move(nextFront));
-            }
-
-            ++frontIndex;
-        }
-
-        for (const auto& front : rankedPopulation.fronts)
-        {
-            calculateCrowdingDistance(
-                population,
-                front,
-                specimenComparator,
-                rankedPopulation.ranks);
-        }
-
-        return rankedPopulation;
-    }
-
-    std::vector<Specimen> selectNextGeneration(
-        const std::vector<Specimen>& combinedPopulation,
-        const RankedPopulation& rankedPopulation,
-        std::size_t populationSize,
-        const SpecimenComparator& specimenComparator)
+    std::vector<Specimen> selectNextGeneration(std::vector<Specimen>& combinedPopulation, const ParetoRankedPopulation& rankedPopulation,
+                                               std::size_t populationSize, const SpecimenComparator& specimenComparator)
     {
         std::vector<Specimen> nextPopulation;
         nextPopulation.reserve(populationSize);
@@ -363,40 +81,24 @@ namespace
         {
             if (nextPopulation.size() + front.size() <= populationSize)
             {
-                for (std::size_t specimenIndex : front)
+                appendMovedSpecimensByIndex(nextPopulation, combinedPopulation, front, front.size());
+
+                if (nextPopulation.size() == populationSize)
                 {
-                    nextPopulation.push_back(
-                        combinedPopulation[specimenIndex]);
+                    break;
                 }
 
                 continue;
             }
 
             std::vector<std::size_t> sortedFront = front;
-            const NSGAIIRankingComparator comparator(
-                combinedPopulation,
-                rankedPopulation.ranks,
-                specimenComparator);
+            const NSGAIIRankingComparator comparator(combinedPopulation, rankedPopulation.ranks, specimenComparator, false);
 
-            std::ranges::sort(
-                sortedFront,
-                [&](std::size_t lhs, std::size_t rhs)
-                {
-                    return comparator.isLess(
-                        combinedPopulation[lhs],
-                        combinedPopulation[rhs]);
-                });
+            std::ranges::sort(sortedFront, [&](std::size_t lhs, std::size_t rhs) {
+                return comparator.isLess(combinedPopulation[lhs], combinedPopulation[rhs]);
+            });
 
-            for (std::size_t specimenIndex : sortedFront)
-            {
-                if (nextPopulation.size() == populationSize)
-                {
-                    break;
-                }
-
-                nextPopulation.push_back(
-                    combinedPopulation[specimenIndex]);
-            }
+            appendMovedSpecimensByIndex(nextPopulation, combinedPopulation, sortedFront, populationSize - nextPopulation.size());
 
             break;
         }
@@ -404,169 +106,90 @@ namespace
         return nextPopulation;
     }
 
-    std::vector<Specimen> firstParetoFront(
-        const std::vector<Specimen>& population,
-        const RankedPopulation& rankedPopulation)
+    ParetoFront firstParetoFront(const std::vector<Specimen>& population, const ParetoRankedPopulation& rankedPopulation)
     {
-        std::vector<Specimen> front;
+        ParetoFront front;
 
         if (rankedPopulation.fronts.empty())
         {
             return front;
         }
 
-        front.reserve(
-            rankedPopulation.fronts.front().size());
-
-        for (std::size_t specimenIndex : rankedPopulation.fronts.front())
-        {
-            front.push_back(
-                population[specimenIndex]);
-        }
-
-        return front;
+        return ParetoFrontUtils::frontFromIndices(population, rankedPopulation.fronts.front());
     }
-}
+} // namespace
 
-NSGAIIAlgorithm::NSGAIIAlgorithm(
-    std::size_t populationSize,
-    std::size_t generations,
-    std::size_t immigrantCount,
-    const SpecimenComparator& specimenComparator,
-    Factories factories
-)
-    : populationSize(populationSize),
-      generations(generations),
-      immigrantCount(immigrantCount),
-      specimenComparator(specimenComparator),
-      factories(factories)
+NSGAIIAlgorithm::NSGAIIAlgorithm(std::size_t populationSizeValue, std::size_t generationCount,
+                                 const SpecimenComparator& specimenComparatorRef, Factories factoriesValue, bool verboseValue)
+    : populationSize(populationSizeValue), generations(generationCount), specimenComparator(specimenComparatorRef),
+      factories(factoriesValue), verbose(verboseValue)
 {
-    if (populationSize == 0)
+    if (populationSizeValue == 0)
     {
         throw std::invalid_argument("Population size must be greater than zero.");
     }
 }
 
-std::vector<Specimen> NSGAIIAlgorithm::run() const
+ParetoFrontHistory NSGAIIAlgorithm::run() const
 {
-    auto initializer =
-        factories.initializerFactory.create();
-    auto selection =
-        factories.selectionFactory.create();
-    auto crossover =
-        factories.crossoverFactory.create();
-    auto mutation =
-        factories.mutationFactory.create();
-    auto fitnessEvaluator =
-        factories.fitnessEvaluatorFactory.create();
+    auto initializer = factories.initializerFactory.create();
+    auto selection = factories.selectionFactory.create();
+    auto crossover = factories.crossoverFactory.create();
+    auto mutation = factories.mutationFactory.create();
+    auto fitnessEvaluator = factories.fitnessEvaluatorFactory.create();
 
-    std::vector<Specimen> population =
-        initializer->createPopulation(
-            populationSize);
+    std::vector<Specimen> population = initializer->createPopulation(populationSize);
+    ParetoFrontHistory history;
+    history.reserve(generations);
+    ParetoFront archive;
 
     for (std::size_t generation = 0; generation < generations; ++generation)
     {
-        evaluatePopulationUnsequenced(
-            population,
-            *fitnessEvaluator);
+        evaluatePopulation(population, *fitnessEvaluator);
 
-        const RankedPopulation rankedParents =
-            rankPopulation(
-                population,
-                specimenComparator);
+        const ParetoRankedPopulation rankedParents = ParetoRanking::rankPopulation(population, specimenComparator);
 
-        printGenerationResult(
-            generation,
-            population,
-            rankedParents);
+        const NSGAIIRankingComparator selectionComparator(population, rankedParents.ranks, specimenComparator, false);
 
-        const NSGAIIRankingComparator selectionComparator(
-            population,
-            rankedParents.ranks,
-            specimenComparator);
+        std::vector<Specimen> offspring = createOffspringPopulation(population, selectionComparator, *selection, *crossover, *mutation);
 
-        std::vector<Specimen> offspring =
-            createOffspringPopulation(
-                population,
-                selectionComparator,
-                *initializer,
-                *selection,
-                *crossover,
-                *mutation);
-
-        evaluatePopulationUnsequenced(
-            offspring,
-            *fitnessEvaluator);
+        evaluatePopulation(offspring, *fitnessEvaluator);
 
         std::vector<Specimen> combinedPopulation;
-        combinedPopulation.reserve(
-            population.size() + offspring.size());
-        std::ranges::copy(
-            population,
-            std::back_inserter(combinedPopulation));
-        std::ranges::copy(
-            offspring,
-            std::back_inserter(combinedPopulation));
+        combinedPopulation.reserve(population.size() + offspring.size());
+        appendMovedPopulation(combinedPopulation, population);
+        appendMovedPopulation(combinedPopulation, offspring);
 
-        const RankedPopulation rankedCombined =
-            rankPopulation(
-                combinedPopulation,
-                specimenComparator);
+        const ParetoRankedPopulation rankedCombined = ParetoRanking::rankPopulation(combinedPopulation, specimenComparator);
 
-        population =
-            selectNextGeneration(
-                combinedPopulation,
-                rankedCombined,
-                populationSize,
-                specimenComparator);
+        population = selectNextGeneration(combinedPopulation, rankedCombined, populationSize, specimenComparator);
+
+        evaluatePopulation(population, *fitnessEvaluator);
+
+        const ParetoRankedPopulation rankedPopulation = ParetoRanking::rankPopulation(population, specimenComparator);
+
+        if (verbose)
+        {
+            printGenerationResult(generation, population, rankedPopulation);
+        }
+
+        ParetoFront currentFront = firstParetoFront(population, rankedPopulation);
+        archive = ParetoFrontUtils::updateArchive(std::move(archive), std::move(currentFront), specimenComparator);
+
+        history.push_back(archive);
     }
 
-    evaluatePopulationUnsequenced(
-        population,
-        *fitnessEvaluator);
-
-    const RankedPopulation rankedPopulation =
-        rankPopulation(
-            population,
-            specimenComparator);
-
-    return firstParetoFront(
-        population,
-        rankedPopulation);
+    return history;
 }
 
-std::vector<Specimen> NSGAIIAlgorithm::createOffspringPopulation(
-    const std::vector<Specimen>& population,
-    const SpecimenComparator& selectionComparator,
-    Initializer& initializer,
-    Selection& selection,
-    Crossover& crossover,
-    Mutation& mutation
-) const
+std::vector<Specimen> NSGAIIAlgorithm::createOffspringPopulation(const std::vector<Specimen>& population,
+                                                                 const SpecimenComparator& selectionComparator, Selection& selection,
+                                                                 Crossover& crossover, Mutation& mutation) const
 {
-    const std::size_t effectiveImmigrantCount =
-        std::min(
-            immigrantCount,
-            populationSize);
-    const std::size_t childrenTarget =
-        populationSize - effectiveImmigrantCount;
-
     std::vector<Specimen> offspring;
     offspring.reserve(populationSize);
 
-    appendChildren(
-        population,
-        offspring,
-        childrenTarget,
-        selectionComparator,
-        selection,
-        crossover,
-        mutation);
-
-    appendImmigrants(
-        offspring,
-        effectiveImmigrantCount,
-        initializer);
+    appendChildren(population, offspring, populationSize, selectionComparator, selection, crossover, mutation);
 
     return offspring;
 }

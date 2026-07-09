@@ -19,10 +19,7 @@ struct Status
 class RecordingValidator
 {
 public:
-    RecordingValidator(
-        const SimulationFactory& simulationFactory,
-        Real timeStep,
-        std::size_t steps);
+    RecordingValidator(const SimulationFactory& simulationFactory, Real timeStep, std::size_t steps);
 
     std::vector<Status> record() const;
 

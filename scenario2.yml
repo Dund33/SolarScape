@@ -1,0 +1,60 @@
+simulation:
+  gravitationalConstant: 0.000000000066743
+  timeStep: 150.0
+  simulationTime: 89029500.0
+
+targetPointFromTargetBody:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+
+bodies:
+  # Central body: Sun
+  - position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    mass: 1988500000000000000000000000000.0
+
+  # Earth, circular orbit around the Sun
+  - position:
+      x: 149597870700.0
+      y: 0.0
+      z: 0.0
+    velocity:
+      x: 0.0
+      y: 29785.3668522424
+      z: 0.0
+    mass: 5972000000000000000000000.0
+
+# Mars, quarter orbit ahead of Earth
+targetBody:
+  position:
+    x: 0.0
+    y: 227939200000.0
+    z: 0.0
+  velocity:
+    x: -24129.9348673705
+    y: 0.0
+    z: 0.0
+  mass: 641710000000000000000000.0
+
+# Probe starting near Earth.
+probe:
+  position:
+    x: 149604641700.0
+    y: 0.0
+    z: 0.0
+  velocity:
+    x: 0.0
+    y: 37455.3668522424
+    z: 0.0
+
+  emptyMass: 4000.0
+  fuelMass: 6000.0
+  fuelFlow: 4
+  specificImpulse: 450.0

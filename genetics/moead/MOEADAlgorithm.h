@@ -23,15 +23,10 @@ public:
         const FitnessEvaluatorFactory& fitnessEvaluatorFactory;
     };
 
-    MOEADAlgorithm(
-        std::size_t populationSize,
-        std::size_t generations,
-        std::size_t neighborhoodSize,
-        const SpecimenComparator& specimenComparator,
-        Factories factories
-    );
+    MOEADAlgorithm(std::size_t populationSize, std::size_t generations, std::size_t neighborhoodSize,
+                   const SpecimenComparator& specimenComparator, Factories factories, bool verbose = false);
 
-    std::vector<Specimen> run() const;
+    ParetoFrontHistory run() const override;
 
 private:
     std::size_t populationSize;
@@ -39,6 +34,7 @@ private:
     std::size_t neighborhoodSize;
     const SpecimenComparator& specimenComparator;
     Factories factories;
+    bool verbose;
 };
 
 #endif
