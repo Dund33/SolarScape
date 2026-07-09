@@ -75,10 +75,13 @@ def format_legend(ax) -> None:
         legend.set_title("")
 
 
-def save_figure(fig, output_path: Path, dpi: int) -> None:
+def save_figure(fig, output_path: Path, dpi: int, bbox_inches=None) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
-    fig.savefig(output_path, dpi=dpi)
+    if output_path.suffix.lower() in {".pdf", ".svg", ".eps"}:
+        fig.savefig(output_path, bbox_inches=bbox_inches)
+    else:
+        fig.savefig(output_path, dpi=dpi, bbox_inches=bbox_inches)
     plt.close(fig)
 
 

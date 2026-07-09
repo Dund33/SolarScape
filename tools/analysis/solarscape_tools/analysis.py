@@ -26,6 +26,7 @@ FITNESS_COLUMNS = [
     "fuelUsed",
     "fuelConstraintViolation",
 ]
+FEASIBILITY_MODES = ("fuel", "target-window", "mission")
 SUMMARY_COLUMNS = [
     "scenario",
     "algorithm",
@@ -35,6 +36,10 @@ SUMMARY_COLUMNS = [
     "final_front_size",
     "final_feasible",
     "final_feasible_rate",
+    "final_target_feasible",
+    "final_target_feasible_rate",
+    "final_mission_feasible",
+    "final_mission_feasible_rate",
     "final_min_distance",
     "final_min_fuel_used",
     "final_best_time",
@@ -67,22 +72,6 @@ BEST_SOLUTION_COLUMNS = [
 ]
 
 
-def normalize_scenario_filter(values: list[str] | None) -> set[str] | None:
-    if values is None:
-        return None
-
-    return {
-        value.lower() if value.lower().startswith("scenario") else f"scenario{value.lower()}"
-        for value in values
-    }
-
-
-def normalize_filter(values: list[str] | None) -> set[str] | None:
-    if values is None:
-        return None
-    return {value.lower() for value in values}
-
-
 def parse_criteria(criteria_keys: list[str], include_constraint: bool) -> list[str]:
     keys = list(dict.fromkeys(criteria_keys))
     if include_constraint and "fuelConstraintViolation" not in keys:
@@ -102,15 +91,13 @@ def parse_criteria(criteria_keys: list[str], include_constraint: bool) -> list[s
 
 def discover_and_validate_experiments(
     input_dir: Path,
-    scenarios: set[str] | None,
-    algorithms: set[str] | None,
     expected_runs: int,
     allow_incomplete: bool,
 ) -> list[ExperimentFile]:
     experiments = discover_experiment_files(
         input_dir=input_dir,
-        scenarios=scenarios,
-        algorithms=algorithms,
+        scenarios=None,
+        algorithms=None,
     )
     if not experiments:
         raise ValueError(f"no experiment JSON files found in {input_dir}")
@@ -124,6 +111,22 @@ def discover_and_validate_experiments(
         print(f"warning: {warning}")
 
     return experiments
+
+
+def load_experiment_frame_cache(cache_path: Path) -> pd.DataFrame:
+    if not cache_path.exists():
+        raise ValueError(f"experiment frame cache does not exist: {cache_path}")
+
+    frame = pd.read_parquet(cache_path)
+    if frame.empty:
+        raise ValueError(f"experiment frame cache is empty: {cache_path}")
+
+    return frame
+
+
+def write_experiment_frame_cache(frame: pd.DataFrame, cache_path: Path) -> None:
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_parquet(cache_path, index=False)
 
 
 def load_experiment_frame(experiments: list[ExperimentFile]) -> pd.DataFrame:
@@ -417,6 +420,9 @@ def aggregate_value_series(
         *group_columns,
         "mean",
         "std",
+        "median",
+        "q1",
+        "q3",
         "finite_run_count",
         "lower",
         "upper",
@@ -426,13 +432,24 @@ def aggregate_value_series(
         return pd.DataFrame(columns=output_columns)
 
     grouped = values.groupby(group_columns, as_index=False)[value_column]
-    result = grouped.agg(mean="mean", std="std", finite_run_count="count")
+    result = grouped.agg(
+        mean="mean",
+        std="std",
+        median="median",
+        q1=lambda series: series.quantile(0.25),
+        q3=lambda series: series.quantile(0.75),
+        finite_run_count="count",
+    )
     result["std"] = result["std"].fillna(0.0)
-    result["spread"] = uncertainty_spread(result, uncertainty)
-    result["lower"] = result["mean"] - result["spread"]
-    result["upper"] = result["mean"] + result["spread"]
+    if uncertainty == "iqr":
+        result["lower"] = result["q1"]
+        result["upper"] = result["q3"]
+    else:
+        result["spread"] = uncertainty_spread(result, uncertainty)
+        result["lower"] = result["mean"] - result["spread"]
+        result["upper"] = result["mean"] + result["spread"]
     result["run_count"] = result.groupby(run_group_columns)["finite_run_count"].transform("max")
-    return result.drop(columns="spread")[output_columns]
+    return result.drop(columns="spread", errors="ignore")[output_columns]
 
 
 def uncertainty_spread(frame: pd.DataFrame, uncertainty: str) -> pd.Series:
@@ -533,9 +550,29 @@ def final_solution_summary_frame(
     )
 
 
+def feasibility_mask(
+    frame: pd.DataFrame,
+    feasibility_mode: str,
+    fuel_tolerance: float,
+    target_tolerance: float,
+) -> pd.Series:
+    fuel_feasible = frame["fuelViolation"].le(fuel_tolerance)
+    target_feasible = frame["targetWindowViolation"].le(target_tolerance)
+
+    if feasibility_mode == "fuel":
+        return fuel_feasible
+    if feasibility_mode == "target-window":
+        return target_feasible
+    if feasibility_mode == "mission":
+        return fuel_feasible & target_feasible
+    raise ValueError(f"Unsupported feasibility mode: {feasibility_mode}")
+
+
 def feasibility_series_frame(
     frame: pd.DataFrame,
     fuel_tolerance: float,
+    feasibility_mode: str = "mission",
+    target_tolerance: float = 0.0,
 ) -> pd.DataFrame:
     group_columns = ["scenario", "algorithm", "run", "generation"]
     output_columns = [*group_columns, "front_size", "feasible", "feasibility_rate"]
@@ -543,7 +580,12 @@ def feasibility_series_frame(
         return pd.DataFrame(columns=output_columns)
 
     data = frame.copy()
-    data["feasible_at_tolerance"] = data["fuelViolation"].le(fuel_tolerance)
+    data["feasible_at_tolerance"] = feasibility_mask(
+        data,
+        feasibility_mode,
+        fuel_tolerance,
+        target_tolerance,
+    )
     result = data.groupby(group_columns, as_index=False).agg(
         front_size=("specimen", "count"),
         feasible=("feasible_at_tolerance", "sum"),
@@ -563,6 +605,33 @@ def aggregate_feasibility_series(
     return aggregate_value_series(
         values=feasibility,
         value_column="feasibility_rate",
+        group_columns=["scenario", "algorithm", "generation"],
+        run_group_columns=["scenario", "algorithm"],
+        uncertainty=uncertainty,
+    )
+
+
+def pareto_front_size_series_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    group_columns = ["scenario", "algorithm", "run", "generation"]
+    output_columns = [*group_columns, "front_size"]
+    if frame.empty:
+        return pd.DataFrame(columns=output_columns)
+
+    result = frame[group_columns + ["front_size"]].drop_duplicates(group_columns)
+    result["scenario_order"] = result["scenario"].map(scenario_order_value)
+    result["algorithm_order"] = result["algorithm"].map(ALGORITHM_ORDER).fillna(100)
+    return result.sort_values(
+        ["scenario_order", "algorithm_order", "run", "generation"]
+    ).drop(columns=["scenario_order", "algorithm_order"])[output_columns]
+
+
+def aggregate_pareto_front_size_series(
+    front_sizes: pd.DataFrame,
+    uncertainty: str,
+) -> pd.DataFrame:
+    return aggregate_value_series(
+        values=front_sizes,
+        value_column="front_size",
         group_columns=["scenario", "algorithm", "generation"],
         run_group_columns=["scenario", "algorithm"],
         uncertainty=uncertainty,
@@ -621,8 +690,27 @@ def final_group_stats(
     stats = final.groupby(group_columns, as_index=False).agg(
         final_front_size=("specimen", "count"),
         final_feasible=("fuelViolation", lambda values: values.le(fuel_tolerance).sum()),
+        final_target_feasible=(
+            "targetWindowViolation",
+            lambda values: values.le(0.0).sum(),
+        ),
     )
     stats["final_feasible_rate"] = stats["final_feasible"] / stats["final_front_size"]
+    mission_feasible = (
+        final["fuelViolation"].le(fuel_tolerance)
+        & final["targetWindowViolation"].le(0.0)
+    )
+    mission = final.assign(final_mission_feasible_mask=mission_feasible)
+    mission_stats = mission.groupby(group_columns, as_index=False).agg(
+        final_mission_feasible=("final_mission_feasible_mask", "sum"),
+    )
+    stats = stats.merge(mission_stats, on=group_columns, how="left")
+    stats["final_target_feasible_rate"] = (
+        stats["final_target_feasible"] / stats["final_front_size"]
+    )
+    stats["final_mission_feasible_rate"] = (
+        stats["final_mission_feasible"] / stats["final_front_size"]
+    )
 
     candidate_stats = candidates.groupby(group_columns, as_index=False).agg(
         final_min_distance=("minimumDistance", "min"),
@@ -693,6 +781,10 @@ def aggregate_summary_mean(
         final_front_size=("final_front_size", "mean"),
         final_feasible=("final_feasible", "mean"),
         final_feasible_rate=("final_feasible_rate", "mean"),
+        final_target_feasible=("final_target_feasible", "mean"),
+        final_target_feasible_rate=("final_target_feasible_rate", "mean"),
+        final_mission_feasible=("final_mission_feasible", "mean"),
+        final_mission_feasible_rate=("final_mission_feasible_rate", "mean"),
         final_min_distance=("final_min_distance", "mean"),
         final_min_fuel_used=("final_min_fuel_used", "mean"),
         final_best_time=("final_best_time", "mean"),
@@ -720,6 +812,10 @@ def aggregate_summary_best(
         final_front_size=("final_front_size", "max"),
         final_feasible=("final_feasible", "max"),
         final_feasible_rate=("final_feasible_rate", "max"),
+        final_target_feasible=("final_target_feasible", "max"),
+        final_target_feasible_rate=("final_target_feasible_rate", "max"),
+        final_mission_feasible=("final_mission_feasible", "max"),
+        final_mission_feasible_rate=("final_mission_feasible_rate", "max"),
         final_min_distance=("final_min_distance", "min"),
         final_min_fuel_used=("final_min_fuel_used", "min"),
         final_best_time=("final_best_time", "min"),
@@ -812,6 +908,8 @@ def format_summary_for_output(
         "selected_run",
         "final_front_size",
         "final_feasible",
+        "final_target_feasible",
+        "final_mission_feasible",
     ]
     for column in count_columns:
         result[column] = result[column].map(format_count)

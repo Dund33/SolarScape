@@ -10,35 +10,29 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from joblib import Parallel, delayed
 
-from solarscape_tools.analysis import aggregate_feasibility_series, feasibility_series_frame, load_experiment_frame_cache
-from solarscape_tools.display import add_display_columns, scenario_title
-from solarscape_tools.plotting import (
-    algorithm_hue_order,
-    format_legend,
-    palette_for,
-    pdf_path,
-    save_figure,
+from solarscape_tools.analysis import (
+    aggregate_pareto_front_size_series,
+    load_experiment_frame_cache,
+    pareto_front_size_series_frame,
 )
+from solarscape_tools.display import add_display_columns, scenario_title
+from solarscape_tools.plotting import algorithm_hue_order, palette_for, pdf_path, save_figure, style_numeric_axis
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 TOOLS_DIR = SCRIPT_DIR.parent
 FRAME_CACHE_PATH = TOOLS_DIR / "out" / "thesis_cache" / "experiment_frame.parquet"
-OUTPUT_DIR = TOOLS_DIR / "out" / "thesis_plots" / "feasibility"
-FEASIBILITY_LABELS = {
-    "fuel": "Fuel-feasible Pareto-front fraction [-]",
-    "target-window": "Target-window feasible Pareto-front fraction [-]",
-    "mission": "Mission-feasible Pareto-front fraction [-]",
-}
+OUTPUT_DIR = TOOLS_DIR / "out" / "thesis_plots" / "pareto_front_size"
 CONFIG = SimpleNamespace(
-    feasibility_mode="mission",
-    fuel_tolerance=0.0,
-    target_tolerance=0.0,
-    uncertainty="iqr",
+    uncertainty="std",
     output_dir=OUTPUT_DIR,
     dpi=300,
     jobs=12,
 )
+
+
+def central_column(args: SimpleNamespace) -> str:
+    return "median" if args.uncertainty == "iqr" else "mean"
 
 
 def plot_group(group, output_path: Path, args: SimpleNamespace) -> None:
@@ -49,11 +43,12 @@ def plot_group(group, output_path: Path, args: SimpleNamespace) -> None:
     fig, ax = plt.subplots(figsize=(7.6, 5.0))
     hue_order = algorithm_hue_order(group)
     palette = palette_for(group)
+    y_column = central_column(args)
 
     sns.lineplot(
         data=group,
         x="generation",
-        y="mean",
+        y=y_column,
         hue="algorithm_label",
         hue_order=hue_order,
         palette=palette,
@@ -68,24 +63,29 @@ def plot_group(group, output_path: Path, args: SimpleNamespace) -> None:
             label = row_group["algorithm_label"].iloc[0]
             ax.fill_between(
                 row_group["generation"].to_numpy(),
-                row_group["lower"].clip(lower=0.0, upper=1.0).to_numpy(),
-                row_group["upper"].clip(lower=0.0, upper=1.0).to_numpy(),
+                row_group["lower"].clip(lower=0.0).to_numpy(),
+                row_group["upper"].clip(lower=0.0).to_numpy(),
                 color=palette[label],
                 alpha=0.14,
                 linewidth=0,
             )
 
     ax.set_xlabel("Generation")
-    ax.set_ylabel(FEASIBILITY_LABELS[args.feasibility_mode])
-    ax.set_ylim(-0.02, 1.02)
-    ax.set_title(
-        f"{scenario_title(group['scenario'].iloc[0])}: "
-        f"{args.feasibility_mode} feasibility"
+    ax.set_ylabel("Pareto front size [specimens]")
+    ax.set_title(f"{scenario_title(group['scenario'].iloc[0])}: Pareto front size")
+    ax.legend(
+        title="",
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.22),
+        ncol=len(hue_order),
+        frameon=True,
+        borderaxespad=0.0,
     )
-    format_legend(ax)
+    ax.set_ylim(bottom=0.0)
+    style_numeric_axis(ax)
     ax.grid(axis="x", visible=False)
     ax.grid(axis="y", color="0.86", linewidth=0.8)
-    save_figure(fig, output_path, args.dpi)
+    save_figure(fig, output_path, args.dpi, bbox_inches="tight")
 
 
 def main() -> int:
@@ -94,20 +94,15 @@ def main() -> int:
 
     try:
         frame = load_experiment_frame_cache(FRAME_CACHE_PATH)
-        feasibility = feasibility_series_frame(
-            frame,
-            args.fuel_tolerance,
-            args.feasibility_mode,
-            args.target_tolerance,
-        )
-        feasibility_summary = aggregate_feasibility_series(feasibility, args.uncertainty)
+        front_sizes = pareto_front_size_series_frame(frame)
+        summary = aggregate_pareto_front_size_series(front_sizes, args.uncertainty)
     except ValueError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
     tasks = []
-    for scenario, group in feasibility_summary.groupby("scenario", sort=True):
-        output_path = pdf_path(args.output_dir, scenario, "feasibility")
+    for scenario, group in summary.groupby("scenario", sort=True):
+        output_path = pdf_path(args.output_dir, scenario, "pareto_front_size")
         tasks.append((group.copy(), output_path))
 
     Parallel(n_jobs=args.jobs)(
