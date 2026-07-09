@@ -127,6 +127,8 @@ add_library(SolarScapeGeneticCore STATIC
         genetics/utils/ParetoRanking.h
         genetics/utils/ParetoFrontUtils.cpp
         genetics/utils/ParetoFrontUtils.h
+        genetics/utils/ReferenceDirections.cpp
+        genetics/utils/ReferenceDirections.h
         genetics/fitness/FitnessMetrics.h
         genetics/fitness/FitnessValue.h
 )
@@ -264,6 +266,24 @@ target_link_libraries(SolarScapeGeneticNSGAII
         SolarScape::GeneticFitness
 )
 
+add_library(SolarScapeGeneticNSGAIII STATIC
+        genetics/nsga/NSGAIIIAlgorithm.cpp
+        genetics/nsga/NSGAIIIAlgorithm.h
+)
+
+add_library(SolarScape::GeneticNSGAIII ALIAS SolarScapeGeneticNSGAIII)
+
+target_include_directories(SolarScapeGeneticNSGAIII
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(SolarScapeGeneticNSGAIII
+        PUBLIC
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+)
+
 add_library(SolarScapeGeneticMOEAD STATIC
         genetics/moead/MOEADAlgorithm.cpp
         genetics/moead/MOEADAlgorithm.h
@@ -338,6 +358,24 @@ target_link_libraries(SolarScapeNSGAII
         SolarScape::GeneticOperators
         SolarScape::GeneticFitness
         SolarScape::GeneticNSGAII
+        SolarScape::Simulation
+)
+
+add_executable(SolarScapeNSGAIII
+        nsga3_simulation.cpp
+)
+
+add_dependencies(SolarScapeNSGAIII
+        copy_yaml_files
+)
+
+target_link_libraries(SolarScapeNSGAIII
+        PRIVATE
+        SolarScape::Config
+        SolarScape::GeneticCore
+        SolarScape::GeneticOperators
+        SolarScape::GeneticFitness
+        SolarScape::GeneticNSGAIII
         SolarScape::Simulation
 )
 

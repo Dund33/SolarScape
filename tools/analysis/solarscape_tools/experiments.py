@@ -9,18 +9,21 @@ from pathlib import Path
 ALGORITHM_NAMES = {
     "SolarScape": "algo",
     "SolarScapeNSGAII": "nsgaii",
+    "SolarScapeNSGAIII": "nsgaiii",
     "SolarScapeMOEAD": "moead",
 }
 
 ALGORITHM_ORDER = {
     "algo": 0,
     "nsgaii": 1,
-    "moead": 2,
+    "nsgaiii": 2,
+    "moead": 3,
 }
 
 ALGORITHM_LABELS = {
     "algo": "Proposed algorithm",
     "nsgaii": "NSGA-II",
+    "nsgaiii": "NSGA-III",
     "moead": "MOEA/D",
 }
 

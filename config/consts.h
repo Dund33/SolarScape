@@ -32,6 +32,7 @@ inline constexpr Real MIN_MANEUVER_THROTTLE = 0.1;
 
 inline constexpr double MUTATION_PROBABILITY = 0.15;
 inline constexpr double NSGAII_MUTATION_PROBABILITY = 0.2;
+inline constexpr double NSGAIII_MUTATION_PROBABILITY = 0.2;
 inline constexpr double MOEAD_MUTATION_PROBABILITY = 0.35;
 inline constexpr double EXTENSIVE_MUTATION_ADD_PROBABILITY = 0.15;
 inline constexpr double EXTENSIVE_MUTATION_REMOVE_PROBABILITY = 0.075;
