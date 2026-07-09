@@ -2,6 +2,7 @@
 
 import argparse
 import concurrent.futures
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -69,8 +70,11 @@ def parse_args() -> argparse.Namespace:
         "-j",
         "--jobs",
         type=int,
-        default=1,
-        help="Number of MOEA/D experiment processes to run in parallel.",
+        default=None,
+        help=(
+            "Number of MOEA/D experiment processes to run in parallel. "
+            "Default: all CPU threads available to this process."
+        ),
     )
     parser.add_argument(
         "--keep-going",
@@ -123,7 +127,7 @@ def validate_args(args: argparse.Namespace) -> None:
     if args.runs <= 0:
         raise ValueError("--runs must be greater than zero.")
 
-    if args.jobs <= 0:
+    if args.jobs is not None and args.jobs <= 0:
         raise ValueError("--jobs must be greater than zero.")
 
     if not args.executables_dir.is_dir():
@@ -133,6 +137,23 @@ def validate_args(args: argparse.Namespace) -> None:
 
     if not args.scenarios_dir.is_dir():
         raise ValueError(f"Scenarios directory does not exist: {args.scenarios_dir}")
+
+
+def available_worker_count() -> int:
+    if hasattr(os, "sched_getaffinity"):
+        try:
+            return max(1, len(os.sched_getaffinity(0)))
+        except OSError:
+            pass
+
+    return max(1, os.cpu_count() or 1)
+
+
+def moead_worker_count(requested_jobs: int | None, experiment_count: int) -> int:
+    return min(
+        requested_jobs if requested_jobs is not None else available_worker_count(),
+        experiment_count,
+    )
 
 
 def build_experiments(
@@ -370,16 +391,14 @@ def main() -> int:
             continue
 
         if algorithm == "moead":
-            jobs = min(
-                args.jobs,
-                len(algorithm_experiments))
+            jobs = moead_worker_count(args.jobs, len(algorithm_experiments))
             print(
                 f"running {len(algorithm_experiments)} MOEA/D experiment(s) "
                 f"with {jobs} worker process(es)"
             )
             exit_code, algorithm_failed_runs = run_experiments_in_parallel(
                 algorithm_experiments,
-                args.jobs,
+                jobs,
                 args.timeout_seconds,
                 args.dry_run,
                 args.keep_going)
