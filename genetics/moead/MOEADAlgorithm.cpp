@@ -18,83 +18,17 @@
 #include "genetics/mutation/Mutation.h"
 #include "genetics/utils/GenerationProgressLogger.h"
 #include "genetics/utils/ParetoFrontUtils.h"
+#include "genetics/utils/ReferenceDirections.h"
 
 namespace
 {
-    using WeightVector = std::vector<Real>;
+    using WeightVector = ReferenceDirections::Direction;
 
     struct ObjectiveBounds
     {
         std::vector<Real> ideal;
         std::vector<Real> nadir;
     };
-
-    void appendLatticeWeightVectors(std::vector<WeightVector>& weightVectors, WeightVector& current, std::size_t objective,
-                                    std::size_t remainingDivisions, std::size_t divisions)
-    {
-        if (objective + 1 == current.size())
-        {
-            current[objective] = static_cast<Real>(remainingDivisions) / static_cast<Real>(divisions);
-            weightVectors.push_back(current);
-            return;
-        }
-
-        for (std::size_t value = 0; value <= remainingDivisions; ++value)
-        {
-            current[objective] = static_cast<Real>(value) / static_cast<Real>(divisions);
-
-            appendLatticeWeightVectors(weightVectors, current, objective + 1, remainingDivisions - value, divisions);
-        }
-    }
-
-    std::vector<WeightVector> generateLatticeWeightVectors(std::size_t objectiveCount, std::size_t divisions)
-    {
-        std::vector<WeightVector> weightVectors;
-        WeightVector current(objectiveCount, 0.0);
-
-        appendLatticeWeightVectors(weightVectors, current, 0, divisions, divisions);
-
-        return weightVectors;
-    }
-
-    std::vector<WeightVector> generateWeightVectors(std::size_t populationSize, std::size_t objectiveCount)
-    {
-        if (objectiveCount == 1)
-        {
-            return std::vector<WeightVector>(populationSize, WeightVector{1.0});
-        }
-
-        if (populationSize == 1)
-        {
-            return {WeightVector(objectiveCount, 1.0 / static_cast<Real>(objectiveCount))};
-        }
-
-        std::size_t divisions = 1;
-        std::vector<WeightVector> lattice;
-
-        do
-        {
-            lattice = generateLatticeWeightVectors(objectiveCount, divisions);
-            ++divisions;
-        } while (lattice.size() < populationSize);
-
-        if (lattice.size() == populationSize)
-        {
-            return lattice;
-        }
-
-        std::vector<WeightVector> weightVectors;
-        weightVectors.reserve(populationSize);
-
-        for (std::size_t i = 0; i < populationSize; ++i)
-        {
-            const std::size_t sourceIndex = i * (lattice.size() - 1) / (populationSize - 1);
-
-            weightVectors.push_back(lattice[sourceIndex]);
-        }
-
-        return weightVectors;
-    }
 
     Real weightDistanceSquared(const WeightVector& lhs, const WeightVector& rhs)
     {
@@ -272,7 +206,7 @@ ParetoFrontHistory MOEADAlgorithm::run() const
 
     evaluatePopulation(population, *fitnessEvaluator);
 
-    const std::vector<WeightVector> weightVectors = generateWeightVectors(populationSize, specimenComparator.objectiveCount());
+    const std::vector<WeightVector> weightVectors = ReferenceDirections::generate(populationSize, specimenComparator.objectiveCount());
     const std::vector<std::vector<std::size_t>> neighborhoods = calculateNeighborhoods(weightVectors, neighborhoodSize);
 
     static thread_local std::mt19937 rng(std::random_device{}());

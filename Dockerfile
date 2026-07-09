@@ -19,7 +19,7 @@ RUN cmake -S . -B /build \
     -DCMAKE_BUILD_TYPE=Release \
     -DSOLARSCAPE_ENABLE_NATIVE_OPTIMIZATIONS=OFF \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
-    && cmake --build /build --target SolarScape SolarScapeNSGAII SolarScapeMOEAD -j "$(nproc)"
+    && cmake --build /build --target SolarScape SolarScapeNSGAII SolarScapeNSGAIII SolarScapeMOEAD -j "$(nproc)"
 
 
 FROM debian:trixie-slim AS experiments
@@ -42,6 +42,7 @@ RUN mkdir -p /opt/solarscape/bin /opt/solarscape/scenarios /opt/solarscape/tools
 
 COPY --from=builder /build/SolarScape /opt/solarscape/bin/SolarScape
 COPY --from=builder /build/SolarScapeNSGAII /opt/solarscape/bin/SolarScapeNSGAII
+COPY --from=builder /build/SolarScapeNSGAIII /opt/solarscape/bin/SolarScapeNSGAIII
 COPY --from=builder /build/SolarScapeMOEAD /opt/solarscape/bin/SolarScapeMOEAD
 
 COPY scenario1.yml scenario2.yml scenario3.yml /opt/solarscape/scenarios/

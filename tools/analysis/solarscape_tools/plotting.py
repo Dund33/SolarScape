@@ -13,6 +13,7 @@ from solarscape_tools.experiments import ALGORITHM_ORDER, algorithm_label
 ALGORITHM_PALETTE = {
     "Proposed algorithm": "#1f77b4",
     "NSGA-II": "#ff7f0e",
+    "NSGA-III": "#d62728",
     "MOEA/D": "#2ca02c",
 }
 
