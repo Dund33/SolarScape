@@ -27,7 +27,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -march=native -fno-math-errno -ffp-contract=fast"
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -march=native -mtune=native -fno-math-errno -ffinite-math-only -ffp-contract=fast"
       }
     },
     {
