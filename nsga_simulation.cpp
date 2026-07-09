@@ -42,7 +42,7 @@ namespace
 
         RandomCutCrossoverFactory crossoverFactory;
 
-        RandomUniformMutationFactory mutationFactory(MUTATION_PROBABILITY, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
+        RandomUniformMutationFactory mutationFactory(NSGAII_MUTATION_PROBABILITY, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
                                                      MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
         VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
