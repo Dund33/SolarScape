@@ -50,8 +50,8 @@ namespace
                        state.targetPointFromTargetBody, paretoFront.front().getManeuvers());
     }
 
-    auto run(const std::string& configFilePath, const std::string& outputFilePath, const std::string& diversityLogFilePath, bool verbose)
-        -> int
+    auto run(const std::string& configFilePath, const std::string& outputFilePath, const std::string& diversityLogFilePath,
+             double mutationProbability, bool verbose) -> int
     {
         SimulationConfig config = SimulationConfig::loadFromFile(configFilePath);
 
@@ -70,10 +70,10 @@ namespace
 
         AlignedSimilarityCrossoverFactory crossoverFactory;
 
-        ExtensiveMutationFactory mutationFactory(MUTATION_PROBABILITY, EXTENSIVE_MUTATION_ADD_PROBABILITY,
-                                                 EXTENSIVE_MUTATION_REMOVE_PROBABILITY, MIN_MANEUVERS, MAX_MANEUVERS, MIN_MANEUVER_TIME,
-                                                 state.simulationTime, MIN_MANEUVER_DURATION, MAX_MANEUVER_DURATION, MUTATION_TIME_RANGE,
-                                                 MUTATION_DURATION_RANGE, MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
+        ExtensiveMutationFactory mutationFactory(mutationProbability, mutationProbability, mutationProbability, MIN_MANEUVERS,
+                                                 MAX_MANEUVERS, MIN_MANEUVER_TIME, state.simulationTime, MIN_MANEUVER_DURATION,
+                                                 MAX_MANEUVER_DURATION, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
+                                                 MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
         VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
                                                                         state.targetPointFromTargetBody, simulationFactory);
@@ -118,18 +118,21 @@ auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        const CommandLineOptions options = CommandLineOptions::parse(argc, argv);
+        const CommandLineOptions options = CommandLineOptions::parse(argc, argv, "scenario1.yml", "pareto-front.json",
+                                                                     MUTATION_PROBABILITY);
 
         if (options.helpRequested())
         {
-            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr);
+            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr, "scenario1.yml", "pareto-front.json",
+                                           MUTATION_PROBABILITY);
             return 0;
         }
 
         try
         {
             return run(options.configFilePath(), options.outputFilePath(),
-                       options.hasDiversityLogFilePath() ? options.diversityLogFilePath() : std::string(), options.verbose());
+                       options.hasDiversityLogFilePath() ? options.diversityLogFilePath() : std::string(),
+                       options.mutationProbability(), options.verbose());
         }
         catch (const YAML::Exception& e)
         {
@@ -145,7 +148,8 @@ auto main(int argc, char* argv[]) -> int
     catch (const CommandLineParseError& e)
     {
         std::cerr << "Argument error: " << e.what() << '\n';
-        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr);
+        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr, "scenario1.yml", "pareto-front.json",
+                                       MUTATION_PROBABILITY);
         return 2;
     }
 }

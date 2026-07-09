@@ -15,10 +15,12 @@ class CommandLineOptions
 {
 public:
     static CommandLineOptions parse(int argc, char* argv[], std::string defaultConfigFile = "scenario1.yml",
-                                    std::string defaultOutputFile = "pareto-front.json");
+                                    std::string defaultOutputFile = "pareto-front.json",
+                                    double defaultMutationProbability = 0.0);
 
     static void printUsage(std::ostream& output, const char* programName, const std::string& defaultConfigFile = "scenario1.yml",
-                           const std::string& defaultOutputFile = "pareto-front.json");
+                           const std::string& defaultOutputFile = "pareto-front.json",
+                           double defaultMutationProbability = 0.0);
 
     const std::string& configFilePath() const;
 
@@ -32,15 +34,18 @@ public:
 
     bool helpRequested() const;
 
+    double mutationProbability() const;
+
 private:
     CommandLineOptions(std::string configFilePath, std::string outputFilePath, std::string diversityLogFilePath, bool verbose,
-                       bool helpRequested);
+                       bool helpRequested, double mutationProbability);
 
     std::string configFilePath_;
     std::string outputFilePath_;
     std::string diversityLogFilePath_;
     bool verbose_{};
     bool helpRequested_{};
+    double mutationProbability_{};
 };
 
 #endif

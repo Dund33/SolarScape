@@ -26,7 +26,7 @@
 
 namespace
 {
-    auto run(const std::string& configFilePath, const std::string& outputFilePath, bool verbose) -> int
+    auto run(const std::string& configFilePath, const std::string& outputFilePath, double mutationProbability, bool verbose) -> int
     {
         SimulationConfig config = SimulationConfig::loadFromFile(configFilePath);
 
@@ -42,7 +42,7 @@ namespace
 
         RandomCutCrossoverFactory crossoverFactory;
 
-        RandomUniformMutationFactory mutationFactory(NSGAIII_MUTATION_PROBABILITY, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
+        RandomUniformMutationFactory mutationFactory(mutationProbability, MUTATION_TIME_RANGE, MUTATION_DURATION_RANGE,
                                                      MUTATION_DIRECTION_RANGE, MUTATION_THROTTLE_RANGE);
 
         VectorSimulationFitnessEvaluatorFactory fitnessEvaluatorFactory(state.timeStep, state.simulationTime,
@@ -69,17 +69,19 @@ auto main(int argc, char* argv[]) -> int
 {
     try
     {
-        const CommandLineOptions options = CommandLineOptions::parse(argc, argv);
+        const CommandLineOptions options = CommandLineOptions::parse(argc, argv, "scenario1.yml", "pareto-front.json",
+                                                                     NSGAIII_MUTATION_PROBABILITY);
 
         if (options.helpRequested())
         {
-            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr);
+            CommandLineOptions::printUsage(std::cout, argc > 0 ? argv[0] : nullptr, "scenario1.yml", "pareto-front.json",
+                                           NSGAIII_MUTATION_PROBABILITY);
             return 0;
         }
 
         try
         {
-            return run(options.configFilePath(), options.outputFilePath(), options.verbose());
+            return run(options.configFilePath(), options.outputFilePath(), options.mutationProbability(), options.verbose());
         }
         catch (const YAML::Exception& e)
         {
@@ -95,7 +97,8 @@ auto main(int argc, char* argv[]) -> int
     catch (const CommandLineParseError& e)
     {
         std::cerr << "Argument error: " << e.what() << '\n';
-        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr);
+        CommandLineOptions::printUsage(std::cerr, argc > 0 ? argv[0] : nullptr, "scenario1.yml", "pareto-front.json",
+                                       NSGAIII_MUTATION_PROBABILITY);
         return 2;
     }
 }
