@@ -26,6 +26,7 @@ class Experiment:
     executable: Path
     scenario: Path
     output_file: Path
+    mutation_probability: float | None
 
 
 def parse_args() -> argparse.Namespace:
@@ -77,6 +78,16 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--mutation-probabilities",
+        type=float,
+        nargs="+",
+        default=None,
+        help=(
+            "Mutation probability values to test. When omitted, executables use "
+            "their built-in defaults."
+        ),
+    )
+    parser.add_argument(
         "--keep-going",
         action="store_true",
         help="Continue remaining runs after a failed process.",
@@ -107,6 +118,11 @@ def run_experiment(
         str(experiment.output_file),
         "-v",
     ]
+    if experiment.mutation_probability is not None:
+        command.extend([
+            "--mutation-probability",
+            f"{experiment.mutation_probability:.12g}",
+        ])
 
     print(f"[{experiment.index}/{experiment.total}] -> {experiment.output_file.name}")
     print(" ".join(command))
@@ -129,6 +145,21 @@ def validate_args(args: argparse.Namespace) -> None:
 
     if args.jobs is not None and args.jobs <= 0:
         raise ValueError("--jobs must be greater than zero.")
+
+    if args.mutation_probabilities is not None:
+        invalid_probability = next(
+            (
+                probability
+                for probability in args.mutation_probabilities
+                if probability < 0.0 or probability > 1.0
+            ),
+            None,
+        )
+        if invalid_probability is not None:
+            raise ValueError(
+                f"--mutation-probabilities values must be in range [0, 1]: "
+                f"{invalid_probability}"
+            )
 
     if not args.executables_dir.is_dir():
         raise ValueError(
@@ -162,40 +193,44 @@ def build_experiments(
     output_dir: Path,
     run_count: int,
     force: bool,
+    mutation_probabilities: list[float | None],
 ) -> tuple[list[Experiment], int]:
-    total_runs = len(executables) * len(scenarios) * run_count
+    total_runs = len(executables) * len(scenarios) * len(mutation_probabilities) * run_count
     experiments: list[Experiment] = []
     current_run = 0
 
     for executable in executables:
         algorithm = algorithm_name(executable)
         for scenario in scenarios:
-            for run_index in range(1, run_count + 1):
-                current_run += 1
-                output_file = output_dir / output_file_name(
-                    scenario,
-                    executable,
-                    run_index,
-                    run_count,
-                )
-
-                if output_file.exists() and not force:
-                    print(
-                        f"[{current_run}/{total_runs}] skipping existing "
-                        f"output: {output_file.name}"
+            for mutation_probability in mutation_probabilities:
+                for run_index in range(1, run_count + 1):
+                    current_run += 1
+                    output_file = output_dir / output_file_name(
+                        scenario,
+                        executable,
+                        run_index,
+                        run_count,
+                        mutation_probability,
                     )
-                    continue
 
-                experiments.append(
-                    Experiment(
-                        current_run,
-                        total_runs,
-                        algorithm,
-                        executable.resolve(),
-                        scenario.resolve(),
-                        output_file,
+                    if output_file.exists() and not force:
+                        print(
+                            f"[{current_run}/{total_runs}] skipping existing "
+                            f"output: {output_file.name}"
+                        )
+                        continue
+
+                    experiments.append(
+                        Experiment(
+                            current_run,
+                            total_runs,
+                            algorithm,
+                            executable.resolve(),
+                            scenario.resolve(),
+                            output_file,
+                            mutation_probability,
+                        )
                     )
-                )
 
     return experiments, total_runs
 
@@ -360,6 +395,7 @@ def main() -> int:
         return 2
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    mutation_probabilities = args.mutation_probabilities if args.mutation_probabilities is not None else [None]
 
     experiments, total_runs = build_experiments(
         executables,
@@ -367,6 +403,7 @@ def main() -> int:
         output_dir,
         args.runs,
         args.force,
+        mutation_probabilities,
     )
 
     if not experiments:

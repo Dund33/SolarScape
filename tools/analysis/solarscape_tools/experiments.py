@@ -127,12 +127,22 @@ def output_file_name(
     executable: Path,
     run_index: int,
     run_count: int,
+    mutation_probability: float | None = None,
 ) -> str:
     scenario_id = scenario_number(scenario)
     algorithm = algorithm_name(executable)
     run_width = max(2, len(str(run_count)))
+    mutation_part = (
+        f"_mp{mutation_probability_tag(mutation_probability)}"
+        if mutation_probability is not None
+        else ""
+    )
 
-    return f"scenario{scenario_id}_{algorithm}_run{run_index:0{run_width}d}.json"
+    return f"scenario{scenario_id}_{algorithm}{mutation_part}_run{run_index:0{run_width}d}.json"
+
+
+def mutation_probability_tag(value: float) -> str:
+    return f"{value:.12g}".replace("-", "m").replace(".", "p")
 
 
 def experiment_sort_key(
